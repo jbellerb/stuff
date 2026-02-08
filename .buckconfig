@@ -1,0 +1,6 @@
+[cells]
+root = .
+toolchains = toolchains
+
+[project]
+ignore = .direnv, .git, .jj
