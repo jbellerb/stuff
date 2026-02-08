@@ -1,7 +1,10 @@
 go_binary(
-    name = "helloworld",
+    name = "installer",
     srcs = glob(["*.go"]),
     deps = [
+        "root//tools/installer/third-party:google.golang.org/grpc",
+        "root//tools/installer/third-party:google.golang.org/grpc/codes",
+        "root//tools/installer/third-party:google.golang.org/grpc/status",
         "root//tools/installer/third-party/buckproto/install:install",
     ],
     visibility = ["PUBLIC"],
