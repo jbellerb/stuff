@@ -11,14 +11,31 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"tools/installer/internal/store"
 )
 
 func main() {
 	tcpPort := flag.Int("tcp-port", 0, "TCP port for gRPC server")
 	logPath := flag.String("log-path", "", "Path to write log output")
+	gc := flag.Bool("gc", false, "Run garbage collection and exit")
 	flag.Parse()
 
-	s := NewServer()
+	st, err := store.NewStore(cacheDir())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize store: %v\n", err)
+		os.Exit(1)
+	}
+
+	if *gc {
+		if err := st.GC(); err != nil {
+			fmt.Fprintf(os.Stderr, "garbage collection failed: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	s := NewServer(st)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -112,4 +129,17 @@ func initLogger(w io.Writer, level slog.Level) {
 	jsonHandler := slog.NewJSONHandler(w, &slog.HandlerOptions{Level: level})
 	ctxHandler := &contextHandler{jsonHandler}
 	slog.SetDefault(slog.New(ctxHandler))
+}
+
+func cacheDir() string {
+	if xdg := os.Getenv("XDG_CACHE_HOME"); xdg != "" {
+		return xdg + "/installer"
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		return homeDir + "/.cache/installer"
+	}
+
+	return ".cache/installer"
 }

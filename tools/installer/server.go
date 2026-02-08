@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"tools/installer/internal/store"
 	pb "tools/installer/third-party/buckproto/install"
 
 	"google.golang.org/grpc"
@@ -23,20 +24,58 @@ var (
 	errFileExists = errors.New("file already exists at destination")
 )
 
+type errorInstall struct {
+	err      error
+	message  string
+	category pb.ErrorCategory
+}
+
+func (e *errorInstall) Error() string {
+	return fmt.Sprintf("%s: %v", e.message, e.err)
+}
+
+func (e *errorInstall) Unwrap() error {
+	return e.err
+}
+
+type installState struct {
+	objects map[string]string
+	pending map[string]struct{}
+}
+
 type Server struct {
 	pb.UnimplementedInstallerServer
 
 	mu       sync.Mutex
-	installs map[string]map[string]struct{}
+	installs map[string]installState
+	store    *store.Store
 	done     chan struct{}
 }
 
 // NewServer creates a new installer server.
-func NewServer() *Server {
+func NewServer(st *store.Store) *Server {
 	return &Server{
-		installs: make(map[string]map[string]struct{}),
+		installs: make(map[string]installState),
+		store:    st,
 		done:     make(chan struct{}),
 	}
+}
+
+func expandName(name string) (string, error) {
+	if strings.HasPrefix(name, "~/") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("failed to get home directory: %w", err)
+		}
+		name = filepath.Join(homeDir, name[2:])
+	}
+
+	fullName, err := filepath.Abs(name)
+	if err != nil {
+		return "", fmt.Errorf("failed to get full path of install name: %w", err)
+	}
+
+	return fullName, nil
 }
 
 // Install implements /install.Installer/Install.
@@ -46,54 +85,85 @@ func (s *Server) Install(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	installId := req.GetInstallId()
+	installID := req.GetInstallId()
 	filesMap := req.GetFiles()
 
-	files := make(map[string]struct{})
-	for dest := range filesMap {
-		files[dest] = struct{}{}
+	state := installState{
+		objects: make(map[string]string, len(filesMap)),
+		pending: make(map[string]struct{}, len(filesMap)),
 	}
-	s.installs[installId] = files
+	for name := range filesMap {
+		state.pending[name] = struct{}{}
+	}
+	s.installs[installID] = state
 
 	slog.InfoContext(
 		ctx,
 		"registered install task",
-		"rpc.install.id", installId,
-		"rpc.install.pending", len(files),
+		"rpc.install.id", installID,
+		"rpc.install.pending", len(state.pending),
 	)
 
-	return &pb.InstallResponse{InstallId: installId}, nil
+	return &pb.InstallResponse{InstallId: installID}, nil
 }
 
-func createSymlink(dest, source string) error {
-	if strings.HasPrefix(dest, "~/") {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
-		}
-		dest = filepath.Join(homeDir, dest[2:])
-	}
-
-	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+func (s *Server) createSymlink(dst, src string) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return fmt.Errorf("failed to create parent directories: %w", err)
 	}
 
 	for {
-		if err := os.Symlink(source, dest); err == nil {
+		if err := os.Symlink(src, dst); err == nil {
 			return nil
 		} else if !errors.Is(err, os.ErrExist) {
 			return fmt.Errorf("failed to create symlink: %w", err)
 		}
 
-		info, err := os.Lstat(dest)
+		info, err := os.Lstat(dst)
 		if err != nil {
 			return fmt.Errorf("failed to stat destination: %w", err)
 		} else if info.Mode()&os.ModeSymlink == 0 {
+			// don't overwrite regular files
 			return errFileExists
-		} else if err := os.Remove(dest); err != nil {
-			return fmt.Errorf("failed to remove existing symlink: %w", err)
+		} else {
+			// only overwrite symlinks that point into the store
+			target, err := os.Readlink(dst)
+			if err != nil {
+				return fmt.Errorf("failed to read existing symlink: %w", err)
+			}
+			if !filepath.IsAbs(target) {
+				target = filepath.Join(filepath.Dir(dst), target)
+			}
+			if !strings.HasPrefix(filepath.Clean(target), s.store.StorePath()+string(filepath.Separator)) {
+				return errFileExists
+			}
+			if err := os.Remove(dst); err != nil {
+				return fmt.Errorf("failed to remove existing symlink: %w", err)
+			}
 		}
 	}
+}
+
+func (s *Server) linkArtifact(installID, dst, src string) (string, *errorInstall) {
+	digest, err := s.store.Put(src)
+	if err != nil {
+		return "", &errorInstall{err, "failed to add file to store", pb.ErrorCategory_ENVIRONMENT}
+	}
+
+	if err := s.store.CreateRoot(installID, dst, digest); err != nil {
+		return "", &errorInstall{err, "failed to log gc root", pb.ErrorCategory_TIER_0}
+	}
+
+	objectPath := s.store.ObjectPath(digest)
+	if err := s.createSymlink(dst, objectPath); err != nil {
+		res := errorInstall{err, "failed to create symlink", pb.ErrorCategory_ENVIRONMENT}
+		if errors.Is(err, errFileExists) {
+			res.category = pb.ErrorCategory_INPUT
+		}
+		return "", &res
+	}
+
+	return digest, nil
 }
 
 // FileReady implements /install.Installer/FileReady.
@@ -114,28 +184,60 @@ func (s *Server) FileReady(
 		slog.String("rpc.install.source", path),
 	)
 
-	files := s.installs[installID]
-	if _, ok := files[name]; !ok {
-		slog.ErrorContext(ctx, "bad request", "exception", errNotFound.Error())
-		return nil, status.Error(codes.NotFound, errNotFound.Error())
-	}
-
-	res := &pb.FileResponse{InstallId: installID, Name: name, Path: path}
-	if err := createSymlink(name, path); err != nil {
-		res.ErrorDetail = &pb.ErrorDetail{
-			Message:  err.Error(),
-			Category: pb.ErrorCategory_ENVIRONMENT,
-		}
-		if errors.Is(err, errFileExists) {
-			res.ErrorDetail.Category = pb.ErrorCategory_INPUT
-		}
-		slog.ErrorContext(ctx, "failed to create symlink", "exception", err.Error())
+	var err error
+	state, ok := s.installs[installID]
+	if !ok {
+		err = errNotFound
 	} else {
-		delete(files, name)
-		slog.InfoContext(ctx, "created symlink", "rpc.install.pending", len(files))
+		if _, ok := state.pending[name]; !ok {
+			err = errNotFound
+		}
+	}
+	if err != nil {
+		slog.ErrorContext(ctx, "bad request", "exception", err)
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	return res, nil
+	res := pb.FileResponse{InstallId: installID, Name: name, Path: path}
+
+	dst, err := expandName(name)
+	if err != nil {
+		res.ErrorDetail = &pb.ErrorDetail{
+			Message:  fmt.Sprintf("failed to expand destination name: %v", err),
+			Category: pb.ErrorCategory_INPUT,
+		}
+		slog.ErrorContext(ctx, "failed to expand destination name", "exception", err)
+		return &res, nil
+	}
+
+	digest, linkErr := s.linkArtifact(installID, dst, path)
+	if linkErr != nil {
+		res.ErrorDetail = &pb.ErrorDetail{
+			Message:  linkErr.Error(),
+			Category: linkErr.category,
+		}
+		slog.ErrorContext(ctx, linkErr.message, "exception", linkErr.Unwrap())
+		return &res, nil
+	}
+
+	state.objects[name] = digest
+	delete(state.pending, name)
+	slog.InfoContext(ctx, "file linked", "rpc.install.digest", digest)
+
+	if len(state.pending) == 0 {
+		if err := s.store.CommitInstall(installID, state.objects); err != nil {
+			res.ErrorDetail = &pb.ErrorDetail{
+				Message:  fmt.Sprintf("failed to log install: %v", err),
+				Category: pb.ErrorCategory_TIER_0,
+			}
+			slog.ErrorContext(ctx, "failed to log install", "exception", err)
+		} else {
+			delete(s.installs, installID)
+			slog.InfoContext(ctx, "install completed")
+		}
+	}
+
+	return &res, nil
 }
 
 // ShutdownServer implements /install.Installer/ShutdownServer.

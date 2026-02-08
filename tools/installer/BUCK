@@ -2,10 +2,23 @@ go_binary(
     name = "installer",
     srcs = glob(["*.go"]),
     deps = [
+        "root//tools/installer/internal/store:store",
         "root//tools/installer/third-party:google.golang.org/grpc",
         "root//tools/installer/third-party:google.golang.org/grpc/codes",
         "root//tools/installer/third-party:google.golang.org/grpc/status",
         "root//tools/installer/third-party/buckproto/install:install",
     ],
     visibility = ["PUBLIC"],
+)
+
+go_test(
+    name = "installer_test",
+    srcs = glob(["*.go"]),
+    deps = [
+        "root//tools/installer/internal/store:store",
+        "root//tools/installer/third-party:google.golang.org/grpc",
+        "root//tools/installer/third-party:google.golang.org/grpc/codes",
+        "root//tools/installer/third-party:google.golang.org/grpc/status",
+        "root//tools/installer/third-party/buckproto/install:install",
+    ],
 )

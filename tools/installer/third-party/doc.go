@@ -6,6 +6,8 @@
 package thirdparty
 
 import (
+	_ "github.com/zeebo/blake3"
+	_ "golang.org/x/sys/unix"
 	_ "google.golang.org/grpc"
 	_ "google.golang.org/grpc/codes"
 	_ "google.golang.org/grpc/status"
