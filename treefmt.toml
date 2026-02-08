@@ -2,6 +2,11 @@ excludes = ["LICENSE*", "README.md"]
 
 walk = "jujutsu"
 
-[formatter.starlark]
+[formatter.buildifier]
 command = "buildifier"
 includes = ["**/BUCK", "**/PACKAGE", "*.bzl"]
+
+[formatter.ruff-format]
+command = "ruff"
+includes = ["*.py", "*.pyi"]
+options = ["format"]
