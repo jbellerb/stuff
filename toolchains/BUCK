@@ -1,4 +1,5 @@
 load("@prelude//toolchains:genrule.bzl", "system_genrule_toolchain")
+load("@prelude//toolchains:no_toolchain.bzl", "no_toolchain")
 load("@prelude//toolchains:python.bzl", "system_python_bootstrap_toolchain")
 
 system_genrule_toolchain(
@@ -6,8 +7,25 @@ system_genrule_toolchain(
     visibility = ["PUBLIC"],
 )
 
+no_toolchain(
+    name = "cxx",
+    visibility = ["PUBLIC"],
+)
+
 system_python_bootstrap_toolchain(
     name = "python_bootstrap",
+    visibility = ["PUBLIC"],
+)
+
+toolchain_alias(
+    name = "go_bootstrap",
+    actual = "toolchains//go:go_bootstrap",
+    visibility = ["PUBLIC"],
+)
+
+toolchain_alias(
+    name = "go",
+    actual = "toolchains//go:go",
     visibility = ["PUBLIC"],
 )
 

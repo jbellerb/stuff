@@ -6,6 +6,11 @@ walk = "jujutsu"
 command = "buildifier"
 includes = ["**/BUCK", "**/PACKAGE", "*.bzl"]
 
+[formatter.go]
+command = "gofmt"
+options = ["-w"]
+includes = ["*.go"]
+
 [formatter.ruff-format]
 command = "ruff"
 includes = ["*.py", "*.pyi"]

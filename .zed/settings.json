@@ -1,0 +1,16 @@
+{
+  "lsp": {
+    "gopls": {
+      "settings": {
+        "gopls": {
+          "build.workspaceFiles": [
+            "**/BUCK",
+            "**/PACKAGE",
+            "**/*.bzl",
+            "**/.buckconfig",
+          ],
+        },
+      },
+    },
+  },
+}
