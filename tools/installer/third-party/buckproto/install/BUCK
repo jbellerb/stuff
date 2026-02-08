@@ -1,0 +1,39 @@
+load("@toolchains//protobuf:defs.bzl", "protobuf_library")
+
+http_file(
+    name = "install.proto",
+    sha256 = "a9cea353359816281df03304412f113115e2ee42c5486b99963109e35928ccca",
+    urls = ["https://raw.githubusercontent.com/facebook/buck2/refs/tags/2026-02-01/app/buck2_install_proto/install.proto"],
+)
+
+_mod_mapping = [
+    "module=tools/installer/third-party/buckproto/install",
+    "M$(location :install.proto)=tools/installer/third-party/buckproto/install",
+]
+
+protobuf_library(
+    name = "install.pb",
+    srcs = [":install.proto"],
+    language = "go",
+    options = _mod_mapping,
+)
+
+protobuf_library(
+    name = "install_grpc.pb",
+    srcs = [":install.proto"],
+    language = "go-grpc",
+    options = _mod_mapping,
+)
+
+go_library(
+    name = "install",
+    srcs = [":install.pb", ":install_grpc.pb"],
+    visibility = ["PUBLIC"],
+    deps = [
+        "root//tools/installer/third-party:google.golang.org/grpc",
+        "root//tools/installer/third-party:google.golang.org/grpc/codes",
+        "root//tools/installer/third-party:google.golang.org/grpc/status",
+        "root//tools/installer/third-party:google.golang.org/protobuf/reflect/protoreflect",
+        "root//tools/installer/third-party:google.golang.org/protobuf/runtime/protoimpl",
+    ],
+)

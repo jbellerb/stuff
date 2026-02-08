@@ -1,5 +1,8 @@
 go_binary(
     name = "helloworld",
     srcs = glob(["*.go"]),
+    deps = [
+        "root//tools/installer/third-party/buckproto/install:install",
+    ],
     visibility = ["PUBLIC"],
 )
