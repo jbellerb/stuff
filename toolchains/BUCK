@@ -4,3 +4,9 @@ system_genrule_toolchain(
     name = "genrule",
     visibility = ["PUBLIC"],
 )
+
+toolchain_alias(
+    name = "protobuf",
+    actual = "toolchains//protobuf:protobuf",
+    visibility = ["PUBLIC"],
+)

@@ -1,0 +1,7 @@
+excludes = ["LICENSE*", "README.md"]
+
+walk = "jujutsu"
+
+[formatter.starlark]
+command = "buildifier"
+includes = ["**/BUCK", "**/PACKAGE", "*.bzl"]

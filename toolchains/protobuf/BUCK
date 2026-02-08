@@ -1,0 +1,61 @@
+load(":defs.bzl", "protobuf_plugin", "protobuf_toolchain")
+
+http_archive(
+    name = "protoc-34.0-rc-2-osx-aarch_64",
+    sha256 = "2569852ef56a41c40e476e47a6627af132b87cf8b0f3f8b3ad8868d0c570e2de",
+    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v34.0-rc2/protoc-34.0-rc-2-osx-aarch_64.zip"],
+)
+
+genrule(
+    name = "protoc",
+    out = "protoc",
+    cmd = "ln -sF $(location :protoc-34.0-rc-2-osx-aarch_64)/bin/protoc $OUT",
+    executable = True,
+)
+
+http_archive(
+    name = "protoc-gen-go.v1.36.11.darwin.arm64",
+    sha256 = "31a1c65833213a925f6771dd84b749ac5b3f4de30be3694d8ec19e23fc44acbf",
+    urls = ["https://github.com/protocolbuffers/protobuf-go/releases/download/v1.36.11/protoc-gen-go.v1.36.11.darwin.arm64.tar.gz"],
+)
+
+genrule(
+    name = "protoc-gen-go",
+    out = "protoc-gen-go",
+    cmd = "ln -sF $(location :protoc-gen-go.v1.36.11.darwin.arm64)/protoc-gen-go $OUT",
+    executable = True,
+)
+
+http_archive(
+    name = "protoc-gen-go-grpc.v1.6.1.darwin.arm64",
+    sha256 = "55d96d01811710865b0531de287d60699b89c54d81c6127f07bf492a3ad08809",
+    urls = ["https://github.com/grpc/grpc-go/releases/download/cmd%2Fprotoc-gen-go-grpc%2Fv1.6.1/protoc-gen-go-grpc.v1.6.1.darwin.arm64.tar.gz"],
+)
+
+genrule(
+    name = "protoc-gen-go-grpc",
+    out = "protoc-gen-go-grpc",
+    cmd = "ln -sF $(location :protoc-gen-go-grpc.v1.6.1.darwin.arm64)/protoc-gen-go-grpc $OUT",
+    executable = True,
+)
+
+protobuf_plugin(
+    name = "protobuf-go-plugin",
+    plugin = ":protoc-gen-go",
+    language = "go",
+    extensions = [".pb.go"],
+)
+
+protobuf_plugin(
+    name = "protobuf-go-grpc-plugin",
+    plugin = ":protoc-gen-go-grpc",
+    language = "go-grpc",
+    extensions = ["_grpc.pb.go"],
+)
+
+protobuf_toolchain(
+    name = "protobuf",
+    protoc = ":protoc",
+    plugins = [":protobuf-go-plugin", ":protobuf-go-grpc-plugin"],
+    visibility = ["toolchains//..."],
+)
