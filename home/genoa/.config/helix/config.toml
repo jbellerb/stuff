@@ -1,0 +1,5 @@
+theme = "term16_light"
+
+[editor]
+mouse = false
+

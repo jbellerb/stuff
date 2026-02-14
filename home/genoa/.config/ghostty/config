@@ -1,0 +1,15 @@
+auto-update = off
+
+command = /Users/jae/.nix-profile/bin/fish
+
+macos-titlebar-style = tabs
+
+theme = One Double Dark
+window-padding-color = extend
+window-padding-x = 5
+window-padding-y = 5
+
+font-family = iA Writer Mono V Text
+font-size = 16
+adjust-cell-height = 10%
+font-feature = -calt

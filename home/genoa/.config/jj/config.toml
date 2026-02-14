@@ -1,0 +1,49 @@
+#:schema https://docs.jj-vcs.dev/latest/config-schema.json
+
+[user]
+email = "foss@jae.zone"
+name = "jae beller"
+
+[signing]
+backend = "ssh"
+behavior = "own"
+key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKd8Zw2VvCVTuPUn1HczgWguHlwkOObu/MXPgyJ3RiPS"
+
+[signing.backends.ssh]
+program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+
+[ui]
+default-command = "l"
+editor = "hx"
+pager = "less -FRX"
+
+[revset-aliases]
+"user(x)" = "author(x) | committer(x)"
+
+"stack()" = "stack(@)"
+"stack(x)" = "stack(x, 2)"
+"stack(x, n)" = "ancestors(reachable(x, mutable()), n)"
+
+# https://andre.arko.net/2025/09/28/stupid-jj-tricks/
+"closest_bookmark(to)" = "heads(::to & bookmarks())"
+"closest_pushable(to)" = "heads(::to & mutable() & ~description(exact:\"\") & (~empty() | merges()))\n"
+
+[aliases]
+l = ["log", "--revisions", "stack()"]
+
+pull = ["util", "exec", "--", "sh", "-c", """
+CLOSEST=$(jj log --limit 1 --revisions 'closest_bookmark(@)' --template 'bookmarks' --no-graph)
+CLOSEST=${CLOSEST%% *}
+CLOSEST=${CLOSEST%"*"}
+
+jj git fetch
+test -n "$CLOSEST" && jj log --limit 1 --revisions "$CLOSEST" > /dev/null 2>&1 || \
+    CLOSEST=trunk()
+jj rebase --destination "$CLOSEST"
+jj l
+"""]
+
+tug = ["util", "exec", "--", "sh", "-c", """
+test $# -eq 0 && set -- --from "closest_bookmark(@)"
+jj bookmark move --to "closest_pushable(@)" "$@"
+""", "--"]

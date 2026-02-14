@@ -1,0 +1,13 @@
+load("//home:defs.bzl", "dotfiles")
+
+dotfiles(
+    name = "home",
+    files = {
+        "~/.config/direnv": [".config/direnv/*.toml"],
+        "~/.config/fish/functions": [".config/fish/functions/*.fish"],
+        "~/.config/ghostty": [".config/ghostty/config"],
+        "~/.config/helix": [".config/helix/*.toml"],
+        "~/.config/jj": [".config/jj/*.toml"],
+        "~/.config/zed": [".config/zed/*.json"],
+    },
+)
