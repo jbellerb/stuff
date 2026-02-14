@@ -1,0 +1,39 @@
+load("@toolchains//apple:rules.bzl", "apple_test")
+
+_XCTOOLCHAIN_PATH = read_root_config(
+    "apple",
+    "xctoolchain_path",
+    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain",
+)
+
+_SWIFT_COMPAT_LIB_PATH = read_root_config(
+    "apple",
+    "swift_compat_lib_path",
+    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx",
+)
+
+_IN_PROC_PLUGIN_SERVER = _XCTOOLCHAIN_PATH + "/usr/lib/swift/host/libSwiftInProcPluginServer.dylib"
+_TESTING_MACROS_PLUGIN_DIR = _XCTOOLCHAIN_PATH + "/usr/lib/swift/host/plugins/testing"
+
+apple_test(
+    name = "PredictionsServerTests",
+    srcs = glob(["**/*.swift"]),
+    info_plist = "Info.plist",
+    deps = [
+        "//predictions-coreml/Sources/PredictionsServer:PredictionsServer",
+        "//third-party/swift/github.com/apple/swift-nio:NIOEmbedded",
+    ],
+    frameworks = [
+        "$SDKROOT/System/Library/Frameworks/Foundation.framework",
+    ],
+    linker_flags = ["-Wl,-rpath," + _SWIFT_COMPAT_LIB_PATH],
+    swift_compiler_flags = [
+        "-in-process-plugin-server-path",
+        _IN_PROC_PLUGIN_SERVER,
+        "-plugin-path",
+        _TESTING_MACROS_PLUGIN_DIR,
+    ],
+    swift_testing = True,
+    target_sdk_version = "26.0",
+    visibility = ["PUBLIC"],
+)

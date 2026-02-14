@@ -1,0 +1,26 @@
+load("@toolchains//apple:rules.bzl", "apple_binary")
+
+# see toolchains//apple:BUCK for why this is needed
+_SWIFT_COMPAT_LIB_PATH = read_root_config(
+    "apple",
+    "swift_compat_lib_path",
+    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx",
+)
+
+apple_binary(
+    name = "predictions",
+    srcs = [
+        "Predictions.swift",
+        "//predictions-coreml:release_version",
+    ],
+    deps = [
+        "//third-party/swift/github.com/apple/swift-argument-parser:ArgumentParser",
+        "//third-party/swift/github.com/apple/swift-log:Logging",
+        "//predictions-coreml/Sources/PredictionsLog:PredictionsLog",
+        "//predictions-coreml/Sources/PredictionsServer:PredictionsServer",
+    ],
+    frameworks = ["$SDKROOT/System/Library/Frameworks/Foundation.framework"],
+    linker_flags = ["-Wl,-rpath," + _SWIFT_COMPAT_LIB_PATH],
+    target_sdk_version = "15.0",
+    visibility = ["PUBLIC"],
+)

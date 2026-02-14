@@ -1,0 +1,11 @@
+genrule(
+    name = "version",
+    out = "VERSION",
+    cmd = "$(exe :version) > $OUT",
+    visibility = ["PUBLIC"],
+)
+
+sh_binary(
+    name = "version",
+    main = "generate_version.sh",
+)

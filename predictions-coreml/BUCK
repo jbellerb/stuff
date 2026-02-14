@@ -1,0 +1,13 @@
+genrule(
+    name = "release_version",
+    out = "ReleaseVersion.swift",
+    cmd = """
+    $(exe :generate_version_info.sh) $(location //tools/version:version) > $OUT
+    """,
+    visibility = ["//predictions-coreml/Sources/Predictions:"],
+)
+
+sh_binary(
+    name = "generate_version_info.sh",
+    main = "scripts/generate_version_info.sh",
+)

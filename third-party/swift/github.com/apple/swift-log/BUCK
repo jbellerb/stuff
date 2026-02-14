@@ -1,0 +1,24 @@
+load("@toolchains//apple:rules.bzl", "apple_library")
+
+http_archive(
+    name = "swift-log-1.9.1",
+    urls = ["https://github.com/apple/swift-log/archive/refs/tags/1.9.1.tar.gz"],
+    sha256 = "00312bc66e8419bb7f032f09c2582b3378e879be1914475f8496ec14c03535eb",
+    strip_prefix = "swift-log-1.9.1/Sources",
+    sub_targets = {
+        "Logging": [
+            "Logging/Locks.swift",
+            "Logging/LogHandler.swift",
+            "Logging/Logging.swift",
+            "Logging/MetadataProvider.swift",
+        ],
+    },
+)
+
+apple_library(
+    name = "Logging",
+    srcs = [":swift-log-1.9.1[Logging]"],
+    module_name = "Logging",
+    swift_compiler_flags = ["-package-name", "swift-log"],
+    visibility = ["PUBLIC"],
+)
