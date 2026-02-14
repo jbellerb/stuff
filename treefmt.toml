@@ -15,3 +15,8 @@ includes = ["*.go"]
 command = "ruff"
 includes = ["*.py", "*.pyi"]
 options = ["format"]
+
+[formatter.swift]
+command = "swift"
+includes = ["*.swift"]
+options = ["format", "-i"]

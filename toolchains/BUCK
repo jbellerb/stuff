@@ -1,7 +1,7 @@
 load("@prelude//tests:test_toolchain.bzl", "noop_test_toolchain")
 load("@prelude//toolchains:genrule.bzl", "system_genrule_toolchain")
 load("@prelude//toolchains:no_toolchain.bzl", "no_toolchain")
-load("@prelude//toolchains:python.bzl", "system_python_bootstrap_toolchain")
+load("@prelude//toolchains:python.bzl", "system_python_bootstrap_toolchain", "system_python_toolchain")
 load("@prelude//toolchains:remote_test_execution.bzl", "remote_test_execution_toolchain")
 
 system_genrule_toolchain(
@@ -9,13 +9,19 @@ system_genrule_toolchain(
     visibility = ["PUBLIC"],
 )
 
-no_toolchain(
+toolchain_alias(
     name = "cxx",
+    actual = "toolchains//cxx:cxx",
     visibility = ["PUBLIC"],
 )
 
 system_python_bootstrap_toolchain(
     name = "python_bootstrap",
+    visibility = ["PUBLIC"],
+)
+
+system_python_toolchain(
+    name = "python",
     visibility = ["PUBLIC"],
 )
 
@@ -34,6 +40,28 @@ toolchain_alias(
 toolchain_alias(
     name = "protobuf",
     actual = "toolchains//protobuf:protobuf",
+    visibility = ["PUBLIC"],
+)
+
+toolchain_alias(
+    name = "swift",
+    actual = "toolchains//apple:swift",
+    visibility = ["PUBLIC"],
+)
+
+toolchain_alias(
+    name = "apple-default",
+    actual = "toolchains//apple:apple",
+    visibility = ["PUBLIC"],
+)
+
+no_toolchain(
+    name = "apple-xctoolchain",
+    visibility = ["PUBLIC"],
+)
+
+no_toolchain(
+    name = "apple-xctoolchain-bundle-id",
     visibility = ["PUBLIC"],
 )
 
