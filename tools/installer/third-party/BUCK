@@ -1425,6 +1425,7 @@ go_library(
     srcs = [":google.golang.org/grpc__srcs[internal/channelz]"],
     visibility = ["root//tools/installer/..."],
     deps = [
+        ":golang.org/x/sys/unix",
         ":google.golang.org/grpc/connectivity",
         ":google.golang.org/grpc/credentials",
         ":google.golang.org/grpc/grpclog",
@@ -1634,6 +1635,7 @@ go_library(
     srcs = [":google.golang.org/grpc__srcs[internal/syscall]"],
     visibility = ["root//tools/installer/..."],
     deps = [
+        ":golang.org/x/sys/unix",
         ":google.golang.org/grpc/grpclog",
     ],
 )

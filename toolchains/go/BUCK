@@ -15,31 +15,62 @@ http_archive(
     urls = ["https://go.dev/dl/go1.25.7.darwin-arm64.tar.gz"],
 )
 
+http_archive(
+    name = "archive_go1.25.7.linux-amd64",
+    sha256 = "12e6d6a191091ae27dc31f6efc630e3a3b8ba409baf3573d955b196fdf086005",
+    strip_prefix = "go",
+    urls = ["https://go.dev/dl/go1.25.7.linux-amd64.tar.gz"],
+)
+
 go_bootstrap_distr(
     name = "go_bootstrap_distr",
-    go_os_arch = ("darwin", "arm64"),
-    go_root = ":archive_go1.25.7.darwin-arm64",
+    go_os_arch = select({
+        "config//os:linux": ("linux", "amd64"),
+        "config//os:macos": ("darwin", "arm64"),
+    }),
+    go_root = select({
+        "config//os:linux": ":archive_go1.25.7.linux-amd64",
+        "config//os:macos": ":archive_go1.25.7.darwin-arm64",
+    }),
 )
 
 go_bootstrap_toolchain(
     name = "go_bootstrap",
-    env_go_arch = "arm64",
-    env_go_os = "darwin",
+    env_go_arch = select({
+        "config//os:linux": "amd64",
+        "config//os:macos": "arm64",
+    }),
+    env_go_os = select({
+        "config//os:linux": "linux",
+        "config//os:macos": "darwin",
+    }),
     go_bootstrap_distr = ":go_bootstrap_distr",
     visibility = ["toolchains//..."],
 )
 
 go_distr(
     name = "go_distr",
-    go_os_arch = ("darwin", "arm64"),
-    go_root = ":archive_go1.25.7.darwin-arm64",
+    go_os_arch = select({
+        "config//os:linux": ("linux", "amd64"),
+        "config//os:macos": ("darwin", "arm64"),
+    }),
+    go_root = select({
+        "config//os:linux": ":archive_go1.25.7.linux-amd64",
+        "config//os:macos": ":archive_go1.25.7.darwin-arm64",
+    }),
     version = "1.25.7",
 )
 
 go_toolchain(
     name = "go",
-    env_go_arch = "arm64",
-    env_go_os = "darwin",
+    env_go_arch = select({
+        "config//os:linux": "amd64",
+        "config//os:macos": "arm64",
+    }),
+    env_go_os = select({
+        "config//os:linux": "linux",
+        "config//os:macos": "darwin",
+    }),
     go_distr = ":go_distr",
     visibility = ["toolchains//..."],
 )

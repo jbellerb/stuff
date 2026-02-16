@@ -385,3 +385,23 @@ func copyFile(dst, src string) error {
 
 	return dstFile.Close()
 }
+
+// fallbackCopyToStore copies a file to the store by copying its contents to a
+// temporary file and atomically renaming it to the destination. This is the
+// fallback in case there aren't any more efficient options.
+func fallbackCopyToStore(source, objectPath, digest string) error {
+	tmpPath := objectPath + ".tmp"
+	if err := copyToStore(source, tmpPath, digest); err != nil {
+		return err
+	}
+	if err := os.Chmod(tmpPath, 0444); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("failed to set permissions: %w", err)
+	}
+	if err := os.Rename(tmpPath, objectPath); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("failed to move file to store: %w", err)
+	}
+
+	return nil
+}
