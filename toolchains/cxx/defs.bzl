@@ -52,6 +52,8 @@ _TOOLCHAIN_FIELDS = [
 def _system_cxx_toolchain_impl(ctx: AnalysisContext) -> Promise:
     def wrap(providers: ProviderCollection) -> list[Provider]:
         cxx = providers[CxxToolchainInfo]
+        platform_name = providers[CxxPlatformInfo].name
+
         base = {k: getattr(cxx, k, None) for k in dir(cxx)}
 
         # copy ObjC/ObjC++ compiler info from C/C++ compilers
@@ -65,10 +67,14 @@ def _system_cxx_toolchain_impl(ctx: AnalysisContext) -> Promise:
         if ctx.attrs.minimum_os_version:
             base["minimum_os_version"] = ctx.attrs.minimum_os_version
 
+        # the prelude sets the OS name to "macos", but the Apple target triple
+        # map expects the SDK name "macosx"
+        platform_name = platform_name.replace("macos-", "macosx-", 1)
+
         return [
             DefaultInfo(),
             CxxToolchainInfo(**base),
-            providers[CxxPlatformInfo],
+            CxxPlatformInfo(name = platform_name),
         ]
 
     attrs = {}
