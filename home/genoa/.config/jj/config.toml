@@ -38,7 +38,7 @@ CLOSEST=${CLOSEST%"*"}
 
 jj git fetch
 test -n "$CLOSEST" && jj log --limit 1 --revisions "$CLOSEST" > /dev/null 2>&1 || \
-    CLOSEST=trunk()
+    CLOSEST='trunk()'
 jj rebase --destination "$CLOSEST"
 jj l
 """]
