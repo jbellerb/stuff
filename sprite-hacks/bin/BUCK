@@ -1,0 +1,7 @@
+load("//:rules.bzl", "executable_file")
+
+executable_file(
+    name = "jj-sprite-workspace",
+    src = "jj-sprite-workspace",
+    visibility = ["PUBLIC"],
+)

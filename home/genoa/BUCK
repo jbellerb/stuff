@@ -9,5 +9,10 @@ dotfiles(
         "~/.config/helix": [".config/helix/*.toml"],
         "~/.config/jj": [".config/jj/*.toml"],
         "~/.config/zed": [".config/zed/*.json"],
+
+        # binaries
+        "~/.cache/installer/bin": [
+            "//sprite-hacks/bin:jj-sprite-workspace",
+        ],
     },
 )
