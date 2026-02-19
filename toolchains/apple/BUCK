@@ -1,5 +1,6 @@
 load(
     ":defs.bzl",
+    "no_apple_simulators",
     "no_binary",
     "system_apple_toolchain",
     "system_swift_toolchain",
@@ -17,8 +18,23 @@ PLATFORM_PATH = read_root_config(
     "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform",
 )
 
+# path to additional Swift stdlib libraries not found in the default search
+# path. Needed for versioned libs like libswiftCompatibilitySpan.dylib which
+# live under usr/lib/swift-<version>/ rather than usr/lib/swift/
+SWIFT_COMPAT_LIB_PATH = read_root_config(
+    "apple",
+    "swift_compat_lib_path",
+    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx",
+)
+
 no_binary(
     name = "no_binary",
+    visibility = ["PUBLIC"],
+)
+
+no_apple_simulators(
+    name = "no_apple_simulators",
+    visibility = ["PUBLIC"],
 )
 
 # the same as prelude/apple/tools:apple-tools, but all tools that require
@@ -26,7 +42,7 @@ no_binary(
 apple_tools(
     name = "apple-tools",
     adhoc_codesign_tool = ":no_binary",
-    assemble_bundle = ":no_binary",
+    assemble_bundle = "//apple/third-party/prelude/apple/tools/bundling:assemble_bundle",
     codesign_manifest_tree_postprocessor = "prelude//apple/tools/codesign_manifest_tree_postprocessor:codesign_manifest_tree_postprocessor",
     dry_codesign_tool = "prelude//apple/tools:dry_codesign_tool",
     framework_sanitizer = "prelude//apple/tools:framework_sanitizer",
@@ -35,7 +51,7 @@ apple_tools(
     make_modulemap = "prelude//apple/tools:make_modulemap",
     make_vfsoverlay = "prelude//apple/tools:make_vfsoverlay",
     selective_debugging_scrubber = "prelude//apple/tools/selective_debugging:tool",
-    signing_context = ":no_binary",
+    signing_context = "//apple/third-party/prelude/apple/tools/bundling:signing_context",
     signing_context_tree_postprocessor = "prelude//apple/tools/signing_context_tree_postprocessor:signing_context_tree_postprocessor",
     split_arch_combine_dsym_bundles_tool = "prelude//apple/tools:split_arch_combine_dsym_bundles_tool",
     spm_packager = "prelude//apple/tools:spm_packager",
@@ -47,6 +63,7 @@ apple_tools(
 system_swift_toolchain(
     name = "swift",
     sdk_path = SDK_PATH,
+    swift_stdlib_tool_flags = ["--source-libraries", SWIFT_COMPAT_LIB_PATH],
     visibility = ["toolchains//..."],
 )
 
@@ -56,5 +73,6 @@ system_apple_toolchain(
     sdk_name = "macosx",
     sdk_path = SDK_PATH,
     swift_toolchain = ":swift",
+    xcode_version = "2620",
     visibility = ["toolchains//..."],
 )

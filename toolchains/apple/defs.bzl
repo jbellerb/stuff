@@ -62,7 +62,7 @@ system_apple_toolchain = rule(
         "sdk_name": attrs.string(default = "macosx"),
         "sdk_path": attrs.string(),
         "swift_toolchain": attrs.option(attrs.toolchain_dep(), default = None),
-        "xcode_version": attrs.string(default = "15.0"),
+        "xcode_version": attrs.string(default = "1600"),
 
         # prelude deps
         "_merge_index_store": attrs.default_only(
@@ -158,5 +158,21 @@ def _no_binary_impl(ctx: AnalysisContext) -> list[Provider]:
 
 no_binary = rule(
     impl = _no_binary_impl,
+    attrs = {},
+)
+
+def _no_apple_simulators_impl(ctx: AnalysisContext) -> list[Provider]:
+    return [
+        DefaultInfo(),
+        LocalResourceInfo(
+            setup = cmd_args([]),
+            resource_env_vars = {
+                "MY_RESOURCE_ID": "my_alias",
+            },
+        ),
+    ]
+
+no_apple_simulators = rule(
+    impl = _no_apple_simulators_impl,
     attrs = {},
 )

@@ -2,5 +2,6 @@ load(":defs.bzl", "system_cxx_toolchain")
 
 system_cxx_toolchain(
     name = "cxx",
+    minimum_os_version = "26.0",
     visibility = ["toolchains//..."],
 )

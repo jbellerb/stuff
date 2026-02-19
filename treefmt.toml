@@ -1,4 +1,8 @@
-excludes = ["LICENSE*", "README.md"]
+excludes = [
+    "LICENSE*",
+    "README.md",
+    "toolchains/apple/third-party/prelude/**",
+]
 
 walk = "jujutsu"
 
