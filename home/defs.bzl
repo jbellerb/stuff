@@ -1,7 +1,7 @@
 load("//tools/installer:defs.bzl", "install")
 
 _target_regex = regex(
-    "^(:?[-.0-9a-z_A-Z]*\\/\\/[-./0-9a-z_A-Z]+)?:[-.0-9a-z_A-Z]+$",
+    "^(:?[-.0-9a-z_A-Z]*\\/\\/[-./0-9a-z_A-Z]+)?:[-./0-9a-z_A-Z]+$",
 )
 
 def _separate_targets(patterns: list[str]):  # -> tuple[list[str], list[str]]:
