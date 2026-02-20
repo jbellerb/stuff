@@ -1,0 +1,72 @@
+name: "Setup Copybara"
+
+description: "Installs and configures Copybara"
+
+inputs:
+  config:
+    description: "Path within the repository to the Copybara config file."
+    default: "copy.bara.sky"
+  repository:
+    description: "GitHub repository to fetch the Copybara config file from."
+    default: ${{ github.repository }}
+  ref:
+    description: "The branch, tag, or commit SHA to fetch the Copybara config file from."
+    default: ${{ github.sha }}
+  token:
+    description: "API token used by Copybara to fetch and push changes."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download Copybara
+      run: |
+        COPYBARA_ROOT=${{ runner.temp }}/copybara
+
+        mkdir -p "${COPYBARA_ROOT}"
+        curl --silent --show-error --location \
+            https://github.com/google/copybara/releases/download/v20260119/copybara_deploy.jar \
+                > "${COPYBARA_ROOT}/copybara.jar"
+      shell: bash
+
+    - name: Configure Copybara
+      env:
+        COPYBARA_TOKEN: ${{ inputs.token }}
+      run: |
+        git config --global user.name "jae beller"
+        git config --global user.email "foss@jae.zone"
+        echo "https://x-access-token:${COPYBARA_TOKEN}@github.com" > ~/.git-credentials
+
+        CONFIGS="${{ inputs.config }}"
+        for config in $CONFIGS
+        do
+          curl --silent --show-error --request GET \
+              --url "https://api.github.com/repos/${{ inputs.repository }}/contents/$config?ref=${{ inputs.ref }}" \
+              --header "Accept: application/vnd.github.v3.raw" \
+              --header "Authorization: Bearer ${COPYBARA_TOKEN}" > "$config"
+        done
+      shell: bash
+      working-directory: ${{ runner.temp }}/copybara
+
+    - name: Install Copybara
+      run: |
+        mkdir -p bin
+        echo "${PWD}/bin" >> "${GITHUB_PATH}"
+
+        read -r config _ << EOF
+        ${{ inputs.config }}
+        EOF
+        cat > bin/copybara << EOF
+        #!/bin/sh
+
+        JAVA_HOME=\$JAVA_HOME_21_X64
+
+        "\$JAVA_HOME/bin/java" -jar "$PWD/copybara.jar" "$PWD/$config" "\$@"
+        case \$? in
+        4) return 0 ;; # return success on no-op
+        *) return \$? ;;
+        esac
+        EOF
+        chmod +x bin/copybara
+      shell: bash
+      working-directory: ${{ runner.temp }}/copybara

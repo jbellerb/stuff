@@ -1,0 +1,18 @@
+default_committer = "jae-beller <foss@jae.zone>"
+
+core.workflow(
+    name = "push-sprite-hacks",
+    origin = git.github_origin(
+        url = "https://github.com/jbellerb/stuff",
+        ref = "trunk",
+    ),
+    destination = git.github_destination(
+        url = "https://github.com/jbellerb/sprite-hacks",
+        push = "trunk",
+    ),
+    origin_files = glob(["sprite-hacks/**"]),
+    destination_files = glob(["**"]),
+    mode = "ITERATIVE",
+    authoring = authoring.pass_thru(default_committer),
+    transformations = [core.move("sprite-hacks", "")],
+)

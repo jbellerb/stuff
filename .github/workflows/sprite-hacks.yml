@@ -1,0 +1,29 @@
+name: Push sprite-hacks changes to the main repo
+
+on:
+  push:
+    branches: [trunk]
+    paths: [sprite-hacks]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      # Workaround until "$/" syntax is released.
+      # See https://github.com/orgs/community/discussions/26245#discussioncomment-15601440
+      - name: Setup "Setup Copybara"
+        run: 'mkdir -p .github/actions/setup-copybara; curl "https://api.github.com/repos/${{ github.repository }}/contents/.github/actions/setup-copybara/action.yml?ref=${{ github.sha }}" -H "Accept: application/vnd.github.v3.raw" -H "Authorization: Bearer ${{ github.token }}" > .github/actions/setup-copybara/action.yml'
+
+      - name: Setup Copybara
+        # uses: $/.github/actions/setup-copybara
+        uses: ./.github/actions/setup-copybara
+        with:
+          token: ${{ secrets.COPYBARA_TOKEN }}
+          config: copy.bara.sky
+
+      - name: Publish change
+        run: copybara push-sprite-hacks
