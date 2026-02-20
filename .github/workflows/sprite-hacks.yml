@@ -3,7 +3,9 @@ name: Push sprite-hacks changes to the main repo
 on:
   push:
     branches: [trunk]
-    paths: [sprite-hacks]
+    paths:
+      - copy.bara.sky
+      - sprite-hacks/**
   workflow_dispatch:
 
 permissions:
@@ -12,6 +14,7 @@ permissions:
 jobs:
   import:
     runs-on: ubuntu-latest
+    environment: copybara
     steps:
       # Workaround until "$/" syntax is released.
       # See https://github.com/orgs/community/discussions/26245#discussioncomment-15601440
