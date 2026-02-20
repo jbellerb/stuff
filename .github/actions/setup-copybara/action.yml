@@ -15,6 +15,9 @@ inputs:
   token:
     description: "API token used by Copybara to fetch and push changes."
     required: true
+  signing_key:
+    description: "SSH private key for signing commits."
+    required: false
 
 runs:
   using: "composite"
@@ -32,10 +35,24 @@ runs:
     - name: Configure Copybara
       env:
         COPYBARA_TOKEN: ${{ inputs.token }}
+        SIGNING_KEY: ${{ inputs.signing_key }}
       run: |
         git config --global user.name "jae beller"
         git config --global user.email "foss@jae.zone"
         echo "https://x-access-token:${COPYBARA_TOKEN}@github.com" > ~/.git-credentials
+
+        # configure SSH commit signing if key is provided
+        if test -n "${SIGNING_KEY}"
+        then
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${SIGNING_KEY}" > ~/.ssh/signing_key
+          chmod 600 ~/.ssh/signing_key
+
+          git config --global gpg.format ssh
+          git config --global user.signingkey ~/.ssh/signing_key
+          git config --global commit.gpgsign true
+        fi
 
         CONFIGS="${{ inputs.config }}"
         for config in $CONFIGS

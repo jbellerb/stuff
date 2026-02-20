@@ -27,6 +27,7 @@ jobs:
         with:
           token: ${{ secrets.COPYBARA_TOKEN }}
           config: copy.bara.sky
+          signing_key: ${{ secrets.COMMIT_SIGNING_KEY }}
 
       - name: Publish change
         run: copybara push-sprite-hacks
