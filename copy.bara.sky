@@ -10,7 +10,7 @@ core.workflow(
         url = "https://github.com/jbellerb/sprite-hacks",
         push = "trunk",
     ),
-    origin_files = glob(["sprite-hacks/**"]),
+    origin_files = glob(["sprite-hacks/**"], exclude = ["sprite-hacks/bin/BUCK"]),
     destination_files = glob(["**"]),
     mode = "ITERATIVE",
     authoring = authoring.pass_thru(default_committer),
