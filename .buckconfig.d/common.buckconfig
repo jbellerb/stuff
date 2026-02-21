@@ -10,7 +10,11 @@ fbcode = none
 fbsource = none
 
 [external_cells]
-prelude = bundled
+prelude = git
+
+[external_cell_prelude]
+git_origin = https://github.com/facebook/buck2-prelude
+commit_hash = 2f4b25f14a413db9a702389eec97f75f8e84325e
 
 [parser]
 target_platform_detector_spec = \
