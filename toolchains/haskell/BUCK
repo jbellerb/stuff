@@ -1,0 +1,28 @@
+load("@prelude//toolchains:haskell.bzl", "system_haskell_toolchain")
+load(":defs.bzl", "haskell_toolchain")
+
+http_archive(
+    name = "ghc-9.10.3-x86_64-ubuntu20_04-linux.tar.xz",
+    sha256 = "b6200c32a56f26f5d2ff77c92481a47a53bb3d43cbc82b59a997aed2ad5fd937",
+    strip_prefix = "ghc-9.10.3-x86_64-unknown-linux",
+    urls = ["https://downloads.haskell.org/~ghc/9.10.3/ghc-9.10.3-x86_64-ubuntu20_04-linux.tar.xz"],
+    visibility = ["toolchains//haskell/lib/..."],
+)
+
+http_archive(
+    name = "ghc-9.10.3-aarch64-apple-darwin.tar.xz",
+    sha256 = "9f50ddd87be5cb994c719402778d6c7fdd341934fd4fbc0fcc3ecb40d49f860c",
+    strip_prefix = "ghc-9.10.3-aarch64-apple-darwin",
+    urls = ["https://downloads.haskell.org/~ghc/9.10.3/ghc-9.10.3-aarch64-apple-darwin.tar.xz"],
+    visibility = ["toolchains//haskell/lib/..."],
+)
+
+haskell_toolchain(
+    name = "haskell",
+    ghc_root = select({
+        "config//os:linux": ":ghc-9.10.3-x86_64-ubuntu20_04-linux.tar.xz",
+        "config//os:macos": ":ghc-9.10.3-aarch64-apple-darwin.tar.xz",
+    }),
+    version = "9.10.3",
+    visibility = ["toolchains//..."],
+)

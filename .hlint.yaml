@@ -1,0 +1,18 @@
+- extensions:
+    - default: false
+    - name: [DefaultSignatures, OverloadedStrings, UndecidableInstances]
+
+- modules:
+    - name: Data.ByteString
+      as: BS
+    - name: [Data.Text, Data.Text.IO]
+      as: T
+    - name: "**"
+      importStyle: explicitOrQualified
+
+- group:
+    name: future
+    enabled: true
+- group:
+    name: generalise
+    enabled: true

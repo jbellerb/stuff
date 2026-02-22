@@ -10,6 +10,11 @@ walk = "jujutsu"
 command = "buildifier"
 includes = ["**/BUCK", "**/PACKAGE", "*.bzl"]
 
+[formatter.fourmolu]
+command = "fourmolu"
+options = ["-i", "-c"]
+includes = ["*.hs"]
+
 [formatter.go]
 command = "gofmt"
 options = ["-w"]

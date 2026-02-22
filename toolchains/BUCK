@@ -65,6 +65,12 @@ no_toolchain(
     visibility = ["PUBLIC"],
 )
 
+toolchain_alias(
+    name = "haskell",
+    actual = "toolchains//haskell:haskell",
+    visibility = ["PUBLIC"],
+)
+
 noop_test_toolchain(
     name = "test",
     visibility = ["PUBLIC"],

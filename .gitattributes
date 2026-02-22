@@ -1,2 +1,3 @@
 toolchains/apple/third-party/prelude/** linguist-vendored
+toolchains/haskell/lib/BUCK linguist-generated
 tools/installer/third-party/BUCK linguist-generated

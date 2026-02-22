@@ -1,0 +1,9 @@
+haddock-style: single-line
+haddock-style-module: multi-line
+import-export-style: leading
+import-grouping:
+  - rules:
+      - match: all
+  - rules:
+      - match: local-modules
+respectful: true
