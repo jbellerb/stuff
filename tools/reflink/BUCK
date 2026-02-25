@@ -1,0 +1,8 @@
+go_binary(
+    name = "reflink",
+    srcs = glob(["*.go"]),
+    deps = [
+        "//third-party/go/golang.org/x/sys:unix",
+    ],
+    visibility = ["PUBLIC"],
+)

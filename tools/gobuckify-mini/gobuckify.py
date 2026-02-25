@@ -139,9 +139,12 @@ http_archive(
             "{f}","""
             buck += """
         ],"""
+        escaped_mod_path = "".join(
+            f"!{c.lower()}" if c.isupper() else c for c in mod_path
+        )
         buck += f"""
     }},
-    urls = ["https://proxy.golang.org/{mod_path}/@v/{version}.zip"],
+    urls = ["https://proxy.golang.org/{escaped_mod_path}/@v/{version}.zip"],
 )
 """
 
