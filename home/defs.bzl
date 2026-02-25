@@ -5,31 +5,31 @@ _target_regex = regex(
 )
 
 def _separate_targets(patterns: list[str]):  # -> tuple[list[str], list[str]]:
-    globs = []
+    paths = []
     targets = []
     for pattern in patterns:
         if _target_regex.match(pattern):
             targets.append(pattern)
         else:
-            globs.append(pattern)
+            paths.append(pattern)
 
-    return globs, targets
+    return paths, targets
 
 def dotfiles(files: dict[str, list[str]], name: str = "install"):
     srcs = {}
 
     for dest, patterns in files.items():
         dest_prefix = dest.rstrip("/") + "/"
-        globs, targets = _separate_targets(patterns)
-        for file in native.glob(globs):
-            _, _, basename = file.rpartition("/")
-            target_name = file.replace("/", "-").replace(".", "_")
+        paths, targets = _separate_targets(patterns)
+        for path in paths:
+            _, _, basename = path.rpartition("/")
+            target_name = path.replace("/", "-").replace(".", "_")
 
             srcs[dest_prefix + basename] = ":{}".format(target_name)
 
             native.export_file(
                 name = target_name,
-                src = file,
+                src = path,
                 visibility = ["PUBLIC"],
             )
         for target in targets:
