@@ -6,11 +6,19 @@ name = "jae beller"
 
 [signing]
 backend = "ssh"
-behavior = "own"
 key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKd8Zw2VvCVTuPUn1HczgWguHlwkOObu/MXPgyJ3RiPS"
 
 [signing.backends.ssh]
 program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+
+[git]
+sign-on-push = true
+
+[fsmonitor]
+backend = "watchman"
+
+[fsmonitor.watchman]
+register-snapshot-trigger = true
 
 [ui]
 default-command = "l"
