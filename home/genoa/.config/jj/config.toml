@@ -34,7 +34,7 @@ pager = "less -FRX"
 
 # https://andre.arko.net/2025/09/28/stupid-jj-tricks/
 "closest_bookmark(to)" = "heads(::to & bookmarks())"
-"closest_pushable(to)" = "heads(::to & mutable() & ~description(exact:\"\") & (~empty() | merges()))\n"
+"closest_pushable(to)" = "heads(::to & mutable() & description(~\"\") & (~empty() | merges()))"
 
 [aliases]
 l = ["log", "--revisions", "stack()"]
