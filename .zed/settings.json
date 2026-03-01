@@ -1,6 +1,7 @@
 {
   "languages": {
-    "Starlark": { "language_servers": ["buck2-lsp", "!starpls", "!tilt"] },
+    "JSONC": { "formatter": { "language_server": { "name": "biome" } } },
+    "Starlark": { "language_servers": ["buck2-lsp", "!starpls", "!tilt"] }
   },
 
   "lsp": {
@@ -10,9 +11,9 @@
           "**/BUCK",
           "**/PACKAGE",
           "**/*.bzl",
-          "**/.buckconfig",
-        ],
-      },
-    },
-  },
+          "**/.buckconfig"
+        ]
+      }
+    }
+  }
 }
