@@ -208,6 +208,12 @@ http_archive(
             "NIOHTTP1/NIOTypedHTTPServerUpgradeHandler.swift",
             "NIOHTTP1/NIOTypedHTTPServerUpgraderStateMachine.swift",
         ],
+        "NIOFoundationCompat": [
+            "NIOFoundationCompat/ByteBuffer-foundation.swift",
+            "NIOFoundationCompat/Codable+ByteBuffer.swift",
+            "NIOFoundationCompat/JSONSerialization+ByteBuffer.swift",
+            "NIOFoundationCompat/WaitSpinningRunLoop.swift",
+        ],
     },
 )
 
@@ -396,6 +402,16 @@ apple_library(
         "//third-party/swift/github.com/apple/swift-collections:DequeModule",
     ],
     module_name = "NIOHTTP1",
+    swift_compiler_flags = NIO_SWIFT_FLAGS,
+    visibility = ["PUBLIC"],
+)
+
+apple_library(
+    name = "NIOFoundationCompat",
+    srcs = [":swift-nio-2.93.0[NIOFoundationCompat]"],
+    exported_deps = [":NIOCore"],
+    frameworks = ["$SDKROOT/System/Library/Frameworks/Foundation.framework"],
+    module_name = "NIOFoundationCompat",
     swift_compiler_flags = NIO_SWIFT_FLAGS,
     visibility = ["PUBLIC"],
 )

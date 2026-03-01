@@ -1,0 +1,13 @@
+load("@toolchains//apple:rules.bzl", "apple_library")
+
+apple_library(
+    name = "MockPredictionsBackend",
+    srcs = glob(["**/*.swift"]),
+    exported_deps = [
+        "//predictions-coreml/Sources/PredictionsBackends:PredictionsBackends",
+    ],
+    frameworks = ["$SDKROOT/System/Library/Frameworks/Foundation.framework"],
+    module_name = "MockPredictionsBackend",
+    target_sdk_version = "15.0",
+    visibility = ["PUBLIC"],
+)

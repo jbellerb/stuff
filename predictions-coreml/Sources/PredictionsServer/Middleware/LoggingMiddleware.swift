@@ -8,7 +8,7 @@ public struct LoggingMiddleware: Middleware {
     public init(logger: Logger) { self.logger = logger }
 
     public func wrap(_ next: @escaping Router.Handler) -> Router.Handler {
-        return { [logger] request in
+        return { [logger] request, body in
             let startTime = ContinuousClock.now
 
             logger.debug(
@@ -17,7 +17,7 @@ public struct LoggingMiddleware: Middleware {
             )
 
             do {
-                let response = try await next(request)
+                let response = try await next(request, body)
                 let duration = ContinuousClock.now - startTime
 
                 logger.debug(

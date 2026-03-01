@@ -1,5 +1,7 @@
 import Logging
+import MockPredictionsBackend
 import NIOHTTP1
+import PredictionsBackends
 import Testing
 
 @testable import PredictionsServer
@@ -20,7 +22,7 @@ struct RouterTests {
 
     @Test
     func routerReturns405ForUnsupportedMethod() async throws {
-        let getHandler: Router.Handler = { _ in
+        let getHandler: Router.Handler = { _, _ in
             var headers = HTTPHeaders()
             headers.add(name: "Content-Type", value: "text/plain; charset=utf-8")
             return Router.Response(status: .ok, headers: headers, body: "OK")
@@ -38,19 +40,9 @@ struct RouterTests {
     }
 
     @Test
-    func routerRoutesToHomeController() async throws {
-        let router = buildRouter(logger: Logger(label: "test"))
-        let request = HTTPRequestHead(version: .http1_1, method: .GET, uri: "/")
-
-        let response = try await router.handle(request)
-
-        #expect(response.status == .ok)
-        #expect(response.body == "Hello, world!")
-    }
-
-    @Test
     func routerRoutesToHealthController() async throws {
-        let router = buildRouter(logger: Logger(label: "test"))
+        let mockBackend = MockPredictionsBackend(behavior: .noChange)
+        let router = buildRouter(logger: Logger(label: "test"), predictionsBackend: mockBackend)
         let request = HTTPRequestHead(version: .http1_1, method: .GET, uri: "/health")
 
         let response = try await router.handle(request)
@@ -76,14 +68,14 @@ struct RouterTests {
             let tracker: ExecutionTracker
 
             func wrap(_ next: @escaping Router.Handler) -> Router.Handler {
-                return { [tracker] request in
+                return { [tracker] request, body in
                     await tracker.recordMiddleware()
-                    return try await next(request)
+                    return try await next(request, body)
                 }
             }
         }
 
-        let handler: Router.Handler = { [tracker] _ in
+        let handler: Router.Handler = { [tracker] _, _ in
             await tracker.recordHandler()
             var headers = HTTPHeaders()
             headers.add(name: "Content-Type", value: "text/plain; charset=utf-8")

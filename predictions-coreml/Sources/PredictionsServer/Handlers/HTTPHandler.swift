@@ -10,6 +10,9 @@ final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
 
     private let logger: Logger?
 
+    private var pendingHead: HTTPRequestHead?
+    private var pendingBody: ByteBuffer?
+
     init(router: Router, logger: Logger? = nil) {
         self.router = router
         self.logger = logger
@@ -28,27 +31,45 @@ final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let requestPart = self.unwrapInboundIn(data)
 
-        guard case .head(let head) = requestPart else { return }
+        switch requestPart {
+        case .head(let head):
+            self.pendingHead = head
+            self.pendingBody = nil
 
-        context.eventLoop.makeFutureWithTask { try await self.router.handle(head) }
-            .whenComplete { result in
-                switch result {
-                case .success(let response):
-                    self.writeResponse(context: context, head: head, response: response)
-                case .failure(let error):
-                    let remoteAddress = context.remoteAddress?.description ?? "unknown"
-                    self.logger?
-                        .error(
-                            "handler error",
-                            metadata: [
-                                "exception": "\(error)", "exception.type": "\(type(of: error))",
-                                "http.method": "\(head.method)", "http.path": "\(head.uri)",
-                                "conn.addr": "\(remoteAddress)",
-                            ]
-                        )
-                    self.writeErrorResponse(context: context, head: head)
-                }
+        case .body(var buffer):
+            if self.pendingBody == nil {
+                self.pendingBody = buffer
+            } else {
+                self.pendingBody?.writeBuffer(&buffer)
             }
+
+        case .end:
+            guard let head = self.pendingHead else { return }
+            let body = self.pendingBody
+
+            self.pendingHead = nil
+            self.pendingBody = nil
+
+            context.eventLoop.makeFutureWithTask { try await self.router.handle(head, body: body) }
+                .whenComplete { result in
+                    switch result {
+                    case .success(let response):
+                        self.writeResponse(context: context, head: head, response: response)
+                    case .failure(let error):
+                        let remoteAddress = context.remoteAddress?.description ?? "unknown"
+                        self.logger?
+                            .error(
+                                "handler error",
+                                metadata: [
+                                    "exception": "\(error)", "exception.type": "\(type(of: error))",
+                                    "http.method": "\(head.method)", "http.path": "\(head.uri)",
+                                    "conn.addr": "\(remoteAddress)",
+                                ]
+                            )
+                        self.writeErrorResponse(context: context, head: head)
+                    }
+                }
+        }
     }
 
     private func writeResponse(
@@ -56,8 +77,9 @@ final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
         head: HTTPRequestHead,
         response: Router.Response
     ) {
+        let byteCount = response.body.utf8.count
         var headers = response.headers
-        headers.add(name: "Content-Length", value: "\(response.body.utf8.count)")
+        headers.add(name: "Content-Length", value: "\(byteCount)")
 
         let responseHead = HTTPResponseHead(
             version: head.version,
@@ -65,7 +87,7 @@ final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
             headers: headers
         )
 
-        var buffer = context.channel.allocator.buffer(capacity: response.body.utf8.count)
+        var buffer = context.channel.allocator.buffer(capacity: byteCount)
         buffer.writeString(response.body)
 
         context.write(self.wrapOutboundOut(.head(responseHead)), promise: nil)

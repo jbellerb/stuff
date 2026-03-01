@@ -2,6 +2,7 @@ import Logging
 import NIOCore
 import NIOHTTP1
 import NIOPosix
+import PredictionsBackends
 
 public final class PredictionsServer: Sendable {
     private let addr: SocketAddress
@@ -10,17 +11,25 @@ public final class PredictionsServer: Sendable {
 
     private let eventLoopGroup: EventLoopGroup?
 
-    public init(addr: SocketAddress, logger: Logger? = nil, eventLoopGroup: EventLoopGroup? = nil) {
+    private let predictionsBackend: any PredictionsBackend
+
+    public init(
+        addr: SocketAddress,
+        logger: Logger? = nil,
+        eventLoopGroup: EventLoopGroup? = nil,
+        predictionsBackend: any PredictionsBackend
+    ) {
         self.addr = addr
         self.logger = logger
         self.eventLoopGroup = eventLoopGroup
+        self.predictionsBackend = predictionsBackend
     }
 
     public func run() async throws {
         let group = eventLoopGroup ?? MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         let shouldShutdownGroup = (eventLoopGroup == nil)
 
-        let router = buildRouter(logger: logger)
+        let router = buildRouter(logger: logger, predictionsBackend: predictionsBackend)
         let bootstrap = ServerBootstrap(group: group)
             .serverChannelOption(ChannelOptions.backlog, value: 256)
             .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
@@ -41,7 +50,7 @@ public final class PredictionsServer: Sendable {
                 try await channel.closeFuture.get()
                 logger?.info("server shutting down")
             } onCancel: {
-                channel.close(promise: nil)
+                channel.close(promise: (nil as EventLoopPromise<Void>?))
             }
         } catch {
             logger?

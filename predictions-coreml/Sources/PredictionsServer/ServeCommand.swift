@@ -1,7 +1,9 @@
 import ArgumentParser
 import Darwin
 import Logging
+import MockPredictionsBackend
 import NIOCore
+import PredictionsBackends
 
 public struct ServeCommand: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(
@@ -15,13 +17,30 @@ public struct ServeCommand: AsyncParsableCommand {
     )
     public var listenAddr: String = ":8080"
 
+    @Option(name: [.short, .long], help: "Model backend to use (mock)")
+    public var model: String?
+
     public init() {}
 
     public mutating func run() async throws {
         let logger = Logger(label: "predictions")
 
+        let selectedModel = model ?? "mock"
+        let predictionsBackend: any PredictionsBackend
+        do { predictionsBackend = try createBackend(name: selectedModel) } catch {
+            logger.error(
+                "Failed to load backend",
+                metadata: ["backend.name": "\(selectedModel)", "exception": "\(error)"]
+            )
+            throw error
+        }
+
         let addr = try parseListenAddr(listenAddr)
-        let server = PredictionsServer(addr: addr, logger: logger)
+        let server = PredictionsServer(
+            addr: addr,
+            logger: logger,
+            predictionsBackend: predictionsBackend
+        )
 
         let coordinator = ShutdownCoordinator(logger: logger)
         let signalStream = makeSignalStream(for: [SIGTERM, SIGINT])
@@ -54,5 +73,30 @@ func parseListenAddr(_ addr: String) throws -> SocketAddress {
 
     do { return try SocketAddress(ipAddress: host, port: port) } catch is SocketAddressError {
         throw ValidationError("Failed to parse IP address")
+    }
+}
+
+func createBackend(name: String) throws -> any PredictionsBackend {
+    switch name.lowercased() {
+    case "mock": return MockPredictionsBackend(name: "mock", behavior: .noChange)
+    default: throw BackendError.unknownBackend(name: name)
+    }
+}
+
+enum BackendError: Error, CustomStringConvertible {
+    case unknownBackend(name: String)
+    case modelNotFound(model: String, expectedPath: String)
+
+    var description: String {
+        switch self {
+        case .unknownBackend(let name): return "Unknown backend '\(name)'. Available backends: mock"
+        case .modelNotFound(let model, let path):
+            return """
+                Model '\(model)' not found in cache.
+                Expected path: \(path)
+
+                To use this model, convert it to CoreML format and place it in the cache directory.
+                """
+        }
     }
 }

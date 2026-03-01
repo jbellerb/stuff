@@ -1,3 +1,4 @@
+import NIOCore
 import NIOHTTP1
 
 public struct Router: Sendable {
@@ -24,7 +25,7 @@ public struct Router: Sendable {
         }
     }
 
-    public typealias Handler = @Sendable (HTTPRequestHead) async throws -> Response
+    public typealias Handler = @Sendable (HTTPRequestHead, ByteBuffer?) async throws -> Response
 
     public struct Response: Sendable {
         public let status: HTTPResponseStatus
@@ -37,6 +38,12 @@ public struct Router: Sendable {
             self.status = status
             self.headers = headers
             self.body = body
+        }
+
+        public static func json(status: HTTPResponseStatus, body: String) -> Response {
+            var headers = HTTPHeaders()
+            headers.add(name: "Content-Type", value: "application/json; charset=utf-8")
+            return Response(status: status, headers: headers, body: body)
         }
     }
 
@@ -54,16 +61,16 @@ public struct Router: Sendable {
         self.middlewares = middlewares
     }
 
-    public func handle(_ request: HTTPRequestHead) async throws -> Response {
+    public func handle(_ request: HTTPRequestHead, body: ByteBuffer? = nil) async throws -> Response
+    {
         let route = Route(method: request.method, path: request.uri)
 
-        if let handler = routes[route] { return try await handler(request) }
+        if let handler = routes[route] { return try await handler(request, body) }
 
-        let pathExists = routes.keys.contains { $0.path == request.uri }
-        if pathExists {
+        let matchingRoutes = routes.keys.filter { $0.path == request.uri }
+        if !matchingRoutes.isEmpty {
             // 405 Method Not Allowed
-            let allowedMethods = routes.keys.filter { $0.path == request.uri }
-                .map { $0.method.rawValue }.joined(separator: ", ")
+            let allowedMethods = matchingRoutes.map { $0.method.rawValue }.joined(separator: ", ")
 
             var headers = HTTPHeaders()
             headers.add(name: "Content-Type", value: "text/plain; charset=utf-8")
