@@ -12,6 +12,7 @@ dotfiles(
 
         # binaries
         "~/.cache/installer/bin": [
+            "//jj-pr:jj-pr",
             "//sprite-hacks/bin:git-remote-sprite",
             "//sprite-hacks/bin:jj-sprite-workspace",
         ],

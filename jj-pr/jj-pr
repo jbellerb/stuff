@@ -1,0 +1,508 @@
+#!/usr/bin/env sh
+
+if test -z "$NO_COLOR"
+then
+    BOLD=$(printf "\033[1m")
+    RED=$(printf "\033[31m")
+    GREEN=$(printf "\033[32m")
+    YELLOW=$(printf "\033[33m")
+    PURPLE=$(printf "\033[35m")
+    RESET_COLOR=$(printf "\033[39m")
+    RESET=$(printf "\033[0m")
+fi
+
+REMOTE=${REMOTE:-origin}
+
+jj_pr_error() {
+    echo "${BOLD}${RED}Error:${RESET} ${BOLD}$1${RESET}" >&2
+    return 1
+}
+
+# open output channel
+exec 3>&1
+
+# locate the Git directory
+if ! GIT_DIR=$(jj git root 2>/dev/null)
+then
+    jj_pr_error "There is no jj repo in '${PURPLE}.${RESET_COLOR}'"
+    exit
+fi
+export GIT_DIR
+
+jj_pr_rev_exists() {
+    _log=$(jj log --revisions "$1" --ignore-working-copy 2> /dev/null) && \
+        test -n "$_log"
+}
+
+jj_pr_get_trunk() {
+    if ! trunk=$(
+        gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name' \
+            2> /dev/null
+    ) || test -z "$trunk"
+    then
+        echo "Could not determine trunk bookmark"
+        return 1
+    fi
+    if ! jj_pr_rev_exists "bookmarks($trunk)"
+    then
+        echo "No trunk bookmark found (expected $trunk)"
+        return 1
+    fi
+
+    echo "$trunk"
+}
+
+jj_pr_get_bookmark() {
+    revset=$1
+    remote=$2
+
+    bookmark=$(
+        jj bookmark list --revisions "$revset" --tracked \
+            --template "if(remote == \"$remote\", name)" --ignore-working-copy \
+            2> /dev/null
+    )
+    if test -z "$bookmark"
+    then
+        echo "Revision \`$revset\` doesn't have any origin bookmarks"
+        return 1
+    fi
+
+    echo "$bookmark"
+}
+
+jj_pr_get_chain() {
+    revset=$1
+    trunk=$2
+
+    chain=$(
+        jj log --revisions "bookmarks($trunk)..$revset" --no-graph \
+            --template 'change_id.shortest() ++ "\n"' --reversed \
+            --ignore-working-copy
+    )
+    if test -z "$chain"
+    then
+        jj_pr_error "No revisions to submit (already on $trunk?)"
+        return
+    fi
+
+    echo "$chain"
+}
+
+jj_pr_get_pr_property() {
+    pr=$1
+    property=$2
+    path=${3:-.$property}
+
+    query=$(gh pr view "$pr" --json "$property" --jq "$path" 2>&1) || \
+        { echo "Failed to check status of PR #$pr: $query"; return 1; }
+    echo "$query"
+}
+
+jj_pr_get_change_body() {
+    revset=$1
+
+    body=$(
+        jj log --revisions "$revset" --template 'description' --no-graph | \
+            tail -n +2
+    ) || exit # panic
+    echo "${body#"
+"}"
+}
+
+jj_pr_merge_pr() {
+    pr=$1
+    dry_run=$2
+
+    state=$(jj_pr_get_pr_property "$pr" "state") || \
+        { echo "$state"; return 1; }
+
+    if test "$state" = "MERGED"
+    then
+        # check if PR is already merged (if we're rerunning after deferred merge)
+        echo "PR #$pr is already merged, fetching and rebasing..." >&3
+    else
+        echo "Merging PR #$pr (squash)..." >&3
+        if test -z "$dry_run"
+        then
+            merge_output=$(gh pr merge "$pr" --squash --auto) || \
+                { echo "Failed to merge PR #$pr"; return 1; }
+
+            echo "$merge_output" >&3
+
+            # check if merge was deferred
+            if echo "$merge_output" | grep -q "will be automatically merged"
+            then
+                echo "" >&3
+                echo "Run '${BOLD}${GREEN}jj pr land${RESET}' after the merge completes to rebase descendants." >&3
+                echo "DEFERRED" && return
+            fi
+        else
+            echo "Dry run requested, skipping merge" >&3
+            # dry run has to defer merge because we can't know the PR's merge
+            # commit beforehand
+            echo "DEFERRED" && return
+        fi
+    fi
+    echo "MERGED"
+}
+
+jj_pr_retarget_descendants() {
+    bookmark=$1
+    new_base=$2
+    dry_run=$3
+
+    # find all open PRs that have this bookmark as their base
+    descendant_prs=$(
+        gh pr list --base "$bookmark" --json number --jq ".[] | .number" \
+            2> /dev/null
+    )
+
+    test -n "$descendant_prs" && test -n "$dry_run" && \
+        echo "Dry run requested, would retarget descendant PRs to $new_base" >&3 && \
+        return
+
+    while IFS= read -r desc_pr
+    do
+        echo "Updating PR #$desc_pr base to $new_base..." >&3
+        gh pr edit "$desc_pr" --base "$new_base" || \
+            { echo "Failed to update base for PR #$desc_pr"; return 1; }
+    done << EOF
+$descendant_prs
+EOF
+}
+
+jj_pr_replace_change() {
+    commit_id=$1
+    merge_commit=$2
+    dry_run=$3
+
+    # rebase and push any children
+    if jj_pr_rev_exists "commit_id($commit_id)+::"
+    then
+        # collect bookmarks before rebase where they might change
+        descendants=$(
+            jj bookmark list --revisions "commit_id($commit_id)+::" --tracked \
+                --template 'name ++ "\n"' --ignore-working-copy | uniq | sort
+        )
+
+        if test -z "$dry_run"
+        then
+            rebase_status=$(
+                jj rebase --source "roots(commit_id($commit_id)+::)" \
+                    --destination "$merge_commit" 3>&1 2>&1
+            ) || { echo "${rebase_status%Error: }"; return 1; }
+        else
+            echo "Dry run requested, skipping rebase" >&3
+            return
+        fi
+
+        # push updated bookmarks for each descendant
+        errored=
+        while IFS= read -r desc_bookmark
+        do
+            jj git push --bookmark "$desc_bookmark" --ignore-working-copy \
+                --quiet > /dev/null 2>&1 || errored=true
+        done << EOF
+$descendants
+EOF
+        test -z "$errored" || \
+            { echo "Failed to push updated bookmarks"; return 1; }
+    fi
+
+    # finally, abandon the commit if it was left behind
+    if jj_pr_rev_exists "commit_id($commit_id)"
+    then
+        abandon_status=$(jj abandon "commit_id($commit_id)") || \
+            { echo "${abandon_status%Error: }"; return 1; }
+    fi
+}
+
+jj_pr_push_change() {
+    change_id=$1
+    remote=$2
+    dry_run=$3
+
+    if test -z "$dry_run"
+    then
+        jj git push --change "$change_id" --remote "$remote" > /dev/null \
+            2>&1 || { echo "Failed to push change $1"; return 1; }
+        bookmark=$(jj_pr_get_bookmark "$change_id" "$remote") || \
+            { echo "Could not determine bookmark after pushing change $change_id"; return 1; }
+
+        echo "$bookmark"
+    else
+        echo "Dry run requested, would push change $change_id" >&3
+    fi
+}
+
+jj_pr_submit_change() {
+    bookmark=$1
+    base_branch=$2
+    title=$3
+    draft=$4
+
+    test -n "$title" || title=$(
+        jj log --revisions "bookmarks($bookmark)" --no-graph \
+            --template 'description.first_line()' --ignore-working-copy 2>&1
+    )
+    body=$(jj_pr_get_change_body "bookmarks($bookmark)")
+    test -n "$draft" && draft="--draft" || draft=""
+
+    create_status=$(
+        gh pr create --head "$bookmark" --base "$base_branch" --title "$title" \
+            --body "$body" $draft
+    ) || { echo "$create_status"; return 1; }
+    pr=$(jj_pr_get_pr_property "$bookmark" number) || \
+        { echo "Failed to retrieve PR for branch $bookmark"; return 1; }
+    echo "Change $bookmark submitted as PR #$pr" >&3
+    echo "$pr"
+}
+
+jj_pr_land_usage_line() {
+    echo "${BOLD}${YELLOW}Usage:${RESET} ${BOLD}${GREEN}jj pr land${RESET} ${GREEN}[OPTIONS]${RESET}"
+}
+
+jj_pr_land_usage() {
+    cat <<EOF
+Land the PR by squash-merging and rebasing descendants
+
+$(jj_pr_land_usage_line)
+
+${BOLD}${YELLOW}Options:${RESET}
+  ${BOLD}${GREEN}-r${RESET}, ${BOLD}${GREEN}--revision${RESET} ${GREEN}<REVSET>${RESET}  The revision to land
+  ${BOLD}${GREEN}-n${RESET}, ${BOLD}${GREEN}--dry-run${RESET}              Print all actions instead of executing them
+EOF
+}
+
+jj_pr_land() {
+    revset='heads(::@ & bookmarks())' # closest bookmark
+
+    while test $# -gt 0
+    do
+        case "$1" in
+        --dry-run|-n) dry_run=true ;;
+        --revision|-r) shift; revset="$1" ;;
+        *)
+            cat >&2 << EOF
+$(jj_pr_error "Unexpected argument '${YELLOW}$1${RESET_COLOR}' found" 2>&1)
+
+$(jj_pr_land_usage_line)
+
+For more information, try '${BOLD}${GREEN}--help${RESET}'.
+EOF
+            return 2
+            ;;
+        esac
+        shift
+    done
+
+    trunk=$(jj_pr_get_trunk) || jj_pr_error "$trunk" || return
+    commit_id=$(
+        jj log --revisions "exactly($revset, 1)" --no-graph \
+            --template 'commit_id.shortest()' --ignore-working-copy 2>&1
+    ) || jj_pr_error "${commit_id%Error: }" || return
+    bookmark=$(jj_pr_get_bookmark "$revset" "$REMOTE") || \
+        jj_pr_error "$bookmark (did you run 'jj pr submit' first?)" || return
+    pr=$(jj_pr_get_pr_property "$bookmark" number) || \
+        jj_pr_error "No PR found for bookmark $bookmark" || return
+
+    # check that the PR's base is trunk
+    base_ref=$(jj_pr_get_pr_property "$pr" baseRefName) || \
+        jj_pr_error "$base_ref" || return
+    test "$base_ref" = "$trunk" || \
+        jj_pr_error "Cannot land PR #$pr: base ref is not $trunk (are all parent PRs landed?)" || return
+
+    merge_status=$(jj_pr_merge_pr "$pr" "$dry_run") || \
+        jj_pr_error "$merge_status" || return
+    test "$merge_status" = "MERGED" || return 0
+
+    echo "Fetching merged changes..." >&3
+
+    # wait for merge to complete with exponential backoff
+    retry=0
+    wait_time=1
+    while true
+    do
+        if merge_commit=$(
+            jj_pr_get_pr_property "$pr" mergeCommit '.mergeCommit.oid'
+        ) && test -n "$merge_commit"
+        then
+            if test -z "$dry_run"
+            then
+                jj git fetch --ignore-working-copy --quiet || return
+                # check that the expected commit exists
+                jj_pr_rev_exists "commit_id($merge_commit)" || continue
+            fi
+            break
+        fi
+
+        retry=$(( retry + 1 ))
+        if test "$retry" -ge 4 # max retries
+        then
+            jj_pr_error "Unable to find merge commit for PR #$pr" || return
+        else
+            sleep "$wait_time"
+            wait_time=$(( wait_time * 2 ))
+        fi
+    done
+
+    retarget_status=$(
+        jj_pr_retarget_descendants "$bookmark" "$trunk" "$dry_run"
+    ) || jj_pr_error "$retarget_status" || return
+    replace_status=$(
+        jj_pr_replace_change "$commit_id" "$merge_commit" "$dry_run"
+    ) || jj_pr_error "$replace_status" || return
+    jj git push --deleted --ignore-working-copy --quiet || return
+
+    echo "Successfully landed PR #$pr"
+}
+
+jj_pr_submit_usage_line() {
+    echo "${BOLD}${YELLOW}Usage:${RESET} ${BOLD}${GREEN}jj pr submit${RESET} ${GREEN}[OPTIONS]${RESET}"
+}
+
+jj_pr_submit_usage() {
+    cat <<EOF
+Submit a revision as a new PR
+
+$(jj_pr_submit_usage_line)
+
+${BOLD}${YELLOW}Options:${RESET}
+  ${BOLD}${GREEN}-r${RESET}, ${BOLD}${GREEN}--revision${RESET} ${GREEN}<REVSET>${RESET}  The revision to submit
+  ${BOLD}${GREEN}-d${RESET}, ${BOLD}${GREEN}--draft${RESET}                Create PRs as drafts
+  ${BOLD}${GREEN}-m${RESET}, ${BOLD}${GREEN}--message${RESET} ${GREEN}<MESSAGE>${RESET}  The PR title to use (for non-stacked PRs)
+  ${BOLD}${GREEN}-s${RESET}, ${BOLD}${GREEN}--stack${RESET}                Create stacked PRs for each change
+  ${BOLD}${GREEN}-n${RESET}, ${BOLD}${GREEN}--dry-run${RESET}              Print all actions instead of executing them
+EOF
+}
+
+jj_pr_submit() {
+    # closest pushable
+    revset='heads(::@ & mutable() & description(~exact:"") & (~empty() | merges()))'
+
+    while test $# -gt 0
+    do
+        case "$1" in
+        --draft|-d) draft=true ;;
+        --dry-run|-n) dry_run=true ;;
+        --message|-m) shift; message="$1" ;;
+        --revision|-r) shift; revset="$1" ;;
+        --stack|-s) stacked=true ;;
+        *)
+            cat >&2 << EOF
+$(jj_pr_error "Unexpected argument '${YELLOW}$1${RESET_COLOR}' found" 2>&1)
+
+$(jj_pr_submit_usage_line)
+
+For more information, try '${BOLD}${GREEN}--help${RESET}'.
+EOF
+            return 2
+            ;;
+        esac
+        shift
+    done
+
+    if test -n "$message" && test -n "$stacked"
+    then
+        jj_pr_error "Cannot set PR message for stacked PRs"
+        return 2
+    fi
+
+    trunk=$(jj_pr_get_trunk) || jj_pr_error "$trunk" || return
+    chain=$(jj_pr_get_chain "$revset" "$trunk") \
+        || jj_pr_error "$chain" || return
+
+    if test -z "$stacked"
+    then
+        change_id=$(echo "$chain" | tail -n 1) # push only the last item
+        bookmark=$(jj_pr_push_change "$change_id" "$REMOTE" "$dry_run") || \
+            jj_pr_error "$bookmark" || return
+
+        # early return if this is a dry run
+        test -n "$bookmark" || return 0
+
+        pr=$(jj_pr_submit_change "$bookmark" "$trunk" "$message" "$draft") || \
+            jj_pr_error "$pr" || return
+    else
+        base=$trunk
+        prs=
+        for change_id in $chain
+        do
+            bookmark=$(jj_pr_push_change "$change_id" "$REMOTE" "$dry_run") || \
+                jj_pr_error "$bookmark" || return
+
+            # early return if this is a dry run
+            test -n "$bookmark" || continue
+
+            if ! pr=$(jj_pr_get_pr_property "$bookmark" number)
+            then
+                pr=$(jj_pr_submit_change "$bookmark" "$base" "" "$draft") || \
+                    jj_pr_error "$pr" || return
+            fi
+
+            prs=$(printf "%s %s %s\n%s" "$change_id" "$pr" "$base" "$prs")
+            base="$bookmark"
+        done
+        test -z "$dry_run" || return 0
+
+        # skip adding footer for single PR (when $prs doesn't contain '\n')
+        test "$prs" != "${prs%%"
+"*}" || return
+
+        # update all PRs with stack footer
+        while read -r change_id pr base
+        do
+            body=$(cat << EOF
+$(jj_pr_get_change_body "change_id($change_id)")
+
+---
+This PR is part of a stack:
+$(
+    while read -r _ stack_pr _
+    do
+        test "$stack_pr" = "$pr" && prefix="- ->" || prefix="- "
+        echo "$prefix #$stack_pr"
+    done << SEOF
+$prs
+SEOF
+)
+EOF
+)
+
+            gh pr edit "$pr" --base "$base" --body "$body" > /dev/null || \
+                { echo "Failed to update PR #$pr"; return 1; }
+        done << EOF
+$prs
+EOF
+    fi
+}
+
+jj_pr_usage_line() {
+    echo "${BOLD}${YELLOW}Usage:${RESET} ${BOLD}${GREEN}jj pr${RESET} ${GREEN}<COMMAND>${RESET}"
+}
+
+jj_pr_usage() {
+    jj_pr_usage_line
+    cat <<EOF
+Commands for managing stacked pull requests with Jujutsu
+
+$(jj_pr_usage_line)
+
+${BOLD}${YELLOW}Commands:${RESET}
+  ${BOLD}${GREEN}s${RESET}, ${BOLD}${GREEN}submit${RESET}  Submit a pull request
+  ${BOLD}${GREEN}l${RESET}, ${BOLD}${GREEN}land${RESET}    Land a pull request (squash-merge and rebase descendants)
+EOF
+}
+
+case "$1" in
+submit|s) shift; jj_pr_submit "$@" ;;
+land|l) shift; jj_pr_land "$@" ;;
+-h|--help) jj_pr_usage; exit ;;
+"") jj_pr_usage; exit 2 ;;
+*)
+    jj_pr_error "unknown command: '${YELLOW}$1${RESET_COLOR}'"
+    echo "" >&2
+    jj_pr_usage_line >&2
+    exit 2
+    ;;
+esac
