@@ -1,6 +1,19 @@
 {
   "auto_update": false,
 
+  "auto_install_extensions": {
+    "alabaster": true,
+    "biome": true,
+    "elixir": true,
+    "git-firefly": true,
+    "html": true,
+    "nix": true,
+    "pyrefly": true,
+    "starlark": true,
+    "swift": true,
+    "toml": true
+  },
+
   "theme": {
     "dark": "Alabaster Dark",
     "light": "Alabaster BG",
@@ -21,19 +34,6 @@
     }
   },
 
-  "auto_install_extensions": {
-    "alabaster": true,
-    "biome": true,
-    "elixir": true,
-    "git-firefly": true,
-    "html": true,
-    "nix": true,
-    "pyrefly": true,
-    "starlark": true,
-    "swift": true,
-    "toml": true
-  },
-
   "languages": {
     "Git Commit": {
       "preferred_line_length": 72,
@@ -41,7 +41,6 @@
     },
     "Go": { "wrap_guides": [80, 100] },
     "Nix": { "language_servers": ["nixd", "!nil"] },
-    "Python": { "language_servers": ["pyrefly", "!basedpyright"] },
-    "Starlark": { "language_servers": ["buck2-lsp", "!starpls", "!tilt"] }
+    "Python": { "language_servers": ["pyrefly", "!basedpyright"] }
   }
 }
