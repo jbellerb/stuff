@@ -18,7 +18,7 @@ sweep_pipeline = Qwen25ConversionPipeline(
     batch_size=64,
     lut_embeddings=None,
     lut_ffn=(8, 8),
-    lut_lmhead=(8, 8),
+    lut_lmhead=None,
 )
 
 

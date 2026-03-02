@@ -72,19 +72,21 @@ class GGUFModel:
 
         for tensor in self.reader.tensors:
             pytorch_name = map_gguf_name_to_pytorch(tensor.name)
+            # GGUF stores shape reversed relative to PyTorch
+            pytorch_shape = tensor.shape[::-1]
 
             if tensor.tensor_type == 0:
                 np_array = np.frombuffer(tensor.data, dtype=np.float32).reshape(
-                    tensor.shape
+                    pytorch_shape
                 )
             elif tensor.tensor_type == 1:
                 np_array = (
                     np.frombuffer(tensor.data, dtype=np.float16)
-                    .reshape(tensor.shape)
+                    .reshape(pytorch_shape)
                     .astype(np.float32)
                 )
             elif tensor.tensor_type == 8:
-                np_array = self._dequantize_q8_0(bytes(tensor.data), tensor.shape)
+                np_array = self._dequantize_q8_0(bytes(tensor.data), pytorch_shape)
             else:
                 print(
                     f"warning: unsupported tensor type {tensor.tensor_type} for {tensor.name}"
@@ -92,14 +94,12 @@ class GGUFModel:
                 continue
 
             torch_tensor = torch.from_numpy(np_array.copy())
-            if (
-                "embed_tokens.weight" in pytorch_name
-                or "lm_head.weight" in pytorch_name
-            ):
-                torch_tensor = torch_tensor.transpose(0, 1).contiguous()
-            elif ".weight" in pytorch_name and len(torch_tensor.shape) == 2:
-                torch_tensor = torch_tensor.transpose(0, 1).contiguous()
-                torch_tensor = torch_tensor.unsqueeze(-1).unsqueeze(-1)
+            if ".weight" in pytorch_name and len(torch_tensor.shape) == 2:
+                if (
+                    "embed_tokens.weight" not in pytorch_name
+                    and "lm_head.weight" not in pytorch_name
+                ):
+                    torch_tensor = torch_tensor.unsqueeze(-1).unsqueeze(-1)
 
             self.state_dict[pytorch_name] = torch_tensor
 

@@ -50,7 +50,7 @@ class Qwen25ConversionPipeline:
     lut_lmhead: tuple[int, int] | None = None
 
     def convert(self, model_path: Path) -> Path:
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        (OUTPUT_DIR / self.prefix).mkdir(parents=True, exist_ok=True)
         prefix = str(OUTPUT_DIR / self.prefix)
 
         lut_bits, per_channel = self.lut_ffn if self.lut_ffn else (None, 8)
@@ -91,7 +91,6 @@ class Qwen25ConversionPipeline:
                     OUTPUT_DIR / self.prefix / "merges.txt", "w", encoding="utf-8"
                 ) as f:
                     f.write("\n".join(merges))
-            return OUTPUT_DIR
 
             state_dict = gguf.load_weights()
             assert self.vocab_size == state_dict["model.embed_tokens.weight"].shape[0]
@@ -155,8 +154,8 @@ class Qwen25ConversionPipeline:
         combined = combine_monolithic(
             lut_bits=lut_bits,
             prefix=self.prefix,
-            input_dir=str(OUTPUT_DIR),
-            output_dir=str(OUTPUT_DIR),
+            input_dir=prefix,
+            output_dir=prefix,
             dedup_weights=True,
         )
         if not combined:
@@ -165,8 +164,8 @@ class Qwen25ConversionPipeline:
         compiled = compile_part(
             part="monolithic",
             lut_bits=lut_bits,
-            target_dir=str(OUTPUT_DIR),
-            prefix=prefix,
+            prefix=self.prefix,
+            target_dir=prefix,
             force_mlprogram=False,
         )
         if not compiled:
