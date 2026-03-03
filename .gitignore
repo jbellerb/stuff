@@ -5,3 +5,9 @@ workspace/
 .buckconfig.local
 
 .build/
+
+__pycache__/
+*.pyc
+.venv
+
+converted_models/

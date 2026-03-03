@@ -1,0 +1,19 @@
+[project]
+name = "predictions-coreml-models"
+version = "0.1.0"
+description = "Conversion scripts for building predictions-coreml."
+dependencies = [
+    "anemll @ git+https://github.com/Anemll/Anemll.git@0.3.5_beta",
+    "coremltools==9.0",
+    "gguf",
+    "huggingface-hub",
+    # NumPy 2.4 is broken in coremltools 9.0, see coremltools PR #2632
+    "numpy>=2.3,<2.4",
+]
+
+[project.scripts]
+sweep = "predictions_coreml_models.sweep:main"
+
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
