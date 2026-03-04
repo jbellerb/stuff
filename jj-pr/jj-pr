@@ -270,7 +270,7 @@ $(jj_pr_land_usage_line)
 
 ${BOLD}${YELLOW}Options:${RESET}
   ${BOLD}${GREEN}-r${RESET}, ${BOLD}${GREEN}--revision${RESET} ${GREEN}<REVSET>${RESET}  The revision to land
-  ${BOLD}${GREEN}-n${RESET}, ${BOLD}${GREEN}--dry-run${RESET}              Print all actions instead of executing them
+  ${BOLD}${GREEN}-n${RESET}, ${BOLD}${GREEN}--dry-run${RESET}            Print all actions instead of executing them
 EOF
 }
 
@@ -370,10 +370,10 @@ $(jj_pr_submit_usage_line)
 
 ${BOLD}${YELLOW}Options:${RESET}
   ${BOLD}${GREEN}-r${RESET}, ${BOLD}${GREEN}--revision${RESET} ${GREEN}<REVSET>${RESET}  The revision to submit
-  ${BOLD}${GREEN}-d${RESET}, ${BOLD}${GREEN}--draft${RESET}                Create PRs as drafts
+  ${BOLD}${GREEN}-d${RESET}, ${BOLD}${GREEN}--draft${RESET}              Create PRs as drafts
   ${BOLD}${GREEN}-m${RESET}, ${BOLD}${GREEN}--message${RESET} ${GREEN}<MESSAGE>${RESET}  The PR title to use (for non-stacked PRs)
-  ${BOLD}${GREEN}-s${RESET}, ${BOLD}${GREEN}--stack${RESET}                Create stacked PRs for each change
-  ${BOLD}${GREEN}-n${RESET}, ${BOLD}${GREEN}--dry-run${RESET}              Print all actions instead of executing them
+  ${BOLD}${GREEN}-s${RESET}, ${BOLD}${GREEN}--stack${RESET}              Create stacked PRs for each change
+  ${BOLD}${GREEN}-n${RESET}, ${BOLD}${GREEN}--dry-run${RESET}            Print all actions instead of executing them
 EOF
 }
 
@@ -484,7 +484,6 @@ jj_pr_usage_line() {
 }
 
 jj_pr_usage() {
-    jj_pr_usage_line
     cat <<EOF
 Commands for managing stacked pull requests with Jujutsu
 
@@ -497,8 +496,8 @@ EOF
 }
 
 case "$1" in
-submit|s) shift; jj_pr_submit "$@" ;;
 land|l) shift; jj_pr_land "$@" ;;
+submit|s) shift; jj_pr_submit "$@" ;;
 --help|-h) jj_pr_usage; exit ;;
 "") jj_pr_usage; exit 2 ;;
 *)
