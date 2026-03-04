@@ -51,6 +51,10 @@ jj rebase --destination "$CLOSEST"
 jj l
 """]
 
+pr = ["util", "exec", "--", "jj-pr"]
+
+sprite-workspace = ["util", "exec", "--", "jj-sprite-workspace"]
+
 tug = ["util", "exec", "--", "sh", "-c", """
 test $# -eq 0 && set -- --from "closest_bookmark(@)"
 jj bookmark move --to "closest_pushable(@)" "$@"
