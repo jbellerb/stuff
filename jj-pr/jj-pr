@@ -282,6 +282,7 @@ jj_pr_land() {
         case "$1" in
         --dry-run|-n) dry_run=true ;;
         --revision|-r) shift; revset="$1" ;;
+        --help|-h) jj_pr_land_usage; return ;;
         *)
             cat >&2 << EOF
 $(jj_pr_error "Unexpected argument '${YELLOW}$1${RESET_COLOR}' found" 2>&1)
@@ -388,6 +389,7 @@ jj_pr_submit() {
         --message|-m) shift; message="$1" ;;
         --revision|-r) shift; revset="$1" ;;
         --stack|-s) stacked=true ;;
+        --help|-h) jj_pr_submit_usage; return ;;
         *)
             cat >&2 << EOF
 $(jj_pr_error "Unexpected argument '${YELLOW}$1${RESET_COLOR}' found" 2>&1)
@@ -497,7 +499,7 @@ EOF
 case "$1" in
 submit|s) shift; jj_pr_submit "$@" ;;
 land|l) shift; jj_pr_land "$@" ;;
--h|--help) jj_pr_usage; exit ;;
+--help|-h) jj_pr_usage; exit ;;
 "") jj_pr_usage; exit 2 ;;
 *)
     jj_pr_error "unknown command: '${YELLOW}$1${RESET_COLOR}'"
