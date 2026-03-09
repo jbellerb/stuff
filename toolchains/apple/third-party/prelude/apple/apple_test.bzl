@@ -240,6 +240,7 @@ def _get_test_info(ctx: AnalysisContext, xctest_bundle: Artifact, test_host_app_
     return ExternalRunnerTestInfo(
         type = "xctest",
         command = [toolchain.xctest, xctest_bundle],
+        env = ctx.attrs.env or {},
         labels = ctx.attrs.labels,
         use_project_relative_paths = True,
         run_from_project_root = True,

@@ -23,7 +23,7 @@ let readmeVocab: [[UInt8]] = [
 // Expected values were derived by tracing the BPE algorithm and the
 // is_valid_token_pair function from rust-gems/bpe/byte_pair_encoding.rs.
 
-let testCases: [([UInt8], [Int])] = [
+let bpeTestCases: [([UInt8], [Int])] = [
     ([0x61], [0]),  // "a" -> a
     ([0x61, 0x62], [3]),  // "ab" -> ab
     ([0x61, 0x62, 0x61, 0x63, 0x62, 0x62], [3, 8]),  // "abacbb" -> ab + acbb
@@ -129,7 +129,7 @@ struct BPEEncodingTests {
         #expect(bpe.encode(input) != [3, 0, 7])  // not the greedy [ab, a, cbb]
     }
 
-    @Test("All expected encodings match", arguments: testCases)
+    @Test("All expected encodings match", arguments: bpeTestCases)
     func encodesExpectedCases(_ test: ([UInt8], [Int])) { #expect(bpe.encode(test.0) == test.1) }
 }
 
@@ -173,7 +173,7 @@ struct BPETokenPairTests {
         #expect(bpe.isValidTokenPair(1, 0))  // b + a doesn't merge
     }
 
-    @Test("Adjacent pairs in encodings are stable", arguments: testCases)
+    @Test("Adjacent pairs in encodings are stable", arguments: bpeTestCases)
     func allEncodingsAreStable(_ test: ([UInt8], [Int])) {
         let tokens = bpe.encode(test.0)
         for i in 0..<tokens.count - 1 {
@@ -195,7 +195,7 @@ struct BPECountTests {
     @Test("Count of empty input is zero")
     func countEmptyInput() { #expect(bpe.count([]) == 0) }
 
-    @Test("All expected encoding lengths match their counts", arguments: testCases)
+    @Test("All expected encoding lengths match their counts", arguments: bpeTestCases)
     func countMatchesEncodeLength(_ test: ([UInt8], [Int])) {
         #expect(bpe.count(test.0) == test.1.count)
     }
@@ -215,10 +215,10 @@ struct BPEDecodeTests {
         }
     }
 
-    @Test("All expected decodings match", arguments: testCases)
+    @Test("All expected decodings match", arguments: bpeTestCases)
     func decodesExpectedCases(_ test: ([UInt8], [Int])) { #expect(bpe.decode(test.1) == test.0) }
 
-    @Test("Encode then decode is identity for all test cases", arguments: testCases)
+    @Test("Encode then decode is identity for all test cases", arguments: bpeTestCases)
     func encodeDecodeRoundtrip(_ test: ([UInt8], [Int])) {
         #expect(bpe.decode(bpe.encode(test.0)) == test.0)
     }

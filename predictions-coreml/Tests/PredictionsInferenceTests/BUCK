@@ -1,5 +1,17 @@
 load("@toolchains//apple:rules.bzl", "apple_info_plist", "apple_test")
 
+http_file(
+    name = "qwen2.5-vocab.json",
+    urls = ["https://huggingface.co/Qwen/Qwen2.5-0.5B/raw/main/vocab.json"],
+    sha256 = "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+)
+
+http_file(
+    name = "qwen2.5-merges.txt",
+    urls = ["https://huggingface.co/Qwen/Qwen2.5-0.5B/raw/main/merges.txt"],
+    sha256 = "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+)
+
 apple_info_plist(
     name = "Info.plist",
     src = "//predictions-coreml/Tests:Info.plist",
@@ -19,6 +31,10 @@ apple_test(
     frameworks = [
         "$SDKROOT/System/Library/Frameworks/Foundation.framework",
     ],
+    env = {
+        "QWEN_VOCAB_JSON": "$(location :qwen2.5-vocab.json)",
+        "QWEN_MERGES_TXT": "$(location :qwen2.5-merges.txt)",
+    },
     swift_testing = True,
     target_sdk_version = "26.0",
     visibility = ["PUBLIC"],

@@ -203,7 +203,5 @@ public struct BPEDictionary {
     }
 
     /// Returns the longest proper prefix token of tokenID, or nil if none.
-    private func nextPrefixOf(_ tokenID: Int) -> Int? {
-        ac.nextPrefixPattern(after: tokenID)
-    }
+    private func nextPrefixOf(_ tokenID: Int) -> Int? { ac.nextPrefixPattern(after: tokenID) }
 }
