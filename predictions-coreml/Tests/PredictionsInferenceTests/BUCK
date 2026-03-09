@@ -1,0 +1,25 @@
+load("@toolchains//apple:rules.bzl", "apple_info_plist", "apple_test")
+
+apple_info_plist(
+    name = "Info.plist",
+    src = "//predictions-coreml/Tests:Info.plist",
+    mutations = [
+        ("set", {"keypath": "CFBundleIdentifier", "value": "zone.jae.stuff.predictions.PredictionsInferenceTests"}),
+        ("set", {"keypath": "CFBundleName", "value": "PredictionsInferenceTests"}),
+    ],
+)
+
+apple_test(
+    name = "PredictionsInferenceTests",
+    srcs = glob(["**/*.swift"]),
+    info_plist = ":Info.plist",
+    deps = [
+        "//predictions-coreml/Sources/PredictionsInference:PredictionsInference",
+    ],
+    frameworks = [
+        "$SDKROOT/System/Library/Frameworks/Foundation.framework",
+    ],
+    swift_testing = True,
+    target_sdk_version = "26.0",
+    visibility = ["PUBLIC"],
+)

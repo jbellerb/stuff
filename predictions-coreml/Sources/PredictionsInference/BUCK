@@ -1,0 +1,12 @@
+load("@toolchains//apple:rules.bzl", "apple_library")
+
+apple_library(
+    name = "PredictionsInference",
+    srcs = glob(["**/*.swift"]),
+    frameworks = [
+        "$SDKROOT/System/Library/Frameworks/Foundation.framework",
+    ],
+    target_sdk_version = "15.0",
+    _swift_enable_testing = True,
+    visibility = ["PUBLIC"],
+)
