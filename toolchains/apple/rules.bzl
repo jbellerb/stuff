@@ -24,6 +24,14 @@ apple_common_attrs = {
     ),
 }
 
+_apple_info_plist = rule(
+    impl = apple_rules.apple_info_plist.impl,
+    attrs = (
+        apple_rules.apple_info_plist.attrs |
+        apple_common_attrs
+    ),
+)
+
 _apple_binary = rule(
     impl = apple_rules.apple_binary.impl,
     attrs = (
@@ -70,6 +78,9 @@ _apple_test = rule(
     uses_plugins = apple_rules.apple_library.uses_plugins,
 )
 
+def apple_info_plist(**kwargs):
+    _apple_info_plist(**kwargs)
+
 def apple_binary(**kwargs):
     kwargs = _fix_platforms(**kwargs)
     _apple_binary(**kwargs)
@@ -80,4 +91,15 @@ def apple_library(**kwargs):
 
 def apple_test(**kwargs):
     kwargs = _fix_platforms(**kwargs)
+
+    if kwargs.get("swift_testing"):
+        swift_compat_lib_path = read_root_config(
+            "apple",
+            "swift_compat_lib_path",
+            "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx",
+        )
+        kwargs["linker_flags"] = [
+            "-Wl,-rpath," + swift_compat_lib_path,
+        ] + kwargs.get("linker_flags", [])
+
     _apple_test(**kwargs)

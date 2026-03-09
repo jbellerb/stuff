@@ -18,13 +18,19 @@ PLATFORM_PATH = read_root_config(
     "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform",
 )
 
+XCTOOLCHAIN_PATH = read_root_config(
+    "apple",
+    "xctoolchain_path",
+    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain",
+)
+
 # path to additional Swift stdlib libraries not found in the default search
 # path. Needed for versioned libs like libswiftCompatibilitySpan.dylib which
 # live under usr/lib/swift-<version>/ rather than usr/lib/swift/
 SWIFT_COMPAT_LIB_PATH = read_root_config(
     "apple",
     "swift_compat_lib_path",
-    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx",
+    XCTOOLCHAIN_PATH + "/usr/lib/swift-6.2/macosx",
 )
 
 no_binary(
@@ -63,6 +69,12 @@ apple_tools(
 system_swift_toolchain(
     name = "swift",
     sdk_path = SDK_PATH,
+    swiftc_flags = [
+        "-in-process-plugin-server-path",
+        XCTOOLCHAIN_PATH + "/usr/lib/swift/host/libSwiftInProcPluginServer.dylib",
+        "-plugin-path",
+        XCTOOLCHAIN_PATH + "/usr/lib/swift/host/plugins/testing",
+    ],
     swift_stdlib_tool_flags = ["--source-libraries", SWIFT_COMPAT_LIB_PATH],
     visibility = ["toolchains//..."],
 )

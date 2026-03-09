@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>zone.jae.stuff.predictions.PredictionsServerTests</string>
+    <string>zone.jae.stuff.predictions.PredictionsTests</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>PredictionsServerTests</string>
+    <string>PredictionsTests</string>
     <key>CFBundlePackageType</key>
     <string>BNDL</string>
     <key>CFBundleVersion</key>
