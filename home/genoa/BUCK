@@ -4,6 +4,7 @@ dotfiles(
     name = "home",
     files = {
         "~/.config/direnv": glob([".config/direnv/*.toml"]),
+        "~/.config/fish/completions": glob([".config/fish/completions/*.fish"]),
         "~/.config/fish/functions": glob([".config/fish/functions/*.fish"]),
         "~/.config/ghostty": [".config/ghostty/config"],
         "~/.config/helix": glob([".config/helix/*.toml"]),
