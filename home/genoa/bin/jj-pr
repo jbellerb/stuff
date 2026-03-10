@@ -124,10 +124,15 @@ jj_pr_merge_pr() {
         echo "Merging PR #$pr (squash)..." >&3
         if test -z "$dry_run"
         then
-            merge_output=$(gh pr merge "$pr" --squash --auto) || \
+            auto_merge_allowed=$(
+                gh repo view --json autoMergeAllowed --jq '.autoMergeAllowed' \
+                    2>/dev/null
+            )
+            test "$auto_merge_allowed" = "true" && auto_flag="--auto" || auto_flag=""
+            merge_output=$(gh pr merge "$pr" --squash $auto_flag) || \
                 { echo "Failed to merge PR #$pr"; return 1; }
 
-            echo "$merge_output" >&3
+            test -n "$merge_output" && echo "$merge_output" >&3
 
             # check if merge was deferred
             if echo "$merge_output" | grep -q "will be automatically merged"
