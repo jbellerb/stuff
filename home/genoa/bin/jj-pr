@@ -162,18 +162,21 @@ jj_pr_retarget_descendants() {
             2> /dev/null
     )
 
-    test -n "$descendant_prs" && test -n "$dry_run" && \
-        echo "Dry run requested, would retarget descendant PRs to $new_base" >&3 && \
-        return
+    if test -n "$descendant_prs"
+    then
+        test -n "$dry_run" && \
+            echo "Dry run requested, would retarget descendant PRs to $new_base" >&3 && \
+            return
 
-    while IFS= read -r desc_pr
-    do
-        echo "Updating PR #$desc_pr base to $new_base..." >&3
-        gh pr edit "$desc_pr" --base "$new_base" || \
-            { echo "Failed to update base for PR #$desc_pr"; return 1; }
-    done << EOF
+        while IFS= read -r desc_pr
+        do
+            echo "Updating PR #$desc_pr base to $new_base..." >&3
+            gh pr edit "$desc_pr" --base "$new_base" || \
+                { echo "Failed to update base for PR #$desc_pr"; return 1; }
+        done << EOF
 $descendant_prs
 EOF
+    fi
 }
 
 jj_pr_replace_change() {
