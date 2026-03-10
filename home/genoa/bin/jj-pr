@@ -263,6 +263,7 @@ jj_pr_submit_change() {
     pr=$(jj_pr_get_pr_property "$bookmark" number) || \
         { echo "Failed to retrieve PR for branch $bookmark"; return 1; }
     echo "Change $bookmark submitted as PR #$pr" >&3
+    echo "View at: $create_status" >&3
     echo "$pr"
 }
 
