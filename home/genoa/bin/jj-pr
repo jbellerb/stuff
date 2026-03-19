@@ -449,6 +449,11 @@ EOF
             then
                 pr=$(jj_pr_submit_change "$bookmark" "$base" "" "$draft") || \
                     jj_pr_error "$pr" || return
+            else
+                # retarget the existing PR to avoid GitHub auto-closing it if
+                # its previous base is moved after it
+                gh pr edit "$pr" --base "$base" > /dev/null || \
+                    { echo "Failed to retarget PR #$pr"; return 1; }
             fi
 
             prs=$(printf "%s %s %s\n%s" "$change_id" "$pr" "$base" "$prs")
@@ -480,7 +485,7 @@ SEOF
 EOF
 )
 
-            gh pr edit "$pr" --base "$base" --body "$body" > /dev/null || \
+            gh pr edit "$pr" --body "$body" > /dev/null || \
                 { echo "Failed to update PR #$pr"; return 1; }
         done << EOF
 $prs
