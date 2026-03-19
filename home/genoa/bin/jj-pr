@@ -471,7 +471,7 @@ This PR is part of a stack:
 $(
     while read -r _ stack_pr _
     do
-        test "$stack_pr" = "$pr" && prefix="- ->" || prefix="- "
+        test "$stack_pr" = "$pr" && prefix="- ->" || prefix="-"
         echo "$prefix #$stack_pr"
     done << SEOF
 $prs
