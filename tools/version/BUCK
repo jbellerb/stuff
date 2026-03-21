@@ -1,11 +1,13 @@
+load("//:rules.bzl", "executable_file")
+
 genrule(
     name = "version",
     out = "VERSION",
-    cmd = "$(exe :version) > $OUT",
+    cmd = "$(exe :generate_version) > $OUT",
     visibility = ["PUBLIC"],
 )
 
-sh_binary(
-    name = "version",
-    main = "generate_version.sh",
+executable_file(
+    name = "generate_version",
+    src = "generate_version.sh",
 )
