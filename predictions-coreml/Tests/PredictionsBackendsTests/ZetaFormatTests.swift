@@ -81,9 +81,9 @@ struct ExcerptParserTests {
         let excerpt = try Excerpt.parse(input)
         #expect(excerpt.path == "Sources/test.swift")
         #expect(excerpt.beforeContext == "")
-        #expect(excerpt.editableRegion == "fn foo() {}\n")
+        #expect(excerpt.editableContent == "fn foo() {}\n")
         #expect(excerpt.afterContext == "")
-        #expect(excerpt.cursorOffset == nil)
+        #expect(excerpt.cursor == (line: 0, offset: 0))
     }
 
     @Test
@@ -103,9 +103,9 @@ struct ExcerptParserTests {
         let excerpt = try Excerpt.parse(input)
         #expect(excerpt.path == "Sources/test.swift")
         #expect(excerpt.beforeContext == "func before() {}\n")
-        #expect(excerpt.editableRegion == "func foo() {\n    let x = 1\n\n")
+        #expect(excerpt.editableContent == "func foo() {\n    let x = 1\n\n")
         #expect(excerpt.afterContext == "}\nfunc after() {}")
-        #expect(excerpt.cursorOffset == nil)
+        #expect(excerpt.cursor == (line: 1, offset: 0))
     }
 
     @Test
@@ -117,7 +117,7 @@ struct ExcerptParserTests {
         let a = try Excerpt.parse(withMarker)
         let b = try Excerpt.parse(withoutMarker)
         #expect(a.beforeContext == b.beforeContext)
-        #expect(a.editableRegion == b.editableRegion)
+        #expect(a.editableContent == b.editableContent)
     }
 
     @Test
@@ -130,9 +130,9 @@ struct ExcerptParserTests {
             ```
             """
         let excerpt = try Excerpt.parse(input)
-        #expect(excerpt.editableRegion == "hello world\n")
+        #expect(excerpt.editableContent == "hello world\n")
         // "hello " is 6 UTF-8 bytes
-        #expect(excerpt.cursorOffset == 6)
+        #expect(excerpt.cursor == (line: 0, offset: 6))
     }
 
     @Test
@@ -145,9 +145,9 @@ struct ExcerptParserTests {
             ```
             """
         let excerpt = try Excerpt.parse(input)
-        #expect(excerpt.editableRegion == "café world\n")
+        #expect(excerpt.editableContent == "café world\n")
         // "café " is 6 bytes in UTF-8
-        #expect(excerpt.cursorOffset == 6)
+        #expect(excerpt.cursor == (line: 0, offset: 6))
     }
 
     @Test
@@ -155,7 +155,7 @@ struct ExcerptParserTests {
         let input =
             "```test.swift\n<|editable_region_start|>\nfoo\n<|editable_region_end|>bar\nbaz\n```"
         let excerpt = try Excerpt.parse(input)
-        #expect(excerpt.editableRegion == "foo\n")
+        #expect(excerpt.editableContent == "foo\n")
         #expect(excerpt.afterContext == "bar\nbaz")
     }
 

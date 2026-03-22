@@ -3,11 +3,39 @@ import Foundation
 /// The excerpt surrounding the user's cursor.
 public struct Excerpt {
     public let path: String
-    public let beforeContext: String
-    public let editableRegion: String
-    public let afterContext: String
-    /// Byte offset of <|user_cursor_is_here|> within editableRegion.
-    public let cursorOffset: Int?
+    public let content: String
+    public let lines: [Substring]
+    /// Range of line indices within `lines` corresponding to the editable region.
+    public let editableRegion: Range<Int>
+    /// Line and byte offset of <|user_cursor_is_here|>.
+    public let cursor: (line: Int, offset: Int)
+
+    /// Return a contiguous slice of content spanning the given range of line
+    /// indices, including each line's trailing newline.
+    public subscript(lines range: Range<Int>) -> Substring {
+        guard !range.isEmpty else { return content[content.startIndex..<content.startIndex] }
+        let start = lines[range.lowerBound].startIndex
+        let end =
+            range.upperBound < lines.count ? lines[range.upperBound].startIndex : content.endIndex
+        return content[start..<end]
+    }
+
+    public subscript(lines range: PartialRangeUpTo<Int>) -> Substring {
+        self[lines: 0..<range.upperBound]
+    }
+
+    public subscript(lines range: PartialRangeFrom<Int>) -> Substring {
+        self[lines: range.lowerBound..<lines.count]
+    }
+
+    /// Text of the lines before the editable region.
+    public var beforeContext: Substring { self[lines: ..<editableRegion.lowerBound] }
+
+    /// Text of the editable region lines.
+    public var editableContent: Substring { self[lines: editableRegion] }
+
+    /// Text of the lines after the editable region.
+    public var afterContext: Substring { self[lines: editableRegion.upperBound...] }
 
     public init(
         path: String,
@@ -17,10 +45,42 @@ public struct Excerpt {
         cursorOffset: Int?
     ) {
         self.path = path
-        self.beforeContext = beforeContext
-        self.editableRegion = editableRegion
-        self.afterContext = afterContext
-        self.cursorOffset = cursorOffset
+
+        let content = beforeContext + editableRegion + afterContext
+        self.content = content
+
+        // build lines in one pass over content, excluding trailing newlines
+        var lines: [Substring] = []
+        var lineStart = content.startIndex
+        for idx in content.indices where content[idx] == "\n" {
+            lines.append(content[lineStart..<idx])
+            lineStart = content.index(after: idx)
+        }
+        if lineStart < content.endIndex { lines.append(content[lineStart...]) }
+        self.lines = lines
+
+        // editable region spans the lines contributed by the editableRegion
+        // string. This assumes editableRegion always ends with "\n".
+        let beforeLineCount = beforeContext.filter { $0 == "\n" }.count
+        let editableLineCount = editableRegion.filter { $0 == "\n" }.count
+        self.editableRegion = beforeLineCount..<(beforeLineCount + editableLineCount)
+
+        if let offset = cursorOffset {
+            var newlinesBefore = 0
+            var lineStartByte = 0
+            var bytePos = 0
+            for byte in editableRegion.utf8 {
+                if bytePos >= offset { break }
+                if byte == 10 {
+                    newlinesBefore += 1
+                    lineStartByte = bytePos + 1
+                }
+                bytePos += 1
+            }
+            self.cursor = (line: beforeLineCount + newlinesBefore, offset: offset - lineStartByte)
+        } else {
+            self.cursor = (line: beforeLineCount, offset: 0)
+        }
     }
 
     /// Parse the raw excerpt string from the Zeta prompt into a structured
@@ -50,9 +110,7 @@ public struct Excerpt {
         rest = String(rest[rest.index(after: firstNewline)...])
 
         // strip closing code fence
-        if rest.hasSuffix("\n```") {
-            rest = String(rest.dropLast(4))
-        }
+        if rest.hasSuffix("\n```") { rest = String(rest.dropLast(4)) }
 
         // strip optional <|start_of_file|> marker
         let startOfFileMarker = "<|start_of_file|>\n"
@@ -75,7 +133,8 @@ public struct Excerpt {
             throw ZetaParseError.missingEditableRegionEnd
         }
         let rawEditable = String(rest[..<endRange.lowerBound])
-        let afterContext = String(rest[endRange.upperBound...])
+        var afterContext = String(rest[endRange.upperBound...])
+        if afterContext.hasPrefix("\n") { afterContext = String(afterContext.dropFirst()) }
 
         // strip <|user_cursor_is_here|> from editable content
         let cursorMarker = "<|user_cursor_is_here|>"
