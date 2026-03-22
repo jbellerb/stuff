@@ -29,7 +29,8 @@ public final class PredictionsServer: Sendable {
         let group = eventLoopGroup ?? MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         let shouldShutdownGroup = (eventLoopGroup == nil)
 
-        let router = buildRouter(logger: logger, predictionsBackend: predictionsBackend)
+        let queue = PredictionQueue(predictionsBackend)
+        let router = buildRouter(logger: logger, predictionsBackend: queue)
         let bootstrap = ServerBootstrap(group: group)
             .serverChannelOption(ChannelOptions.backlog, value: 256)
             .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
