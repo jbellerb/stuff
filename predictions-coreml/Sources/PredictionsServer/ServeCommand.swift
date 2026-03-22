@@ -85,18 +85,10 @@ func createBackend(name: String) throws -> any PredictionsBackend {
 
 enum BackendError: Error, CustomStringConvertible {
     case unknownBackend(name: String)
-    case modelNotFound(model: String, expectedPath: String)
 
     var description: String {
         switch self {
         case .unknownBackend(let name): return "Unknown backend '\(name)'. Available backends: mock"
-        case .modelNotFound(let model, let path):
-            return """
-                Model '\(model)' not found in cache.
-                Expected path: \(path)
-
-                To use this model, convert it to CoreML format and place it in the cache directory.
-                """
         }
     }
 }
