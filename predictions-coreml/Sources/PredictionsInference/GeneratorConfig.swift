@@ -1,11 +1,14 @@
 /// Configuration for the Generator's generation loop.
 public struct GeneratorConfig {
     public let contextLength: Int
+    public let stateLength: Int
     public let prefillBatchSize: Int
     public let stopTokens: Set<Int32>
 
-    public init(contextLength: Int, prefillBatchSize: Int, stopTokens: Set<Int32>) {
+    public init(contextLength: Int, stateLength: Int, prefillBatchSize: Int, stopTokens: Set<Int32>)
+    {
         self.contextLength = contextLength
+        self.stateLength = stateLength
         self.prefillBatchSize = prefillBatchSize
         self.stopTokens = stopTokens
     }

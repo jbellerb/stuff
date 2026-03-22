@@ -14,6 +14,16 @@
           "**/.buckconfig"
         ]
       }
+    },
+    "pyrefly": {
+      "settings": {
+        "python": {
+          "pythonPath": "predictions-coreml/models/.venv/bin/python"
+        },
+        "pyrefly": {
+          "python_interpreter": "predictions-coreml/models/.venv/bin/python"
+        }
+      }
     }
   }
 }

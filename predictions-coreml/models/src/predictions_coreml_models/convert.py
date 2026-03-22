@@ -2,11 +2,12 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from anemll.ane_converter.qwen2_5_converter import Qwen25Converter
+import coremltools as ct
+import coremltools.optimize as cto
 from anemll.models import qwen2_5_model
-from anemll.utils.combine_models import combine_monolithic
-from anemll.utils.compile_models import compile_part
 from huggingface_hub import snapshot_download
+
+from predictions_coreml_models.models import qwen2
 
 OUTPUT_DIR = Path("converted_models")
 
@@ -29,6 +30,52 @@ def download_model(
     return model_path
 
 
+def linear_quantize_weights(
+    mlmodel: ct.models.MLModel,
+    overrides: dict[str, tuple[int, int]] | None = None,
+) -> ct.models.MLModel:
+    # int8 per_block with block_size=32 matches Q8_0 block quantization,
+    # minimizing loss when the source weights were Q8_0
+    global_config = cto.coreml.OpLinearQuantizerConfig(
+        dtype="int8",
+        granularity="per_block",
+        block_size=32,
+    )
+
+    # op_name_configs requires exact MIL op names, so walk the program to find
+    # ops whose names contain each override pattern.
+    op_name_configs: dict[str, cto.coreml.OpLinearQuantizerConfig] = {}
+    if overrides:
+        prog = mlmodel._mil_program
+        if prog:
+            for op in prog.functions["main"].operations:
+                op_name = op.name or ""
+                for pattern, (dtype, block_size) in overrides.items():
+                    if pattern in op_name:
+                        op_name_configs[op_name] = cto.coreml.OpLinearQuantizerConfig(
+                            dtype=dtype,
+                            granularity="per_block",
+                            block_size=block_size,
+                        )
+                        break
+
+    op_config = cto.coreml.OptimizationConfig(
+        global_config=global_config,
+        op_name_configs=op_name_configs if op_name_configs else None,
+    )
+    return cto.coreml.linear_quantize_weights(mlmodel, op_config)
+
+
+def combine_models(
+    output_path: Path, models: dict[str, Path], default_model: str
+) -> None:
+    desc = ct.utils.MultiFunctionDescriptor()
+    for name, path in models.items():
+        desc.add_function(str(path), "main", name)
+    desc.default_function_name = default_model
+    ct.utils.save_multifunction(desc, str(output_path))
+
+
 @dataclass
 class Qwen25ConversionPipeline:
     prefix: str
@@ -45,21 +92,14 @@ class Qwen25ConversionPipeline:
     context_length: int
     batch_size: int
 
-    lut_embeddings: tuple[int, int] | None = None
-    lut_ffn: tuple[int, int] | None = None
-    lut_lmhead: tuple[int, int] | None = None
+    quantize: bool = False
+    quantize_overrides: dict[str, tuple[str, int]] | None = (
+        None  # pattern -> (dtype, block_size)
+    )
 
     def convert(self, model_path: Path) -> Path:
         (OUTPUT_DIR / self.prefix).mkdir(parents=True, exist_ok=True)
         prefix = str(OUTPUT_DIR / self.prefix)
-
-        lut_bits, per_channel = self.lut_ffn if self.lut_ffn else (None, 8)
-        lut_embeddings_bits, lut_embeddings_per_channel = (
-            self.lut_embeddings if self.lut_embeddings else (None, 8)
-        )
-        lut_lmhead_bits, lut_lmhead_per_channel = (
-            self.lut_lmhead if self.lut_lmhead else (None, 8)
-        )
 
         config = qwen2_5_model.Qwen25Config(
             architectures=["Qwen2ForCausalLM"],
@@ -127,38 +167,34 @@ class Qwen25ConversionPipeline:
         for param in model.parameters():
             param.requires_grad = False
 
-        converter = Qwen25Converter(
-            model=model,
-            context_length=self.context_length,
-            batch_size=self.batch_size,
-            lut_bits=lut_bits,
-            per_channel=per_channel,
-            num_chunks=1,
-            argmax_in_model=False,
-            lut_embeddings_bits=lut_embeddings_bits,
-            lut_embeddings_per_channel=lut_embeddings_per_channel,
-            lut_lmhead_bits=lut_lmhead_bits,
-            lut_lmhead_per_channel=lut_lmhead_per_channel,
+        suffix = "_int8" if self.quantize else ""
+        infer_path = Path(f"{prefix}_infer{suffix}.mlpackage")
+        prefill_path = Path(f"{prefix}_prefill{suffix}.mlpackage")
+        combined_path = Path(f"{prefix}_full{suffix}.mlpackage")
+
+        print("Converting infer model...")
+        mlmodel_infer = qwen2.convert_infer(model, self.context_length)
+        if self.quantize:
+            mlmodel_infer = linear_quantize_weights(
+                mlmodel_infer, self.quantize_overrides
+            )
+        mlmodel_infer.save(str(infer_path))
+
+        print("Converting prefill model...")
+        mlmodel_prefill = qwen2.convert_prefill(
+            model, self.context_length, self.batch_size
+        )
+        if self.quantize:
+            mlmodel_prefill = linear_quantize_weights(
+                mlmodel_prefill, self.quantize_overrides
+            )
+        mlmodel_prefill.save(str(prefill_path))
+
+        print("Combining models...")
+        combine_models(
+            combined_path,
+            {"infer": infer_path, "prefill": prefill_path},
+            default_model="infer",
         )
 
-        lut_suffix = f"_lut{lut_bits}" if lut_bits else ""
-        mlmodel = converter.convert(part="monolithic")
-        mlmodel = mlmodel[0] if isinstance(mlmodel, list) else mlmodel
-        mlmodel.save(f"{prefix}_monolithic{lut_suffix}.mlpackage")
-        mlmodel_prefill = converter.convert(part="monolithic_prefill")
-        mlmodel_prefill = (
-            mlmodel_prefill[0] if isinstance(mlmodel_prefill, list) else mlmodel_prefill
-        )
-        mlmodel_prefill.save(f"{prefix}_monolithic_prefill{lut_suffix}.mlpackage")
-
-        combined = combine_monolithic(
-            lut_bits=lut_bits,
-            prefix=self.prefix,
-            input_dir=prefix,
-            output_dir=prefix,
-            dedup_weights=True,
-        )
-        if not combined:
-            raise Exception("failed to combine model packages")
-
-        return OUTPUT_DIR / f"{self.prefix}_monolithic_full{lut_suffix}.mlpackage"
+        return combined_path

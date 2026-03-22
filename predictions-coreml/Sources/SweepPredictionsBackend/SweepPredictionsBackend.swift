@@ -32,6 +32,7 @@ public class SweepPredictionsBackend: PredictionsBackend {
 
         let generatorConfig = GeneratorConfig(
             contextLength: 8192,
+            stateLength: 8192,
             prefillBatchSize: 64,
             stopTokens: [SweepTokenizer.endOfText, SweepTokenizer.imEnd, SweepTokenizer.fileSep]
         )
@@ -43,7 +44,8 @@ public class SweepPredictionsBackend: PredictionsBackend {
             inferModel: inferModel,
             tokenizer: tokenizer,
             config: generatorConfig,
-            outputConfig: outputConfig
+            outputConfig: outputConfig,
+            logger: logger
         )
     }
 

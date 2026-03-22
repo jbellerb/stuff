@@ -16,9 +16,7 @@ sweep_pipeline = Qwen25ConversionPipeline(
     vocab_size=43839,
     context_length=8192,
     batch_size=64,
-    lut_embeddings=None,
-    lut_ffn=(8, 8),
-    lut_lmhead=None,
+    quantize=True,
 )
 
 
