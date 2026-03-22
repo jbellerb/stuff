@@ -161,14 +161,4 @@ class Qwen25ConversionPipeline:
         if not combined:
             raise Exception("failed to combine model packages")
 
-        compiled = compile_part(
-            part="monolithic",
-            lut_bits=lut_bits,
-            prefix=self.prefix,
-            target_dir=prefix,
-            force_mlprogram=False,
-        )
-        if not compiled:
-            raise Exception("failed to compile monolithic model package")
-
-        return OUTPUT_DIR / f"{self.prefix}_monolithic_full{lut_suffix}.mlmodelc"
+        return OUTPUT_DIR / f"{self.prefix}_monolithic_full{lut_suffix}.mlpackage"

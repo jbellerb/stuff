@@ -14,8 +14,8 @@ public class SweepPredictionsBackend: PredictionsBackend {
     private let logger: Logger
     private let generator: Generator
 
-    public init(_ cache: ModelCache, logger: Logger) throws {
-        let modelURL = cache.modelPath(for: modelName)
+    public init(_ cache: ModelCache, logger: Logger) async throws {
+        let modelURL = try await cache.compiledModelURL(for: modelName)
         let tokDir = cache.tokenizerDirectory(for: modelName)
 
         let inferConfig = MLModelConfiguration()

@@ -1,8 +1,11 @@
+import CoreML
 import Foundation
+import Logging
 
 /// Manages the cache directory for CoreML models.
 public struct ModelCache: Sendable {
     public let directory: URL
+    private let logger: Logger
 
     public static let environmentKey = "PREDICTIONS_CACHE_DIR"
 
@@ -16,7 +19,7 @@ public struct ModelCache: Sendable {
 
     /// Creates a model cache, using the specified directory or falling back to
     /// defaults.
-    public init(directory: URL? = nil) {
+    public init(directory: URL? = nil, logger: Logger) {
         if let directory = directory {
             self.directory = directory
         } else if let envPath = ProcessInfo.processInfo.environment[Self.environmentKey] {
@@ -24,23 +27,40 @@ public struct ModelCache: Sendable {
         } else {
             self.directory = Self.defaultDirectory
         }
+        self.logger = logger
     }
 
-    /// Returns the path for a model package with the given name.
-    public func modelPath(for modelName: String) -> URL {
-        directory.appendingPathComponent("\(modelName).mlmodelc", isDirectory: true)
+    /// Returns the compiled model URL for a model, compiling from an mlpackage
+    /// if necessary. The compiled result is saved next to the source package so
+    /// subsequent calls skip recompilation.
+    public func compiledModelURL(for modelName: String) async throws -> URL {
+        let compiledURL = directory.appendingPathComponent(
+            "\(modelName).mlmodelc",
+            isDirectory: true
+        )
+        if FileManager.default.fileExists(atPath: compiledURL.path) { return compiledURL }
+
+        let packageURL = directory.appendingPathComponent(
+            "\(modelName).mlpackage",
+            isDirectory: true
+        )
+        guard FileManager.default.fileExists(atPath: packageURL.path) else {
+            throw ModelCacheError.modelNotFound(modelName)
+        }
+
+        logger.info(
+            "compiling model",
+            metadata: ["model.name": "\(modelName)", "model_cache.path": "\(directory)"]
+        )
+        let tempURL = try await MLModel.compileModel(at: packageURL)
+        _ = try FileManager.default.replaceItemAt(compiledURL, withItemAt: tempURL)
+        return compiledURL
     }
 
     /// Returns the directory containing tokenizer files for a model.
     public func tokenizerDirectory(for modelName: String) -> URL {
         directory.appendingPathComponent(modelName, isDirectory: true)
     }
-
-    /// Checks if a model exists in the cache.
-    public func modelExists(_ modelName: String) -> Bool {
-        let path = modelPath(for: modelName)
-        var isDirectory: ObjCBool = false
-        return FileManager.default.fileExists(atPath: path.path, isDirectory: &isDirectory)
-            && isDirectory.boolValue
-    }
 }
+
+public enum ModelCacheError: Error { case modelNotFound(String) }

@@ -1,5 +1,6 @@
 import ArgumentParser
 import Darwin
+import Foundation
 import Logging
 import MockPredictionsBackend
 import NIOCore
@@ -22,14 +23,31 @@ public struct ServeCommand: AsyncParsableCommand {
     @Option(name: [.short, .long], help: "Model backend to use (mock)")
     public var model: String?
 
+    @Option(
+        name: .long,
+        help: "Model cache directory (default: ~/.cache/predictions-coreml/models)"
+    )
+    public var cacheDir: String?
+
     public init() {}
 
     public mutating func run() async throws {
         let logger = Logger(label: "predictions")
 
+        let cache = ModelCache(
+            directory: cacheDir.map { URL(fileURLWithPath: $0, isDirectory: true) },
+            logger: logger
+        )
+
         let selectedModel = model ?? "mock"
         let predictionsBackend: any PredictionsBackend
-        do { predictionsBackend = try createBackend(name: selectedModel, logger: logger) } catch {
+        do {
+            predictionsBackend = try await createBackend(
+                name: selectedModel,
+                cache: cache,
+                logger: logger
+            )
+        } catch {
             logger.error(
                 "Failed to load backend",
                 metadata: ["backend.name": "\(selectedModel)", "exception": "\(error)"]
@@ -78,15 +96,16 @@ func parseListenAddr(_ addr: String) throws -> SocketAddress {
     }
 }
 
-func createBackend(name: String, logger: Logger) throws -> any PredictionsBackend {
+func createBackend(name: String, cache: ModelCache, logger: Logger) async throws
+    -> any PredictionsBackend
+{
     switch name.lowercased() {
     case "mock": return MockPredictionsBackend(name: "mock", behavior: .noChange)
     case "sweep":
         guard #available(macOS 15.0, *) else {
             throw BackendError.unsupportedPlatform(backend: name, requirement: "macOS 15.0")
         }
-        // TODO: configurable model cache
-        return try SweepPredictionsBackend(ModelCache(), logger: logger)
+        return try await SweepPredictionsBackend(cache, logger: logger)
     default: throw BackendError.unknownBackend(name: name)
     }
 }

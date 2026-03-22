@@ -3,7 +3,11 @@ load("@toolchains//apple:rules.bzl", "apple_library")
 apple_library(
     name = "PredictionsInference",
     srcs = glob(["**/*.swift"]),
+    exported_deps = [
+        "//third-party/swift/github.com/apple/swift-log:Logging",
+    ],
     frameworks = [
+        "$SDKROOT/System/Library/Frameworks/CoreML.framework",
         "$SDKROOT/System/Library/Frameworks/Foundation.framework",
     ],
     target_sdk_version = "15.0",
