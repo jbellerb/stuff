@@ -65,16 +65,24 @@ public struct ServeCommand: AsyncParsableCommand {
         let coordinator = ShutdownCoordinator(logger: logger)
         let signalStream = makeSignalStream(for: [SIGTERM, SIGINT])
 
-        await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask { try await server.run() }
+        do {
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask { try await server.run() }
+                group.addTask {
+                    for await signal in signalStream {
+                        let action = await coordinator.handleSignal(signal: signal)
+                        if action == .forceQuit { Darwin.exit(1) }
+                        break
+                    }
+                }
 
-            for await signal in signalStream {
-                let action = await coordinator.handleSignal(signal: signal)
-                if action == .forceQuit { Darwin.exit(1) }
+                defer { group.cancelAll() }
 
-                group.cancelAll()
-                break
+                try await group.next()
             }
+        } catch {
+            // error message was already printed. Replace error with exit code.
+            throw ExitCode(1)
         }
     }
 }
