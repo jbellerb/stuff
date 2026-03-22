@@ -4,7 +4,7 @@ import Foundation
 let pretokenizerRE =
     #"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+"#
 
-public struct Qwen2Tokenizer {
+public struct Qwen2Tokenizer: Tokenizer {
     private let bpe: BPEDictionary
     private let pretokenizer: NSRegularExpression
 
@@ -46,7 +46,7 @@ public struct Qwen2Tokenizer {
         self.pretokenizer = try NSRegularExpression(pattern: pretokenizerRE, options: [])
     }
 
-    public func encode(_ text: String) -> [Int] {
+    public func encode(_ text: String) -> [Int32] {
         guard !text.isEmpty else { return [] }
 
         let nsText = text as NSString
@@ -55,7 +55,7 @@ public struct Qwen2Tokenizer {
             range: NSRange(location: 0, length: nsText.length)
         )
 
-        var result: [Int] = []
+        var result: [Int32] = []
         for match in matches {
             guard let range = Range(match.range, in: text) else { continue }
             let piece = String(text[range])
@@ -66,19 +66,18 @@ public struct Qwen2Tokenizer {
             // piece directly.
             let bytes = Array(piece.utf8)
 
-            let tokenIds = bpe.encode(bytes)
-            result.append(contentsOf: tokenIds)
+            result.append(contentsOf: bpe.encode(bytes).map { Int32($0) })
         }
 
         return result
     }
 
-    public func decode(_ tokens: [Int]) -> String {
+    public func decode(_ tokens: [Int32]) -> String {
         guard !tokens.isEmpty else { return "" }
 
         var allBytes: [UInt8] = []
         for tokenId in tokens {
-            if let bytes = bpe.tokenBytes(tokenId) { allBytes.append(contentsOf: bytes) }
+            if let bytes = bpe.tokenBytes(Int(tokenId)) { allBytes.append(contentsOf: bytes) }
         }
 
         return String(decoding: allBytes, as: UTF8.self)

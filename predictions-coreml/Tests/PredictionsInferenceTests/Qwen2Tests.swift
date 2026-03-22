@@ -17,7 +17,7 @@ private func makeTokenizer() throws -> Qwen2Tokenizer {
 // loaded once for the whole test run
 private let sharedTokenizer: Result<Qwen2Tokenizer, any Error> = Result { try makeTokenizer() }
 
-let qwen2TestCases: [(String, [Int])] = [
+let qwen2TestCases: [(String, [Int32])] = [
     ("", []), ("Hello, world!", [9707, 11, 1879, 0]),
     ("The quick brown fox", [785, 3974, 13876, 38835]), (" the", [279]), ("the", [1782]),
     ("in", [258]), ("I'm fine", [40, 2776, 6915]), ("don't", [15007, 944]),
@@ -56,13 +56,13 @@ struct Qwen2TokenizerTests {
     init() throws { tok = try sharedTokenizer.get() }
 
     @Test("All expected encodings match", arguments: qwen2TestCases)
-    func encodesExpectedCases(_ test: (String, [Int])) { #expect(tok.encode(test.0) == test.1) }
+    func encodesExpectedCases(_ test: (String, [Int32])) { #expect(tok.encode(test.0) == test.1) }
 
     @Test("All expected decodings match", arguments: qwen2TestCases)
-    func decodesExpectedCases(_ test: (String, [Int])) { #expect(tok.decode(test.1) == test.0) }
+    func decodesExpectedCases(_ test: (String, [Int32])) { #expect(tok.decode(test.1) == test.0) }
 
     @Test("Encode then decode is identity for all test cases", arguments: qwen2TestCases)
-    func encodeDecodeRoundtrip(_ test: (String, [Int])) {
+    func encodeDecodeRoundtrip(_ test: (String, [Int32])) {
         #expect(tok.decode(tok.encode(test.0)) == test.0)
     }
 }

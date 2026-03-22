@@ -4,6 +4,8 @@ import Logging
 import MockPredictionsBackend
 import NIOCore
 import PredictionsBackends
+import PredictionsInference
+import SweepPredictionsBackend
 
 public struct ServeCommand: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(
@@ -27,7 +29,7 @@ public struct ServeCommand: AsyncParsableCommand {
 
         let selectedModel = model ?? "mock"
         let predictionsBackend: any PredictionsBackend
-        do { predictionsBackend = try createBackend(name: selectedModel) } catch {
+        do { predictionsBackend = try createBackend(name: selectedModel, logger: logger) } catch {
             logger.error(
                 "Failed to load backend",
                 metadata: ["backend.name": "\(selectedModel)", "exception": "\(error)"]
@@ -76,19 +78,29 @@ func parseListenAddr(_ addr: String) throws -> SocketAddress {
     }
 }
 
-func createBackend(name: String) throws -> any PredictionsBackend {
+func createBackend(name: String, logger: Logger) throws -> any PredictionsBackend {
     switch name.lowercased() {
     case "mock": return MockPredictionsBackend(name: "mock", behavior: .noChange)
+    case "sweep":
+        guard #available(macOS 15.0, *) else {
+            throw BackendError.unsupportedPlatform(backend: name, requirement: "macOS 15.0")
+        }
+        // TODO: configurable model cache
+        return try SweepPredictionsBackend(ModelCache(), logger: logger)
     default: throw BackendError.unknownBackend(name: name)
     }
 }
 
 enum BackendError: Error, CustomStringConvertible {
     case unknownBackend(name: String)
+    case unsupportedPlatform(backend: String, requirement: String)
 
     var description: String {
         switch self {
-        case .unknownBackend(let name): return "Unknown backend '\(name)'. Available backends: mock"
+        case .unknownBackend(let name):
+            return "Unknown backend '\(name)'. Available backends: mock, sweep"
+        case .unsupportedPlatform(let backend, let requirement):
+            return "Backend '\(backend)' requires \(requirement)"
         }
     }
 }
