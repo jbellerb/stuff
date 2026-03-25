@@ -14,5 +14,8 @@ core.workflow(
     destination_files = glob(["**"]),
     mode = "ITERATIVE",
     authoring = authoring.pass_thru(default_committer),
-    transformations = [core.move("sprite-hacks", "")],
+    transformations = [
+        core.move("sprite-hacks", ""),
+        metadata.scrubber("\\Asprite-hacks: ", replacement = ""),
+    ],
 )
