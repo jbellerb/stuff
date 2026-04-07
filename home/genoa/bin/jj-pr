@@ -258,7 +258,7 @@ jj_pr_submit_change() {
 
     create_status=$(
         gh pr create --head "$bookmark" --base "$base_branch" --title "$title" \
-            --body "$body" $draft
+            --body "$body" $draft 2>&1
     ) || { echo "$create_status"; return 1; }
     pr=$(jj_pr_get_pr_property "$bookmark" number) || \
         { echo "Failed to retrieve PR for branch $bookmark"; return 1; }
