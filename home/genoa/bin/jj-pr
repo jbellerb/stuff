@@ -205,16 +205,19 @@ jj_pr_replace_change() {
         fi
 
         # push updated bookmarks for each descendant
-        errored=
-        while IFS= read -r desc_bookmark
-        do
-            jj git push --bookmark "$desc_bookmark" --ignore-working-copy \
-                --quiet > /dev/null 2>&1 || errored=true
-        done << EOF
+        if test -n "$descendants"
+        then
+            errored=
+            while IFS= read -r desc_bookmark
+            do
+                jj git push --bookmark "$desc_bookmark" --ignore-working-copy \
+                    --quiet > /dev/null 2>&1 || errored=true
+            done << EOF
 $descendants
 EOF
-        test -z "$errored" || \
-            { echo "Failed to push updated bookmarks"; return 1; }
+            test -z "$errored" || \
+                { echo "Failed to push updated bookmarks"; return 1; }
+        fi
     fi
 
     # finally, abandon the commit if it was left behind
