@@ -34,11 +34,17 @@ then
     TREE_DIRTY="-dirty"
 fi
 
-COMMIT_YEAR=$(( $(date -j -f %s "$COMMIT_TIME" +"%G") - 2000 ))
-COMMIT_WEEK=$(date -j -f %s "$COMMIT_TIME" +"%V")
+COMMIT_YEAR=$(( $(date -u -d "@$COMMIT_TIME" +"%G") - 2000 ))
+COMMIT_WEEK=$(date -u -d "@$COMMIT_TIME" +"%V")
 COMMIT_WEEK=${COMMIT_WEEK#0} # remove leading zero
 
-WEEK_START=$(date -j -v-mon -f %s "$COMMIT_TIME" +"%FT00:00:00+00")
+DAYS_SINCE_MON=$(( $(date -u -d "@$COMMIT_TIME" +%u) - 1 ))
+if test "${DAYS_SINCE_MON}" -eq 0
+then
+    WEEK_START=$(date -u -d "@$COMMIT_TIME" +"%FT00:00:00+00")
+else
+    WEEK_START=$(date -u -d "@$COMMIT_TIME -${DAYS_SINCE_MON} days" +"%FT00:00:00+00")
+fi
 COMMIT_COUNT=$(( $(git log --since="$WEEK_START" --oneline | wc -l) ))
 
 echo $COMMIT_HASH
