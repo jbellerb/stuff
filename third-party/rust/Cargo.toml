@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+
+[package]
+name = "rust-third-party"
+version = "0.1.0"
+publish = false
+edition = "2024"
+
+[[bin]]
+name = "top"
+path = "top/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.6", features = ["derive", "string"] }
+time = { version = "0.3", features = ["formatting"] }

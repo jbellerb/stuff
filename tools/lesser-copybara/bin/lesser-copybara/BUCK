@@ -1,0 +1,14 @@
+rust_binary(
+    name = "lesser-copybara",
+    srcs = glob(["src/**/*.rs"]),
+    env = {
+        "LESSER_COPYBARA_VERSION_INFO": "$(location //tools/version:version)",
+    },
+    deps = [
+        "//third-party/rust:anyhow",
+        "//third-party/rust:clap",
+        "//third-party/rust:time",
+    ],
+    edition = "2024",
+    visibility = ["PUBLIC"],
+)
