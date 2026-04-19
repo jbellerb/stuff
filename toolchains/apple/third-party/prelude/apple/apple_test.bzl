@@ -24,7 +24,6 @@ load(
     "CompileArgsfile",  # @unused Used as a type
 )
 load("@prelude//cxx:cxx_library.bzl", "cxx_library_parameterized")
-load("@prelude//cxx:cxx_library_utility.bzl", "cxx_attr_deps", "cxx_attr_exported_deps")
 load(
     "@prelude//cxx:cxx_sources.bzl",
     "CxxSrcWithFlags",  # @unused Used as a type
@@ -129,7 +128,7 @@ def apple_test_impl(ctx: AnalysisContext) -> [list[Provider], Promise]:
         # Locate the temporary binary that is bundled into the xctest in a binaries directory. When Xcode loads the test out of the target's output dir,
         # it will utilize a binary with the test name from the output dir instead of the xctest bundle. Which then results in paths to test resources
         # being incorrect. Locating the temporary binary elsewhere works around this issue.
-        test_binary_output = ctx.actions.declare_output("__binaries__", get_product_name(ctx))
+        test_binary_output = ctx.actions.declare_output("__binaries__", get_product_name(ctx), has_content_based_path = False)
 
         # Rename in order to generate dSYM with correct binary name (dsymutil doesn't provide a way to control binary name in output dSYM bundle).
         test_binary = ctx.actions.copy_file(test_binary_output, cxx_library_output.default_output.default)
@@ -182,11 +181,6 @@ def apple_test_impl(ctx: AnalysisContext) -> [list[Provider], Promise]:
         )
         sub_targets = bundle_result.sub_targets
         sub_targets.update(cxx_library_output.sub_targets)
-
-        # Add xplugins debug artifacts as subtarget (similar to apple_bundle)
-        all_deps = cxx_attr_deps(ctx) + cxx_attr_exported_deps(ctx)
-        xplugins_debug_artifacts_info = xplugins_get_debug_artifacts_info(ctx, all_deps)
-        sub_targets["xplugins"] = xplugins_get_debug_artifacts_subtargets(ctx.actions, xplugins_debug_artifacts_info)
 
         dsym_artifact = get_apple_dsym(
             ctx = ctx,
@@ -253,7 +247,7 @@ def _get_test_host_app_bundle(ctx: AnalysisContext) -> Artifact | None:
     if ctx.attrs.test_host_app:
         # Copy the test host app bundle into test's output directory
         original_bundle = ctx.attrs.test_host_app[AppleBundleInfo].bundle
-        test_host_app_bundle = ctx.actions.declare_output(original_bundle.basename)
+        test_host_app_bundle = ctx.actions.declare_output(original_bundle.basename, has_content_based_path = False)
         ctx.actions.copy_file(test_host_app_bundle, original_bundle)
         return test_host_app_bundle
 
@@ -276,7 +270,7 @@ def _get_ui_test_target_app_bundle(ctx: AnalysisContext) -> Artifact | None:
     if ctx.attrs.ui_test_target_app:
         # Copy the ui test target app bundle into test's output directory
         original_bundle = ctx.attrs.ui_test_target_app[AppleBundleInfo].bundle
-        ui_test_target_app_bundle = ctx.actions.declare_output(original_bundle.basename)
+        ui_test_target_app_bundle = ctx.actions.declare_output(original_bundle.basename, has_content_based_path = False)
         ctx.actions.copy_file(ui_test_target_app_bundle, original_bundle)
         return ui_test_target_app_bundle
 
