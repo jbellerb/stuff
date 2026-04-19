@@ -53,6 +53,10 @@ in
     ];
   };
 
+  reindeer = binPackage "reindeer" ./reindeer.toml {
+    license = [ licenses.mit ];
+  };
+
   rust-project = binPackage "rust-project" ./rust-project.toml {
     license = [
       licenses.asl20

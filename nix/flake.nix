@@ -26,6 +26,7 @@
           packages = {
             inherit (pkgs.callPackage ./packages/default.nix { })
               buck2
+              reindeer
               rust-project
               ;
           };
@@ -34,6 +35,7 @@
           devShells.default = pkgs.mkShellNoCC {
             nativeBuildInputs = [
               config.packages.buck2
+              config.packages.reindeer
               config.packages.rust-project
             ];
           };
