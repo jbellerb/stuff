@@ -25,6 +25,11 @@ command = "ruff"
 includes = ["*.py", "*.pyi"]
 options = ["format"]
 
+[formatter.rustfmt]
+command = "rustfmt"
+includes = ["*.rs"]
+options = ["--config", "skip_children=true", "--edition", "2024"]
+
 [formatter.swift]
 command = "swift"
 includes = ["*.swift"]
