@@ -25,6 +25,10 @@ default-command = "l"
 editor = "hx"
 pager = "less -FRX"
 
+[revsets]
+bookmark-advance-to = "closest_pushable(@)"
+bookmark-advance-from = "closest_bookmark(to)"
+
 [revset-aliases]
 "user(x)" = "author(x) | committer(x)"
 
@@ -54,8 +58,3 @@ jj l
 pr = ["util", "exec", "--", "jj-pr"]
 
 sprite-workspace = ["util", "exec", "--", "jj-sprite-workspace"]
-
-tug = ["util", "exec", "--", "sh", "-c", """
-test $# -eq 0 && set -- --from "closest_bookmark(@)"
-jj bookmark move --to "closest_pushable(@)" "$@"
-""", "--"]
