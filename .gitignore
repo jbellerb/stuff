@@ -1,5 +1,6 @@
 .DS_Store
 buck-out
+.direnv/
 target/
 workspace/
 

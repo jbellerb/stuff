@@ -1,0 +1,16 @@
+version = "2026-04-15"
+
+[[bin]]
+platform = "aarch64-darwin"
+url = "https://github.com/facebook/buck2/releases/download/2026-04-15/buck2-aarch64-apple-darwin.zst"
+hash = "sha256-zBZ2gEPRxyaBYmnRfYfhYDqswqfiXvxYDHrUI92Z1UQ="
+
+[[bin]]
+platform = "x86_64-linux"
+url = "https://github.com/facebook/buck2/releases/download/2026-04-15/buck2-x86_64-unknown-linux-musl.zst"
+hash = "sha256-1vwtufObj0W+zQjWeLD8Hc47TnF28kcbrTe0R9wAX/0="
+
+[[bin]]
+platform = "aarch64-linux"
+url = "https://github.com/facebook/buck2/releases/download/2026-04-15/buck2-aarch64-unknown-linux-musl.zst"
+hash = "sha256-siq98ge7jjPQ97XRY1c45GeecyFLim7n+0l+49+YpQg="
