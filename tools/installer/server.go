@@ -86,13 +86,13 @@ func (s *Server) Install(
 	defer s.mu.Unlock()
 
 	installID := req.GetInstallId()
-	filesMap := req.GetFiles()
+	fileNames := req.GetFileNames()
 
 	state := installState{
-		objects: make(map[string]string, len(filesMap)),
-		pending: make(map[string]struct{}, len(filesMap)),
+		objects: make(map[string]string, len(fileNames)),
+		pending: make(map[string]struct{}, len(fileNames)),
 	}
-	for name := range filesMap {
+	for _, name := range fileNames {
 		state.pending[name] = struct{}{}
 	}
 	s.installs[installID] = state

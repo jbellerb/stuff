@@ -2,8 +2,8 @@ load("@toolchains//protobuf:defs.bzl", "protobuf_library")
 
 http_file(
     name = "install.proto",
-    sha256 = "a9cea353359816281df03304412f113115e2ee42c5486b99963109e35928ccca",
-    urls = ["https://raw.githubusercontent.com/facebook/buck2/refs/tags/2026-02-01/app/buck2_install_proto/install.proto"],
+    sha256 = "32e879b486432853de4b5bf65a9e36138c0c8c8b787010ff0b1daa6f6c44d78b",
+    urls = ["https://raw.githubusercontent.com/facebook/buck2/refs/tags/2026-04-15/app/buck2_install_proto/install.proto"],
 )
 
 _mod_mapping = [
