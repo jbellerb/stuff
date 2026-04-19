@@ -26,6 +26,7 @@
           packages = {
             inherit (pkgs.callPackage ./packages/default.nix { })
               buck2
+              rust-project
               ;
           };
 
@@ -33,6 +34,7 @@
           devShells.default = pkgs.mkShellNoCC {
             nativeBuildInputs = [
               config.packages.buck2
+              config.packages.rust-project
             ];
           };
         };

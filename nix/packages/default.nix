@@ -52,4 +52,11 @@ in
       licenses.mit
     ];
   };
+
+  rust-project = binPackage "rust-project" ./rust-project.toml {
+    license = [
+      licenses.asl20
+      licenses.mit
+    ];
+  };
 }

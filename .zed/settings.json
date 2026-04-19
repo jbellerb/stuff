@@ -24,6 +24,20 @@
           "python_interpreter": "predictions-coreml/models/.venv/bin/python"
         }
       }
+    },
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "overrideCommand": ["rust-project", "check", "$saved_file"]
+        },
+        "workspace": {
+          "discoverConfig": {
+            "command": ["rust-project", "develop-json", "{arg}"],
+            "progressLabel": "buck2/rust-project",
+            "filesToWatch": ["BUCK"]
+          }
+        }
+      }
     }
   }
 }
