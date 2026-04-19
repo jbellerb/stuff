@@ -65,6 +65,8 @@ _apple_test = rule(
             "entitlements_verification_check_enabled": attrs.bool(default = False),
             "versioned_macos_bundle": attrs.bool(default = False),
             "_watch_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
+            "_provisioning_profile_sources": attrs.dep(default = "//apple:no_binary"),
+            "_provisioning_profile_sources_enabled": attrs.bool(default = False),
             "_provisioning_profiles": attrs.dep(default = "//apple:no_binary"),
             "_iphone_unbooted_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
             "_iphone_booted_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
