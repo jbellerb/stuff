@@ -1,1 +1,3 @@
 project-includes = ["**/*.py*"]
+
+project-excludes = ["toolchains/apple/third-party/prelude/apple/tools/**/*.py*"]
