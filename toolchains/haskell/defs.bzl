@@ -1,20 +1,23 @@
-load("@prelude//decls:haskell_rules.bzl", "haskell_rules")
-load(
-    "@prelude//haskell:haskell.bzl",
-    prelude_haskell_prebuilt_library_impl = "haskell_prebuilt_library_impl",
-)
-load(
-    "@prelude//haskell:library_info.bzl",
-    "HaskellLibraryInfo",
-    "HaskellLibraryInfoTSet",
-)
-load("@prelude//haskell:link_info.bzl", "HaskellLinkInfo")
+load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo")
 load(
     "@prelude//haskell:toolchain.bzl",
     "HaskellPlatformInfo",
     "HaskellToolchainInfo",
 )
-load("@prelude//linking:link_info.bzl", "LinkStyle")
+load(
+    "//haskell/lib/package_db.bzl",
+    "HaskellGHCPackageDBInfo",
+    "haskell_boot_package_database",
+)
+
+_DEFAULT_TRIPLE = select({
+    "prelude//os:linux": select({
+        "prelude//cpu:x86_64": "x86_64-ubuntu20_04-linux",
+    }),
+    "prelude//os:macos": select({
+        "prelude//cpu:arm64": "aarch64-apple-darwin",
+    }),
+})
 
 HaskellGHCDistrInfo = provider(
     fields = {
@@ -26,222 +29,117 @@ HaskellGHCDistrInfo = provider(
     },
 )
 
-# adapted from prelude//haskell:haskell.bzl
-def _get_haskell_prebuilt_libs(ctx: AnalysisContext, link_style: LinkStyle):
-    if link_style == LinkStyle("shared"):
-        # profiling doesn't support shared libraries
-        return ctx.attrs.shared_libs.values(), []
-    elif link_style == LinkStyle("static"):
-        return ctx.attrs.static_libs, ctx.attrs.profiled_static_libs
-    elif link_style == LinkStyle("static_pic"):
-        return ctx.attrs.pic_static_libs, ctx.attrs.pic_profiled_static_libs
-    else:
-        fail("unexpected LinkStyle '{}'".format(link_style.value))
+def haskell_ghc_distr_impl(ctx: AnalysisContext) -> list[Provider]:
+    cxx_toolchain = ctx.attrs.cxx_toolchain[CxxToolchainInfo]
 
-# wraps the prelude's prebuilt library rule, but assigns import_dirs to properly
-# materialize .hi files
-def _haskell_prebuilt_library_impl(ctx: AnalysisContext) -> list[Provider]:
-    providers = prelude_haskell_prebuilt_library_impl(ctx)
-    if not ctx.attrs.import_dirs:
-        return providers
+    topdir = ctx.actions.declare_output(ctx.label.name, dir = True)
+    bin = topdir.project("bin")
+    lib = topdir.project("lib")
 
-    new_providers = []
-    for provider in providers:
-        if type(provider) == HaskellLinkInfo:
-            new_info = {}
-            new_prof_info = {}
-            for link_style in LinkStyle:
-                libs, prof_libs = _get_haskell_prebuilt_libs(ctx, link_style)
-                hlibinfo = HaskellLibraryInfo(
-                    name = ctx.attrs.name,
-                    db = ctx.attrs.db,
-                    import_dirs = ctx.attrs.import_dirs,  # new
-                    stub_dirs = [],
-                    id = ctx.attrs.id,
-                    libs = libs,
-                    version = ctx.attrs.version,
-                    is_prebuilt = True,
-                    profiling_enabled = False,
-                )
-                prof_hlibinfo = HaskellLibraryInfo(
-                    name = ctx.attrs.name,
-                    db = ctx.attrs.db,
-                    import_dirs = ctx.attrs.import_dirs,  # new
-                    stub_dirs = [],
-                    id = ctx.attrs.id,
-                    libs = prof_libs,
-                    version = ctx.attrs.version,
-                    is_prebuilt = True,
-                    profiling_enabled = True,
-                )
+    install = cmd_args([
+        ctx.attrs._install_ghc[RunInfo].args,
+        cmd_args(ctx.attrs.ghc_root, format = "--bindist={}"),
+        cmd_args(topdir.as_output(), format = "--out={}"),
+        cmd_args(cxx_toolchain.c_compiler_info.compiler, format = "--cc={}"),
+        cmd_args(cxx_toolchain.cxx_compiler_info.compiler, format = "--cxx={}"),
+        cmd_args(cxx_toolchain.linker_info.linker, format = "--ld={}"),
+        cmd_args(cxx_toolchain.linker_info.archiver, format = "--ar={}"),
+        cmd_args(cxx_toolchain.binary_utilities_info.nm, format = "--nm={}"),
+        cmd_args(cxx_toolchain.binary_utilities_info.ranlib, format = "--ranlib={}"),
+        cmd_args(
+            cmd_args(
+                cxx_toolchain.c_compiler_info.compiler_flags or [],
+                delimiter = " ",
+            ),
+            format = "--cflags={}",
+        ),
+        cmd_args(
+            cmd_args(
+                cxx_toolchain.cxx_compiler_info.compiler_flags or [],
+                delimiter = " ",
+            ),
+            format = "--cxxflags={}",
+        ),
+        cmd_args(
+            cmd_args(cxx_toolchain.linker_info.linker_flags or [], delimiter = " "),
+            format = "--linkflags={}",
+        ),
+        "--bin-prefix={}".format(ctx.attrs.bin_prefix),
+        "--host-triple={}".format(ctx.attrs.host),
+        "--target-triple={}".format(ctx.attrs.target),
+    ])
 
-                haskell_infos = [
-                    dep[HaskellLinkInfo]
-                    for dep in ctx.attrs.deps
-                    if HaskellLinkInfo in dep
-                ]
-                new_info[link_style] = ctx.actions.tset(
-                    HaskellLibraryInfoTSet,
-                    value = hlibinfo,
-                    children = [lib.info[link_style] for lib in haskell_infos],
-                )
-                new_prof_info[link_style] = ctx.actions.tset(
-                    HaskellLibraryInfoTSet,
-                    value = prof_hlibinfo,
-                    children = [lib.prof_info[link_style] for lib in haskell_infos],
-                )
+    ctx.actions.run(
+        install,
+        category = "configure_ghc",
+        identifier = ctx.label.name,
+    )
 
-            new_providers.append(HaskellLinkInfo(
-                info = new_info,
-                prof_info = new_prof_info,
-            ))
-        else:
-            # keep other providers unchanged
-            new_providers.append(provider)
-
-    return new_providers
-
-haskell_prebuilt_library = rule(
-    impl = _haskell_prebuilt_library_impl,
-    attrs = haskell_rules.haskell_prebuilt_library.attrs,
-)
-
-def _haskell_ghc_distr_impl(ctx: AnalysisContext) -> list[Provider]:
     def ghc_bin(name: str) -> RunInfo:
         return RunInfo(
-            ctx.attrs.ghc_root.project(
-                "bin/{}{}-{}".format(ctx.attrs.bin_prefix, name, ctx.attrs.version),
+            bin.project(
+                "{}{}-{}".format(ctx.attrs.bin_prefix, name, ctx.attrs.version),
             ),
         )
 
+    ghc = cmd_args([
+        ghc_bin("ghc"),
+        cmd_args(lib, format = "-B{}"),
+        "-no-user-package-db",
+    ])
+
+    arch, _, tail = ctx.attrs.target.partition("-")
+    _, _, os = tail.rpartition("-")
+
     return [
-        DefaultInfo(),
+        DefaultInfo(
+            sub_targets = haskell_boot_package_database(
+                ctx,
+                ctx.attrs.ghc_root,
+                os,
+                ctx.attrs.version,
+                ctx.attrs.package_manifest,
+            ),
+        ),
         HaskellGHCDistrInfo(
-            compiler = ghc_bin("ghc"),
-            linker = ghc_bin("ghc"),
+            compiler = RunInfo(ghc),
+            linker = RunInfo(ghc),
             packager = ghc_bin("ghc-pkg"),
             haddock = ghc_bin("haddock-ghc"),
+            version = ctx.attrs.version,
+        ),
+        HaskellGHCPackageDBInfo(
+            db = lib.project("package.conf.d"),
+            arch = arch,
+            os = os,
             version = ctx.attrs.version,
         ),
     ]
 
 haskell_ghc_distr = rule(
-    impl = _haskell_ghc_distr_impl,
+    impl = haskell_ghc_distr_impl,
     attrs = {
         "ghc_root": attrs.source(allow_directory = True),
-        "bin_prefix": attrs.string(default = ""),
-        "version": attrs.string(),
-    },
-)
-
-def _haskell_ghc_wasm_distr_impl(ctx: AnalysisContext) -> list[Provider]:
-    distr_info = _haskell_ghc_distr_impl(ctx)[1]
-
-    wasi_sdk = ctx.attrs.wasi_sdk
-    libffi = ctx.attrs.libffi
-
-    # GHC adds .wasm to output paths (in the @response file it passes to pgml),
-    # but buck2 expects the output without the extension. This wrapper calls
-    # clang and then renames <output>.wasm to <output>.
-    linker_wrapper, _ = ctx.actions.write(
-        "ghc-wasm-linker.sh",
-        cmd_args(
-            wasi_sdk.project("bin/wasm32-wasi-clang"),
-            format = """#!/bin/sh
-output_wasm=""
-prev=""
-for arg in "$@"
-do
-    case "$arg" in
-    @*)
-        rspfile="${arg#@}"
-        while IFS= read -r line
-        do
-            clean="${line#\\"}"
-            clean="${clean%\\"}"
-            if test "$prev" = "-o"
-            then
-                output_wasm="$clean"
-            fi
-            prev="$clean"
-        done < "$rspfile"
-        ;;
-    *)
-        if test "$prev" = "-o"
-        then
-            output_wasm="$arg"
-        fi
-        prev="$arg"
-        ;;
-    esac
-done
-
-"{}" "$@"
-status=$?
-
-if test $status -eq 0 && test -n "$output_wasm"
-then
-    output="${output_wasm%.wasm}"
-    if test "$output" != "$output_wasm" && test -e "$output_wasm" && test ! -e "$output"
-    then
-        mv "$output_wasm" "$output"
-    fi
-fi
-
-exit "$status"
-""",
+        "cxx_toolchain": attrs.toolchain_dep(
+            providers = [CxxToolchainInfo],
+            default = "toolchains//:cxx",
         ),
-        is_executable = True,
-        allow_args = True,
-    )
-
-    ghc = RunInfo(
-        cmd_args([
-            distr_info.compiler.args,
-            cmd_args(libffi.project("include"), format = "-I{}"),
-            cmd_args(libffi.project("lib"), format = "-optl-L{}"),
-            "-pgma",
-            wasi_sdk.project("bin/wasm32-wasi-clang"),
-            "-pgmlas",
-            wasi_sdk.project("bin/wasm32-wasi-clang"),
-            "-pgmc",
-            wasi_sdk.project("bin/wasm32-wasi-clang"),
-            "-pgmcxx",
-            wasi_sdk.project("bin/wasm32-wasi-clang++"),
-            "-pgmP",
-            wasi_sdk.project("bin/wasm32-wasi-clang"),
-            # "-pgmJSP",
-            # wasi_sdk.project("bin/wasm32-wasi-clang"),
-            # "-pgmCmmP",
-            # wasi_sdk.project("bin/wasm32-wasi-clang"),
-            "-pgml",
-            linker_wrapper,
-            "-pgmlm",
-            wasi_sdk.project("bin/wasm-ld"),
-            "-pgmar",
-            wasi_sdk.project("bin/llvm-ar"),
-        ]),
-    )
-
-    return [
-        DefaultInfo(),
-        HaskellGHCDistrInfo(
-            compiler = ghc,
-            linker = ghc,
-            packager = distr_info.packager,
-            haddock = distr_info.haddock,
-            version = distr_info.version,
-        ),
-    ]
-
-haskell_ghc_wasm_distr = rule(
-    impl = _haskell_ghc_wasm_distr_impl,
-    attrs = {
-        "ghc_root": attrs.source(allow_directory = True),
-        "wasi_sdk": attrs.source(allow_directory = True),
-        "libffi": attrs.source(allow_directory = True),
         "bin_prefix": attrs.string(default = ""),
+        "target": attrs.string(),
+        "host": attrs.string(default = _DEFAULT_TRIPLE),
         "version": attrs.string(),
+        "package_manifest": attrs.dict(
+            key = attrs.string(),
+            value = attrs.any(),
+            default = {},
+        ),
+        "labels": attrs.list(attrs.string(), default = []),
+        "_install_ghc": attrs.default_only(
+            attrs.exec_dep(
+                providers = [RunInfo],
+                default = "//haskell/tools:install_ghc",
+            ),
+        ),
     },
 )
 
@@ -273,4 +171,14 @@ haskell_toolchain = rule(
         "linker_flags": attrs.list(attrs.arg(), default = []),
     },
     is_toolchain_rule = True,
+)
+
+def _exec_alias_impl(ctx):
+    return ctx.attrs.actual.providers
+
+exec_alias = rule(
+    impl = _exec_alias_impl,
+    attrs = {
+        "actual": attrs.exec_dep(),
+    },
 )
