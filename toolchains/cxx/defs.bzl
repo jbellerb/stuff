@@ -1,3 +1,4 @@
+load("@prelude//cxx:cxx_apple_linker_flags.bzl", "is_valid_apple_platform_name")
 load(
     "@prelude//cxx:cxx_toolchain_types.bzl",
     "CxxInternalTools",
@@ -7,7 +8,6 @@ load(
     "ObjcxxCompilerInfo",
 )
 load("@prelude//decls:common.bzl", "buck")
-load("@prelude//cxx:cxx_apple_linker_flags.bzl", "is_valid_apple_platform_name")
 load("@prelude//linking:link_info.bzl", "LinkOrdering")
 load(
     "@prelude//toolchains:cxx.bzl",
