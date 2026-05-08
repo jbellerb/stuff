@@ -1,0 +1,38 @@
+load(":defs.bzl", "deno_toolchain")
+
+remote_file(
+    name = "deno-aarch64-apple-darwin.zip",
+    sha256 = "aeb5825f83b4a9cd7f9355a1c4ddd666205dacf76ccb7b98c2b10e066bc9e4bb",
+    type = "exploded_zip",
+    url = "https://github.com/denoland/deno/releases/download/v2.7.14/deno-aarch64-apple-darwin.zip",
+)
+
+remote_file(
+    name = "deno-x86_64-unknown-linux-gnu.zip",
+    sha256 = "3287efef53606966469cb6a02781327be22b908959397f976e2996dc1b64ae0f",
+    type = "exploded_zip",
+    url = "https://github.com/denoland/deno/releases/download/v2.7.14/deno-x86_64-unknown-linux-gnu.zip",
+)
+
+genrule(
+    name = "deno-aarch64-apple-darwin",
+    out = "deno",
+    cmd = "ln -sF $(location :deno-aarch64-apple-darwin.zip)/deno $OUT",
+    executable = True,
+)
+
+genrule(
+    name = "deno-x86_64-unknown-linux-gnu",
+    out = "deno",
+    cmd = "ln -sF $(location :deno-x86_64-unknown-linux-gnu.zip)/deno $OUT",
+    executable = True,
+)
+
+deno_toolchain(
+    name = "deno",
+    deno = select({
+        "config//os:linux": ":deno-x86_64-unknown-linux-gnu",
+        "config//os:macos": ":deno-aarch64-apple-darwin",
+    }),
+    visibility = ["toolchains//..."],
+)
