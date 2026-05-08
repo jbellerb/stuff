@@ -27,6 +27,12 @@ system_python_toolchain(
 )
 
 toolchain_alias(
+    name = "binaryen",
+    actual = "toolchains//binaryen:binaryen",
+    visibility = ["PUBLIC"],
+)
+
+toolchain_alias(
     name = "deno",
     actual = "toolchains//deno:deno",
     visibility = ["PUBLIC"],
