@@ -1,5 +1,5 @@
 load("@prelude//toolchains:haskell.bzl", "system_haskell_toolchain")
-load(":defs.bzl", "haskell_toolchain")
+load(":defs.bzl", "haskell_ghc_distr", "haskell_ghc_wasm_distr", "haskell_toolchain")
 
 http_archive(
     name = "ghc-9.10.3-x86_64-ubuntu20_04-linux.tar.xz",
@@ -17,12 +17,83 @@ http_archive(
     visibility = ["toolchains//haskell/lib/..."],
 )
 
-haskell_toolchain(
-    name = "haskell",
+http_archive(
+    name = "wasm32-wasi-ghc-gmp-aarch64-darwin-9.10.tar.xz",
+    sha256 = "3bda3333b3b09c99495a5513cf554d155d9462697a919919320ddac516496f0c",
+    strip_prefix = "ghc-9.10.3.20260403-wasm32-wasi",
+    urls = ["https://github.com/haskell-wasm/ghc-wasm-bindists/releases/download/20260403T135157/wasm32-wasi-ghc-gmp-aarch64-darwin-9.10.tar.xz"],
+)
+
+http_archive(
+    name = "wasm32-wasi-ghc-9.10.tar.xz",
+    sha256 = "60d0e537548a82590fd6cfd6eaec5ceba0bc58bf320a6f491843a1cf4403bce8",
+    strip_prefix = "ghc-9.10.3.20260403-wasm32-wasi",
+    urls = ["https://github.com/haskell-wasm/ghc-wasm-bindists/releases/download/20260403T135157/wasm32-wasi-ghc-9.10.tar.xz"],
+)
+
+http_archive(
+    name = "wasi-sdk-aarch64-darwin.tar.gz",
+    sha256 = "fcd80b74af20c8f4f2f9783852620db8e80ed7cf3fd162e760018819fa7de2ba",
+    strip_prefix = "wasi-sdk-29.0-arm64-macos",
+    urls = ["https://github.com/haskell-wasm/ghc-wasm-bindists/releases/download/20251219T213239/wasi-sdk-aarch64-darwin.tar.gz"],
+)
+
+http_archive(
+    name = "wasi-sdk-x86_64-linux.tar.gz",
+    sha256 = "fa1b236d847fa6ab5abecb08b8c1807178818f68b33029845eb15157d5bdbe47",
+    strip_prefix = "wasi-sdk-29.0-x86_64-linux",
+    urls = ["https://github.com/haskell-wasm/ghc-wasm-bindists/releases/download/20251219T213239/wasi-sdk.tar.gz"],
+)
+
+http_archive(
+    name = "libffi-wasm",
+    sha256 = "526f4672ef732a5d29cc560bdd19809f2149a3338f295a2ad4d9d4da38a5234b",
+    strip_prefix = "out/libffi-wasm",
+    type = "zip",
+    urls = ["https://github.com/haskell-wasm/ghc-wasm-bindists/releases/download/20250310T060803/libffi-wasm"],
+)
+
+haskell_ghc_distr(
+    name = "ghc-9.10.3",
     ghc_root = select({
-        "config//os:linux": ":ghc-9.10.3-x86_64-ubuntu20_04-linux.tar.xz",
-        "config//os:macos": ":ghc-9.10.3-aarch64-apple-darwin.tar.xz",
+        "config//cpu:x86_64": select({
+            "config//os:linux": ":ghc-9.10.3-x86_64-ubuntu20_04-linux.tar.xz",
+        }),
+        "config//cpu:arm64": select({
+            "config//os:macos": ":ghc-9.10.3-aarch64-apple-darwin.tar.xz",
+        }),
     }),
     version = "9.10.3",
+)
+
+haskell_ghc_wasm_distr(
+    name = "ghc-9.10.3.20260403-wasm32-wasi",
+    ghc_root = select({
+        "config//cpu:x86_64": select({
+            "config//os:linux": ":wasm32-wasi-ghc-9.10.tar.xz",
+        }),
+        "config//cpu:arm64": select({
+            "config//os:macos": ":wasm32-wasi-ghc-gmp-aarch64-darwin-9.10.tar.xz",
+        }),
+    }),
+    wasi_sdk = select({
+        "config//cpu:x86_64": select({
+            "config//os:linux": ":wasi-sdk-x86_64-linux.tar.gz",
+        }),
+        "config//cpu:arm64": select({
+            "config//os:macos": ":wasi-sdk-aarch64-darwin.tar.gz",
+        }),
+    }),
+    libffi = ":libffi-wasm",
+    bin_prefix = "wasm32-wasi-",
+    version = "9.10.3.20260403",
+)
+
+haskell_toolchain(
+    name = "haskell",
+    ghc_distr = select({
+        "config//os:wasi": ":ghc-9.10.3.20260403-wasm32-wasi",
+        "DEFAULT": ":ghc-9.10.3",
+    }),
     visibility = ["toolchains//..."],
 )

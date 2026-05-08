@@ -16,6 +16,16 @@ load(
 )
 load("@prelude//linking:link_info.bzl", "LinkStyle")
 
+HaskellGHCDistrInfo = provider(
+    fields = {
+        "compiler": provider_field(RunInfo),
+        "linker": provider_field(RunInfo),
+        "packager": provider_field(RunInfo),
+        "haddock": provider_field(RunInfo),
+        "version": provider_field(str),
+    },
+)
+
 # adapted from prelude//haskell:haskell.bzl
 def _get_haskell_prebuilt_libs(ctx: AnalysisContext, link_style: LinkStyle):
     if link_style == LinkStyle("shared"):
@@ -96,23 +106,158 @@ haskell_prebuilt_library = rule(
     attrs = haskell_rules.haskell_prebuilt_library.attrs,
 )
 
-def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
+def _haskell_ghc_distr_impl(ctx: AnalysisContext) -> list[Provider]:
     def ghc_bin(name: str) -> RunInfo:
         return RunInfo(
             ctx.attrs.ghc_root.project(
-                "bin/{}-{}".format(name, ctx.attrs.version),
+                "bin/{}{}-{}".format(ctx.attrs.bin_prefix, name, ctx.attrs.version),
             ),
         )
 
     return [
         DefaultInfo(),
-        HaskellToolchainInfo(
+        HaskellGHCDistrInfo(
             compiler = ghc_bin("ghc"),
-            compiler_flags = ctx.attrs.compiler_flags,
             linker = ghc_bin("ghc"),
-            linker_flags = ctx.attrs.linker_flags,
             packager = ghc_bin("ghc-pkg"),
             haddock = ghc_bin("haddock-ghc"),
+            version = ctx.attrs.version,
+        ),
+    ]
+
+haskell_ghc_distr = rule(
+    impl = _haskell_ghc_distr_impl,
+    attrs = {
+        "ghc_root": attrs.source(allow_directory = True),
+        "bin_prefix": attrs.string(default = ""),
+        "version": attrs.string(),
+    },
+)
+
+def _haskell_ghc_wasm_distr_impl(ctx: AnalysisContext) -> list[Provider]:
+    distr_info = _haskell_ghc_distr_impl(ctx)[1]
+
+    wasi_sdk = ctx.attrs.wasi_sdk
+    libffi = ctx.attrs.libffi
+
+    # GHC adds .wasm to output paths (in the @response file it passes to pgml),
+    # but buck2 expects the output without the extension. This wrapper calls
+    # clang and then renames <output>.wasm to <output>.
+    linker_wrapper, _ = ctx.actions.write(
+        "ghc-wasm-linker.sh",
+        cmd_args(
+            wasi_sdk.project("bin/wasm32-wasi-clang"),
+            format = """#!/bin/sh
+output_wasm=""
+prev=""
+for arg in "$@"
+do
+    case "$arg" in
+    @*)
+        rspfile="${arg#@}"
+        while IFS= read -r line
+        do
+            clean="${line#\\"}"
+            clean="${clean%\\"}"
+            if test "$prev" = "-o"
+            then
+                output_wasm="$clean"
+            fi
+            prev="$clean"
+        done < "$rspfile"
+        ;;
+    *)
+        if test "$prev" = "-o"
+        then
+            output_wasm="$arg"
+        fi
+        prev="$arg"
+        ;;
+    esac
+done
+
+"{}" "$@"
+status=$?
+
+if test $status -eq 0 && test -n "$output_wasm"
+then
+    output="${output_wasm%.wasm}"
+    if test "$output" != "$output_wasm" && test -e "$output_wasm" && test ! -e "$output"
+    then
+        mv "$output_wasm" "$output"
+    fi
+fi
+
+exit "$status"
+""",
+        ),
+        is_executable = True,
+        allow_args = True,
+    )
+
+    ghc = RunInfo(
+        cmd_args([
+            distr_info.compiler.args,
+            cmd_args(libffi.project("include"), format = "-I{}"),
+            cmd_args(libffi.project("lib"), format = "-optl-L{}"),
+            "-pgma",
+            wasi_sdk.project("bin/wasm32-wasi-clang"),
+            "-pgmlas",
+            wasi_sdk.project("bin/wasm32-wasi-clang"),
+            "-pgmc",
+            wasi_sdk.project("bin/wasm32-wasi-clang"),
+            "-pgmcxx",
+            wasi_sdk.project("bin/wasm32-wasi-clang++"),
+            "-pgmP",
+            wasi_sdk.project("bin/wasm32-wasi-clang"),
+            # "-pgmJSP",
+            # wasi_sdk.project("bin/wasm32-wasi-clang"),
+            # "-pgmCmmP",
+            # wasi_sdk.project("bin/wasm32-wasi-clang"),
+            "-pgml",
+            linker_wrapper,
+            "-pgmlm",
+            wasi_sdk.project("bin/wasm-ld"),
+            "-pgmar",
+            wasi_sdk.project("bin/llvm-ar"),
+        ]),
+    )
+
+    return [
+        DefaultInfo(),
+        HaskellGHCDistrInfo(
+            compiler = ghc,
+            linker = ghc,
+            packager = distr_info.packager,
+            haddock = distr_info.haddock,
+            version = distr_info.version,
+        ),
+    ]
+
+haskell_ghc_wasm_distr = rule(
+    impl = _haskell_ghc_wasm_distr_impl,
+    attrs = {
+        "ghc_root": attrs.source(allow_directory = True),
+        "wasi_sdk": attrs.source(allow_directory = True),
+        "libffi": attrs.source(allow_directory = True),
+        "bin_prefix": attrs.string(default = ""),
+        "version": attrs.string(),
+    },
+)
+
+def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
+    ghc_distr = ctx.attrs.ghc_distr[HaskellGHCDistrInfo]
+
+    return [
+        DefaultInfo(),
+        ghc_distr,
+        HaskellToolchainInfo(
+            compiler = ghc_distr.compiler,
+            compiler_flags = ctx.attrs.compiler_flags,
+            linker = ghc_distr.linker,
+            linker_flags = ctx.attrs.linker_flags,
+            packager = ghc_distr.packager,
+            haddock = ghc_distr.haddock,
         ),
         HaskellPlatformInfo(
             # TODO: what is HaskellPlatformInfo even used for?
@@ -123,10 +268,9 @@ def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
 haskell_toolchain = rule(
     impl = _haskell_toolchain_impl,
     attrs = {
-        "ghc_root": attrs.source(allow_directory = True),
+        "ghc_distr": attrs.exec_dep(providers = [HaskellGHCDistrInfo]),
         "compiler_flags": attrs.list(attrs.arg(), default = []),
         "linker_flags": attrs.list(attrs.arg(), default = []),
-        "version": attrs.string(),
     },
     is_toolchain_rule = True,
 )
