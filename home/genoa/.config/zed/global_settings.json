@@ -13,6 +13,18 @@
     "swift": true,
     "toml": true
   },
+  "auto_update_extensions": {
+    "alabaster": false,
+    "biome": false,
+    "elixir": false,
+    "git-firefly": false,
+    "html": false,
+    "nix": false,
+    "pyrefly": false,
+    "starlark": false,
+    "swift": false,
+    "toml": false
+  },
 
   "theme": {
     "dark": "Alabaster Dark",
