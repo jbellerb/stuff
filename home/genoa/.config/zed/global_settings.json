@@ -1,6 +1,4 @@
 {
-  "auto_update": false,
-
   "auto_install_extensions": {
     "alabaster": true,
     "biome": true,
@@ -46,6 +44,11 @@
   "ui_font_family": "IBM Plex Sans",
   "diff_view_style": "unified",
   "hour_format": "hour24",
+
+  "project_panel": { "dock": "left" },
+  "outline_panel": { "dock": "left" },
+  "collaboration_panel": { "dock": "left" },
+  "git_panel": { "dock": "left" },
 
   "helix_mode": true,
 
