@@ -13,6 +13,4 @@ if (plugins && Array.isArray(plugins) && plugins.length > 0) {
   );
 }
 
-console.log(options);
-
 await esbuild.build(options);
