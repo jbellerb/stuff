@@ -14,7 +14,7 @@ prelude = git
 
 [external_cell_prelude]
 git_origin = https://github.com/facebook/buck2-prelude
-commit_hash = f0896771c4cc1ab8f87e032c5293376c89e5096b
+commit_hash = 9871e50c53b21e58caa40ac06e51659542aed30c
 
 [parser]
 target_platform_detector_spec = \
