@@ -1,5 +1,5 @@
+load("//deno:npm.bzl", "NodePackageInfo", "NodePackageTSet")
 load(":defs.bzl", "EsbuildToolchainInfo")
-load(":npm.bzl", "NodePackageInfo")
 
 def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     esbuild_toolchain = ctx.attrs._esbuild_toolchain[EsbuildToolchainInfo]
@@ -49,10 +49,13 @@ def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
 
     cmd.add(cmd_args(output.as_output(), format = "--outfile={}"))
 
-    deps = []
-    for dep in ctx.attrs.deps:
-        info = dep[NodePackageInfo]
-        deps.append(cmd_args(info.contents, format = info.package + ":{}"))
+    deps = [
+        "{}:{}".format(dep.package, dep.contents)
+        for dep in ctx.actions.tset(
+            NodePackageTSet,
+            children = [dep[NodePackageInfo].lib for dep in ctx.attrs.deps],
+        ).traverse()
+    ]
 
     bundle = cmd_args([
         "sh",

@@ -1,18 +1,32 @@
 load("@prelude//http_archive:exec_deps.bzl", "HttpArchiveExecDeps")
 load("@prelude//http_archive:unarchive.bzl", "unarchive")
 
+NodePackage = record(
+    package = str,
+    contents = Artifact,
+)
+
+def _project_as_package_json(entry: NodePackage) -> dict:
+    return {
+        "pkg": entry.package,
+        "path": entry.contents,
+    }
+
+NodePackageTSet = transitive_set(
+    json_projections = {"package": _project_as_package_json},
+)
+
 NodePackageInfo = provider(
-    fields = {
-        "package": provider_field(str),
-        "contents": provider_field(Artifact),
-    },
+    fields = {"lib": provider_field(NodePackageTSet)},
 )
 
 def _parse_npm_name(name: str) -> typing.Any:
+    scope, package = "", name
     if name.startswith("@"):
-        scope, package = name.split("/", 1)
-        return scope, package
-    return "", name
+        scope, _, package = name.partition("/")
+    if package == "" or "/" in package:
+        fail("Failed to parse npm package name: {}".format(name))
+    return scope, package
 
 def _npm_package_impl(ctx: AnalysisContext) -> list[Provider]:
     scope, package = _parse_npm_name(
@@ -48,8 +62,11 @@ def _npm_package_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(default_output = output),
         NodePackageInfo(
-            package = full_package,
-            contents = output,
+            lib = ctx.actions.tset(
+                NodePackageTSet,
+                value = NodePackage(package = full_package, contents = output),
+                children = [dep[NodePackageInfo].lib for dep in ctx.attrs.deps],
+            ),
         ),
     ]
 
@@ -68,6 +85,11 @@ npm_package = rule(
             attrs.string(),
             default = None,
             doc = "The SHA-256 hash of the downloaded archive.",
+        ),
+        "deps": attrs.list(
+            attrs.dep(providers = [NodePackageInfo]),
+            default = [],
+            doc = "The package dependencies.",
         ),
         "_archive_exec_deps": attrs.default_only(attrs.exec_dep(
             providers = [HttpArchiveExecDeps],
