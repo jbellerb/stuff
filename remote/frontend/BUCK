@@ -1,0 +1,31 @@
+load("@toolchains//esbuild:rules.bzl", "esbuild_bundle")
+
+TARGETS = ["chrome142", "firefox140", "safari18", "ios18"]
+
+export_file(
+    name = "index",
+    src = "index.html",
+    visibility = ["//remote/..."],
+)
+
+esbuild_bundle(
+    name = "bundle-js",
+    entrypoints = ["app.ts"],
+    deps = ["//third-party/npm/@xterm/xterm:xterm"],
+    format = "esm",
+    platform = "browser",
+    target = TARGETS,
+    minify = True,
+    plugins = ["plugins/esbuild-cssstylesheet.ts"],
+    visibility = ["//remote/..."],
+)
+
+esbuild_bundle(
+    name = "bundle-css",
+    entrypoints = ["main.css"],
+    outfile = "main.css",
+    deps = ["//third-party/npm/@xterm/xterm:xterm"],
+    target = TARGETS,
+    minify = True,
+    visibility = ["//remote/..."],
+)

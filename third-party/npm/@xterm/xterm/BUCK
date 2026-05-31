@@ -1,0 +1,14 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "xterm-6.0.0",
+    package = "@xterm/xterm",
+    version = "6.0.0",
+    sha256 = "908e66e04af6c8dc6b00dd3b54de088e2e81e5ed866284fd6c2fb3c2d1c7a3f6",
+)
+
+alias(
+    name = "xterm",
+    actual = ":xterm-6.0.0",
+    visibility = ["PUBLIC"],
+)

@@ -1,0 +1,13 @@
+go_binary(
+    name = "remote",
+    srcs = glob(["*.go"]),
+    deps = [
+        "//third-party/go/github.com/coder/websocket:websocket",
+    ],
+    embed_srcs = {
+        "index.html": "//remote/frontend:index",
+        "index.js": "//remote/frontend:bundle-js",
+        "main.css": "//remote/frontend:bundle-css",
+    },
+    visibility = ["PUBLIC"],
+)

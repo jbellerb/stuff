@@ -1,0 +1,60 @@
+http_archive(
+    name = "github.com/coder/websocket__srcs",
+    sha256 = "b729277821461eb21a816c16e29a02029dd6abbb1a43b526c1e0a6b794942de0",
+    strip_prefix = "github.com/coder/websocket@v1.8.14",
+    sub_targets = {
+        ".": [
+            "accept.go",
+            "close.go",
+            "compress.go",
+            "conn.go",
+            "dial.go",
+            "doc.go",
+            "errors.go",
+            "frame.go",
+            "hijack.go",
+            "mask.go",
+            "mask_amd64.s",
+            "mask_arm64.s",
+            "mask_asm.go",
+            "mask_go.go",
+            "netconn.go",
+            "netconn_notjs.go",
+            "read.go",
+            "stringer.go",
+            "write.go",
+        ],
+        "internal/errd": [
+            "internal/errd/wrap.go",
+        ],
+        "internal/util": [
+            "internal/util/util.go",
+        ],
+    },
+    urls = ["https://proxy.golang.org/github.com/coder/websocket/@v/v1.8.14.zip"],
+)
+
+go_library(
+    name = "websocket",
+    package_name = "github.com/coder/websocket",
+    srcs = [":github.com/coder/websocket__srcs[.]"],
+    deps = [
+        ":websocket/internal/errd",
+        ":websocket/internal/util",
+    ],
+    visibility = ["PUBLIC"],
+)
+
+go_library(
+    name = "websocket/internal/errd",
+    package_name = "github.com/coder/websocket/internal/errd",
+    srcs = [":github.com/coder/websocket__srcs[internal/errd]"],
+    visibility = ["//third-party/go/github.com/coder/websocket/..."],
+)
+
+go_library(
+    name = "websocket/internal/util",
+    package_name = "github.com/coder/websocket/internal/util",
+    srcs = [":github.com/coder/websocket__srcs[internal/util]"],
+    visibility = ["//third-party/go/github.com/coder/websocket/..."],
+)
