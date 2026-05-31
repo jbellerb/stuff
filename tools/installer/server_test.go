@@ -4,8 +4,10 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -53,7 +55,7 @@ func (ts *testServer) writeFile(t *testing.T, name, content string) string {
 func (ts *testServer) install(t *testing.T, id string, files map[string]string) *pb.FileResponse {
 	t.Helper()
 
-	req := &pb.InstallInfoRequest{InstallId: id, Files: files}
+	req := &pb.InstallInfoRequest{InstallId: id, FileNames: slices.Collect(maps.Keys(files))}
 	if _, err := ts.Install(context.Background(), req); err != nil {
 		t.Fatalf("Install failed: %v", err)
 	}
@@ -76,10 +78,7 @@ func TestInstall_RecordsFilesMap(t *testing.T) {
 
 	req := &pb.InstallInfoRequest{
 		InstallId: "//foo:bar",
-		Files: map[string]string{
-			"~/.config/foo.conf": "/buck-out/tmp/foo.conf",
-			"~/.local/bin/foo":   "/buck-out/tmp/foo",
-		},
+		FileNames: []string{"~/.config/foo.conf", "~/.local/bin/foo"},
 	}
 
 	resp, err := s.Install(context.Background(), req)
@@ -99,7 +98,7 @@ func TestInstall_RecordsFilesMap(t *testing.T) {
 		t.Fatalf("expected state to hold 2 pending files, got %d", len(state.pending))
 	}
 
-	for name := range req.Files {
+	for _, name := range req.FileNames {
 		if _, ok := state.pending[name]; !ok {
 			t.Errorf("expected file %s in pending state", name)
 		}
@@ -118,11 +117,11 @@ func TestInstall_MultipleCalls(t *testing.T) {
 
 	req1 := &pb.InstallInfoRequest{
 		InstallId: "//foo:bar",
-		Files:     map[string]string{"~/.config/foo.conf": "/buck-out/tmp/foo.conf"},
+		FileNames: []string{"~/.config/foo.conf"},
 	}
 	req2 := &pb.InstallInfoRequest{
 		InstallId: "//baz:qux",
-		Files:     map[string]string{"~/.config/baz.conf": "/buck-out/tmp/baz.conf"},
+		FileNames: []string{"~/.config/baz.conf"},
 	}
 
 	if _, err := ts.Install(context.Background(), req1); err != nil {
@@ -298,7 +297,7 @@ func TestFileReady_UnknownFileName(t *testing.T) {
 
 	req := &pb.InstallInfoRequest{
 		InstallId: "//test:target",
-		Files:     map[string]string{"~/.config/foo.conf": "/buck-out/tmp/foo.conf"},
+		FileNames: []string{"~/.config/foo.conf"},
 	}
 	if _, err := ts.Install(context.Background(), req); err != nil {
 		t.Fatalf("Install failed: %v", err)
@@ -317,13 +316,12 @@ func TestFileReady_UnknownFileName(t *testing.T) {
 func TestFileReady_PartialInstall_NoSymlinks(t *testing.T) {
 	ts := newTestServer(t)
 	src1 := ts.writeFile(t, "source1.txt", "test1")
-	src2 := ts.writeFile(t, "source2.txt", "test2")
 	dst1 := filepath.Join(ts.dir, "destination1.txt")
 	dst2 := filepath.Join(ts.dir, "destination2.txt")
 
 	req := &pb.InstallInfoRequest{
 		InstallId: "//test:partial",
-		Files:     map[string]string{dst1: src1, dst2: src2},
+		FileNames: []string{dst1, dst2},
 	}
 	if _, err := ts.Install(context.Background(), req); err != nil {
 		t.Fatalf("Install failed: %v", err)
@@ -418,7 +416,7 @@ func TestFileReady_TracksStartedAndCompleted(t *testing.T) {
 	// register install but don't complete any files yet
 	req := &pb.InstallInfoRequest{
 		InstallId: "//test:tracking",
-		Files:     map[string]string{dst: src},
+		FileNames: []string{dst},
 	}
 	if _, err := ts.Install(context.Background(), req); err != nil {
 		t.Fatalf("Install failed: %v", err)
