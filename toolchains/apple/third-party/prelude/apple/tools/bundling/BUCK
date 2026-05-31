@@ -45,3 +45,15 @@ python_library(
         "prelude//apple/tools/re_compatibility_utils:re_compatibility_utils",
     ],
 )
+
+meta_python_test(
+    name = "bundling_test",
+    srcs = glob(["*_test.py"]),
+    resources = glob([
+        "test_resources/*",
+    ]),
+    deps = [
+        "fbsource//third-party/pypi/setuptools:setuptools",
+        ":lib",
+    ],
+)

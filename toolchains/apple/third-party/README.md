@@ -1,5 +1,5 @@
 This directory contains modified bits of the prelude for building with the OSS
-verson of Buck2. Based on revision `e9737f0bfbce5c0d47e5bc2ff361bda2b7a08c31`.
+verson of Buck2. Based on revision `19125a663111fdd5e3d2f527239504257ef2cd47`.
 
 ### Local Modifications
 
