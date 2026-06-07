@@ -34,5 +34,6 @@ esbuild_toolchain(
         "config//os:linux": ":esbuild-x86_64-linux",
         "config//os:macos": ":esbuild-aarch64-darwin",
     }),
+    esbuild_build = "//esbuild/tools:esbuild_build",
     visibility = ["toolchains//..."],
 )

@@ -8,88 +8,62 @@ def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
         outfile = ctx.attrs.outfile
     else:
         outfile = ctx.label.name
-        if not ctx.label.name.endswith(".js"):
+        if not ctx.label.name.endswith(".js") and not ctx.label.name.endswith(".css"):
             outfile += ".js"
     output = ctx.actions.declare_output(outfile)
 
-    cmd = cmd_args([
-        esbuild_toolchain.esbuild,
-        ctx.attrs.entrypoints,
-    ], hidden = ctx.attrs.srcs)
-
+    options = {"entryPoints": ctx.attrs.entrypoints}
     if ctx.attrs.bundle:
-        cmd.add("--bundle")
-
+        options["bundle"] = True
     if ctx.attrs.format != None:
-        cmd.add("--format=" + ctx.attrs.format)
-
+        options["format"] = ctx.attrs.format
     if ctx.attrs.platform != None:
-        cmd.add("--platform=" + ctx.attrs.platform)
-
+        options["platform"] = ctx.attrs.platform
     if ctx.attrs.target != []:
-        cmd.add("--target=" + ",".join(ctx.attrs.target))
-
-    if ctx.attrs.tsconfig != None:
-        cmd.add(cmd_args(ctx.attrs.tsconfig, format = "--tsconfig={}"))
-
+        options["target"] = ctx.attrs.target
     if ctx.attrs.minify:
-        cmd.add("--minify")
-
+        options["minify"] = True
     if ctx.attrs.sourcemap != None:
-        cmd.add("--sourcemap=" + ctx.attrs.sourcemap)
-
-    for pkg in ctx.attrs.external:
-        cmd.add("--external:" + pkg)
-
-    for key, value in ctx.attrs.define.items():
-        cmd.add("--define:" + key + "=" + value)
-
-    for ext, loader_type in ctx.attrs.loader.items():
-        cmd.add("--loader:" + ext + "=" + loader_type)
-
-    cmd.add(cmd_args(output.as_output(), format = "--outfile={}"))
-
-    deps = [
-        "{}:{}".format(dep.package, dep.contents)
-        for dep in ctx.actions.tset(
+        options["sourcemap"] = ctx.attrs.sourcemap
+    if ctx.attrs.external != []:
+        options["external"] = ctx.attrs.external
+    if ctx.attrs.define != {}:
+        options["define"] = ctx.attrs.define
+    if ctx.attrs.loader != {}:
+        options["loader"] = ctx.attrs.loader
+    if ctx.attrs.tsconfig != None:
+        options["tsconfig"] = ctx.attrs.tsconfig
+    if ctx.attrs.deps != []:
+        node_modules = ctx.actions.declare_output("node_modules", dir = True)
+        deps = ctx.actions.tset(
             NodePackageTSet,
             children = [dep[NodePackageInfo].lib for dep in ctx.attrs.deps],
-        ).traverse()
-    ]
+        )
+        ctx.actions.symlinked_dir(
+            node_modules.as_output(),
+            {dep.package: dep.contents for dep in deps.traverse()},
+        )
+        options["nodePaths"] = cmd_args(node_modules)
+    if ctx.attrs.plugins != []:
+        options["plugins"] = cmd_args(ctx.attrs.plugins)
 
-    bundle = cmd_args([
-        "sh",
-        "-c",
-        r"""
-mkdir -p "$BUCK_SCRATCH_PATH/node_path"
+    bundle_cfg = ctx.actions.write_json(
+        ctx.actions.declare_output("bundle.json").as_output(),
+        options,
+        with_inputs = True,
+    )
 
-while test "$#" -gt 0
-do
-    if test "$1" = "--"
-    then
-        shift
-        break
-    fi
+    bundle = cmd_args(
+        [esbuild_toolchain.esbuild_build, bundle_cfg, output.as_output()],
+        hidden = ctx.attrs.srcs,
+    )
 
-    package=${1%:*}
-    path=${1##*:}
-    scope=${package%/*}
-    test "$scope" = "$package" || \
-        mkdir -p "$BUCK_SCRATCH_PATH/node_path/$scope"
-
-    ln -s "$PWD/$path" "$BUCK_SCRATCH_PATH/node_path/$package"
-    shift
-done
-
-NODE_PATH="$BUCK_SCRATCH_PATH/node_path" "$@"
-""",
-        "--",
-        deps,
-        "--",
-        cmd,
-    ])
-
-    ctx.actions.run(bundle, category = "esbuild_bundle", identifier = ctx.label.name)
+    ctx.actions.run(
+        bundle,
+        category = "esbuild_bundle",
+        identifier = ctx.label.name,
+        env = {"ESBUILD_BINARY_PATH": esbuild_toolchain.esbuild},
+    )
 
     return [DefaultInfo(default_output = output)]
 
@@ -164,6 +138,11 @@ esbuild_bundle = rule(
             attrs.string(),
             default = {},
             doc = "Map file extensions to esbuild loaders.",
+        ),
+        "plugins": attrs.list(
+            attrs.source(),
+            default = [],
+            doc = "A list of esbuild plugins to apply during bundling.",
         ),
         "_esbuild_toolchain": attrs.default_only(
             attrs.toolchain_dep(

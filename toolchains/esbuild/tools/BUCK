@@ -1,0 +1,19 @@
+load("//deno:npm.bzl", "npm_package")
+load("//deno:rules.bzl", "deno_binary")
+
+npm_package(
+    name = "esbuild-0.28.0",
+    package = "esbuild",
+    version = "0.28.0",
+    sha256 = "a26129dd91dd4cf0286ca5e35f98c1901bdd67175c0cdc5ca665cfba382d2b7e",
+)
+
+deno_binary(
+    name = "esbuild_build",
+    main = "esbuild_build.js",
+    skip_check = True,
+    permissions = ["env", "read", "run", "write"],
+    unstable_features = ["detect-cjs"],
+    npm_deps = [":esbuild-0.28.0"],
+    visibility = ["//esbuild/..."],
+)
