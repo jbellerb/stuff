@@ -7,6 +7,7 @@ load(
     "ObjcxxCompilerInfo",
 )
 load("@prelude//decls:common.bzl", "buck")
+load("@prelude//cxx:cxx_apple_linker_flags.bzl", "is_valid_apple_platform_name")
 load("@prelude//linking:link_info.bzl", "LinkOrdering")
 load(
     "@prelude//toolchains:cxx.bzl",
@@ -64,12 +65,12 @@ def _system_cxx_toolchain_impl(ctx: AnalysisContext) -> Promise:
             **{k: getattr(base["cxx_compiler_info"], k, None) for k in _COMPILER_FIELDS}
         )
 
-        if ctx.attrs.minimum_os_version:
-            base["minimum_os_version"] = ctx.attrs.minimum_os_version
-
         # the prelude sets the OS name to "macos", but the Apple target triple
         # map expects the SDK name "macosx"
         platform_name = platform_name.replace("macos-", "macosx-", 1)
+
+        if ctx.attrs.minimum_os_version and is_valid_apple_platform_name(platform_name):
+            base["minimum_os_version"] = ctx.attrs.minimum_os_version
 
         return [
             DefaultInfo(),
