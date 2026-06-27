@@ -7,17 +7,21 @@ def _deno_binary_impl(ctx: AnalysisContext) -> list[Provider]:
     cfg = {"lock": False}
     hidden = []
     if ctx.attrs.npm_deps != []:
-        node_modules = ctx.actions.declare_output("node_modules", dir = True)
-        deps = ctx.actions.tset(
-            NodePackageTSet,
-            children = [dep[NodePackageInfo].lib for dep in ctx.attrs.npm_deps],
-        )
-        ctx.actions.symlinked_dir(
-            node_modules.as_output(),
-            {dep.package: dep.contents for dep in deps.traverse()},
-        )
-        cfg["nodeModulesDir"] = "manual"
-        hidden.append(node_modules)
+        # workspace members must be nested under the workspace root, so we
+        # symlink each package into a `workspace/` dir beside deno.json.
+        # Traverse each dependency's own transitive set rather than merging them
+        # into a fresh TSet. TSets can't cross cell boundaries, so this is
+        # required for toolchain rules to call third-party dependencies.
+        #
+        # TODO: should toolchains have a separate set of third-party packages?
+        members = {
+            package.package: package.contents
+            for dep in ctx.attrs.npm_deps
+            for package in dep[NodePackageInfo].lib.traverse()
+        }
+        workspace = ctx.actions.symlinked_dir("workspace", members)
+        cfg["workspace"] = ["./workspace/" + package for package in members]
+        hidden.append(workspace)
 
     deno_cfg = ctx.actions.write_json(
         ctx.actions.declare_output("deno.json").as_output(),
