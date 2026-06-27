@@ -223,7 +223,21 @@ def _haskell_boot_library(
             shared_libs,
             shared_library_infos,
         ),
-        "LinkGroupLibInfo": LinkGroupLibInfo(libs = link_group_infos),
+        "LinkableGraph": create_linkable_graph(
+            ctx,
+            node = create_linkable_graph_node(
+                ctx,
+                linkable_node = create_linkable_node(
+                    ctx,
+                    exported_deps = [dep["LinkableGraph"] for dep in deps],
+                    link_infos = link_infos,
+                    shared_libs = shared_libs,
+                    default_soname = shared_lib.basename,
+                ),
+            ),
+            deps = [dep["LinkableGraph"] for dep in deps],
+        ),
+        "LinkGroupLibInfo": merge_link_group_lib_info(children = link_group_infos),
     }
 
 def haskell_boot_package_database(
