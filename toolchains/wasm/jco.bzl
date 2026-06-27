@@ -1,3 +1,11 @@
+load("//deno:node.bzl", "NodePackageTSet")
+load(
+    "//typescript:rules.bzl",
+    "TypeScriptLibTSet",
+    "TypeScriptLibraryInfo",
+    "TypeScriptModule",
+    "TypeScriptModuleTSet",
+)
 load(":defs.bzl", "WasmToolchainInfo")
 
 _PREVIEW2_SHIM_MAP = {
@@ -24,6 +32,8 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
             "instantiation": "async",
             "map": ctx.attrs.shim_map,
             "name": ctx.attrs.module_name,
+            "compress": ctx.attrs.compress,
+            "compressor": ctx.attrs.compressor[RunInfo] if ctx.attrs.compressor else None,
         },
         with_inputs = True,
     )
@@ -55,6 +65,7 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
                     ctx.attrs.module_name + ".js",
                     ctx.attrs.module_name + ".d.ts",
                     "cores.js",
+                    "cores.d.ts",
                 ]
             },
         ),
@@ -80,6 +91,21 @@ jco_transpile = rule(
         "optimize": attrs.bool(
             default = False,
             doc = "Run wasm-opt on core modules after splitting.",
+        ),
+        "compress": attrs.bool(
+            default = False,
+            doc = """
+            Bake core modules into .js modules of gzipped base64 so the output
+            is a self-contained ES module graph.
+            """,
+        ),
+        "compressor": attrs.option(
+            attrs.exec_dep(providers = [RunInfo]),
+            default = None,
+            doc = """
+            A compressor command that takes a binary as stdin and produces a
+            gzip binary as stdout. Implies `compress = True`.
+            """,
         ),
         "_jco_transpile": attrs.default_only(
             attrs.exec_dep(

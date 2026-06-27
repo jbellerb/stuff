@@ -1,6 +1,6 @@
 import { transpileBytes } from "npm:@bytecodealliance/jco-transpile";
 
-const { input, name, instantiation, map } = JSON.parse(
+const { input, name, instantiation, map, compress, compressor } = JSON.parse(
   await Deno.readTextFile(Deno.args[0]),
 );
 const outDir = Deno.args[1];
@@ -18,7 +18,7 @@ const { files } = await transpileBytes(component, {
   wasiShim: false,
 });
 
-const coreNames = [];
+const cores = [];
 for (const [name, bytes] of Object.entries(files)) {
   const path = `${outDir}/${name}`;
   const slash = path.lastIndexOf("/");
@@ -28,13 +28,94 @@ for (const [name, bytes] of Object.entries(files)) {
   await Deno.writeFile(path, bytes);
 
   if (/\.core\d*\.wasm$/.test(name)) {
-    coreNames.push(name);
+    cores[name] = bytes;
   }
 }
-coreNames.sort();
 
-const coresJs = coreNames
-  .map((name) => `export { default as "${name}" } from "./${name}";\n`)
-  .join("");
+const compressBinary = async (bytes) => {
+  if (compressor != null) {
+    const child = Deno.spawn(compressor[0], {
+      args: compressor.slice(1),
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "inherit",
+    });
+    const writer = child.stdin.getWriter();
+    try {
+      writer.write(bytes);
+      await writer.close();
+    } catch (e) {
+      throw new Error(`failed to write to compressor: ${e.message}`);
+    }
 
-await Deno.writeFile(`${outDir}/cores.js`, new TextEncoder().encode(coresJs));
+    let output;
+    try {
+      output = await child.stdout.bytes();
+    } catch (e) {
+      throw new Error(`failed to read from compressor: ${e.message}`);
+    }
+
+    const status = await child.status;
+    if (!status.success) {
+      throw new Error(
+        `compressor returned non-zero exit code: ${status.code}`,
+      );
+    }
+    return new Uint8Array(output.stdout);
+  } else {
+    using file = await Deno.open(path, { read: true });
+    const stream = file.readable.pipeThrough(new CompressionStream("gzip"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+};
+
+if (compress) {
+  await Deno.writeTextFile(
+    `${outDir}/compile.js`,
+    `export default function compile(base64) {
+  const stream = new ReadableStream({
+    start(c) {
+      c.enqueue(Uint8Array.fromBase64(base64));
+      c.close();
+    },
+  }).pipeThrough(new DecompressionStream("gzip"));
+  return WebAssembly.compileStreaming(new Response(stream));
+}
+`,
+  );
+} else {
+  await Deno.writeTextFile(
+    `${outDir}/compile.js`,
+    `export default function compile(base64) {
+  return WebAssembly.compile(Uint8Array.fromBase64(base64));
+}
+`,
+  );
+}
+
+await Deno.writeTextFile(
+  `${outDir}/cores.js`,
+  `import compile from "./compile.js";
+
+const cores = {
+${await Promise.all(
+    Object.entries(cores).map(
+      async ([name, bytes]) =>
+        `  "${name}": "${
+          (compress ? await compressBinary(bytes) : bytes).toBase64()
+        }",`,
+    ),
+  ).then((cores) => cores.join("\n"))}
+};
+
+export const getCoreModule = (name) => {
+  const bytes = cores[name];
+  if (!bytes) throw new Error(\`missing core module: \${name}\`);
+  return compile(bytes);
+};
+`,
+);
+await Deno.writeTextFile(
+  `${outDir}/cores.d.ts`,
+  "export const getCoreModule: (path: string) => Promise<WebAssembly.Module>;\n",
+);
