@@ -208,5 +208,6 @@ haskell_toolchain(
         "config//os:wasi": ":ghc-9.10.3.20260403-wasm32-wasi",
         "DEFAULT": ":ghc-9.10.3",
     }),
+    compiler_flags = ["-XGHC2024"],
     visibility = ["//..."],
 )
