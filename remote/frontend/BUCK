@@ -1,8 +1,9 @@
-load("@toolchains//esbuild:rules.bzl", "esbuild_bundle")
+load("@toolchains//css:rules.bzl", "css_bundle")
 load("@toolchains//typescript:rules.bzl", "typescript_bundle")
 load(":defs.bzl", "css_stylesheet")
 
 TARGETS = ["chrome142", "firefox140", "safari18", "ios18"]
+CSS_TARGETS = ["chrome >= 142", "firefox >= 140", "safari >= 18", "ios_saf >= 18"]
 
 export_file(
     name = "index",
@@ -31,12 +32,11 @@ typescript_bundle(
     visibility = ["//remote/..."],
 )
 
-esbuild_bundle(
+css_bundle(
     name = "bundle-css",
-    entrypoints = ["main.css"],
+    entrypoint = "main.css",
     outfile = "main.css",
-    deps = ["//third-party/npm/@xterm/xterm:xterm"],
-    target = TARGETS,
+    targets = CSS_TARGETS,
     minify = True,
     visibility = ["//remote/..."],
 )

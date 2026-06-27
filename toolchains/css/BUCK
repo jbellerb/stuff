@@ -1,0 +1,44 @@
+load(":defs.bzl", "css_toolchain")
+
+http_archive(
+    name = "darwin-arm64-1.32.0.tgz",
+    sha256 = "2d3b35acef94f2ace79ca3184555edd05476fe84de4e9596d1165f7da204c33a",
+    strip_prefix = "package",
+    urls = ["https://registry.npmjs.org/lightningcss-cli-darwin-arm64/-/lightningcss-cli-darwin-arm64-1.32.0.tgz"],
+)
+
+http_archive(
+    name = "linux-x64-gnu-1.32.0.tgz",
+    sha256 = "4f821eb5ea1078b8fd10adbe4efd06978edee236f8e6f7f84a3c5d87b74b5505",
+    strip_prefix = "package",
+    urls = ["https://registry.npmjs.org/lightningcss-cli-linux-x64-gnu/-/lightningcss-cli-linux-x64-gnu-1.32.0.tgz"],
+)
+
+genrule(
+    name = "lightningcss-aarch64-darwin",
+    out = "lightningcss",
+    cmd = "ln -sF $(location :darwin-arm64-1.32.0.tgz)/lightningcss $OUT",
+    executable = True,
+)
+
+genrule(
+    name = "lightningcss-x86_64-linux",
+    out = "lightningcss",
+    cmd = "ln -sF $(location :linux-x64-gnu-1.32.0.tgz)/lightningcss $OUT",
+    executable = True,
+)
+
+alias(
+    name = "lightningcss",
+    actual = select({
+        "config//os:linux": ":lightningcss-x86_64-linux",
+        "config//os:macos": ":lightningcss-aarch64-darwin",
+    }),
+    visibility = ["PUBLIC"],
+)
+
+css_toolchain(
+    name = "css",
+    lightningcss = ":lightningcss",
+    visibility = ["toolchains//..."],
+)

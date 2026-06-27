@@ -8,14 +8,7 @@ load(
 )
 
 def _css_stylesheet_impl(ctx: AnalysisContext) -> list[Provider]:
-    esbuild = ctx.attrs._esbuild[DefaultInfo].default_outputs[0]
-
-    package = ctx.attrs.package[NodePackageInfo].lib
-    node_modules = ctx.actions.declare_output("node_modules", dir = True)
-    ctx.actions.symlinked_dir(
-        node_modules.as_output(),
-        {dep.package: dep.contents for dep in package.traverse()},
-    )
+    lightningcss = ctx.attrs._lightningcss[DefaultInfo].default_outputs[0]
 
     output = ctx.actions.declare_output(ctx.label.name, dir = True)
 
@@ -23,25 +16,21 @@ def _css_stylesheet_impl(ctx: AnalysisContext) -> list[Provider]:
         "sh",
         "-c",
         r"""
-esbuild=$1
+lightningcss=$1
 entry=$2
-node_modules=$3
-output=$4
+output=$3
 
 mkdir -p "$output"
 
-NODE_PATH="$PWD/$node_modules" "$esbuild" "$entry" --bundle --minify \
-    --outfile="$BUCK_SCRATCH_PATH/main.css"
+"$lightningcss" --bundle --minify "$entry" \
+    --output-file="$BUCK_SCRATCH_PATH/main.css"
 
-cat > "$BUCK_SCRATCH_PATH/stub.js" << EOF
-import rules from "./main.css";
+cat > "$output/index.js" << EOF
+const rules = "$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' "$BUCK_SCRATCH_PATH/main.css")";
 const stylesheet = new CSSStyleSheet();
 stylesheet.replaceSync(rules);
 export default stylesheet;
 EOF
-
-"$esbuild" "$BUCK_SCRATCH_PATH/stub.js" --bundle --format=esm \
-    --loader:.css=text --outfile="$output/index.js"
 
 cat > "$output/index.d.ts" << EOF
 declare const stylesheet: CSSStyleSheet;
@@ -49,12 +38,11 @@ export default stylesheet;
 EOF
 """,
         "--",
-        esbuild,
+        lightningcss,
         cmd_args(
             [ctx.attrs.package[DefaultInfo].default_outputs[0], ctx.attrs.path],
             delimiter = "/",
         ),
-        node_modules,
         output.as_output(),
     ])
 
@@ -90,9 +78,9 @@ css_stylesheet = rule(
         "path": attrs.string(
             doc = "Path of the stylesheet within the package.",
         ),
-        "_esbuild": attrs.default_only(
+        "_lightningcss": attrs.default_only(
             attrs.exec_dep(
-                default = "toolchains//esbuild:binary",
+                default = "toolchains//css:lightningcss",
                 providers = [RunInfo],
             ),
         ),

@@ -39,6 +39,12 @@ toolchain_alias(
 )
 
 toolchain_alias(
+    name = "css",
+    actual = "toolchains//css:css",
+    visibility = ["PUBLIC"],
+)
+
+toolchain_alias(
     name = "esbuild",
     actual = "toolchains//esbuild:esbuild",
     visibility = ["PUBLIC"],
