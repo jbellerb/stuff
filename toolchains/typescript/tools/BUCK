@@ -10,6 +10,15 @@ deno_binary(
 )
 
 deno_binary(
+    name = "rolldown_bundle",
+    main = "rolldown_bundle.ts",
+    srcs = ["lib/util.ts", "lib/types.ts"],
+    permissions = ["env", "ffi", "read", "run", "write"],
+    npm_deps = ["root//third-party/npm/rolldown:rolldown"],
+    visibility = ["//typescript/..."],
+)
+
+deno_binary(
     name = "tsc_build",
     main = "tsc_build.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],

@@ -1,0 +1,14 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "pluginutils-1.0.1",
+    package = "@rolldown/pluginutils",
+    version = "1.0.1",
+    sha256 = "13fcb3423d37f95a8e861c172e4b62fd24f22412be4e942087367242476e3400",
+)
+
+alias(
+    name = "pluginutils",
+    actual = ":pluginutils-1.0.1",
+    visibility = ["PUBLIC"],
+)

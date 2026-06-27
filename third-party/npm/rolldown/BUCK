@@ -1,0 +1,32 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "binding-darwin-arm64-1.1.5",
+    package = "@rolldown/binding-darwin-arm64",
+    version = "1.1.5",
+    sha256 = "483f67609297a9f4c45a4447542728bc0b69dec18cf4da0252ecaabf70affb75",
+)
+
+npm_package(
+    name = "binding-linux-x64-gnu-1.1.5",
+    package = "@rolldown/binding-linux-x64-gnu",
+    version = "1.1.5",
+    sha256 = "f9810c10a3bdd9e962c43c42234c8b661e389fdc75febeec19da0c68928be913",
+)
+
+npm_package(
+    name = "rolldown-1.1.5",
+    package = "rolldown",
+    version = "1.1.5",
+    sha256 = "1c5ed26d1c8d29fb9b35050679c411f3eaf8357e857873003a691df1e66dfdc9",
+    deps = ["//third-party/npm/@rolldown/pluginutils:pluginutils"] + select({
+        "config//os:linux": [":binding-linux-x64-gnu-1.1.5"],
+        "config//os:macos": [":binding-darwin-arm64-1.1.5"],
+    }),
+)
+
+alias(
+    name = "rolldown",
+    actual = ":rolldown-1.1.5",
+    visibility = ["PUBLIC"],
+)

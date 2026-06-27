@@ -62,6 +62,8 @@ const real = (path: string): string | undefined => {
   return undefined;
 };
 
+// this is incompatible with resolveLabel from util.ts because TypeScript
+// requires this function to be synchronous
 const resolveLabel = (
   target: string,
 ): ts.ResolvedModuleWithFailedLookupLocations | undefined => {

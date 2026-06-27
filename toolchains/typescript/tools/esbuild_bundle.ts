@@ -1,67 +1,19 @@
 import * as esbuild from "npm:esbuild";
 
-import { canonicalize, matchDep } from "./lib/util.ts";
+import { abs, resolveLabel } from "./lib/util.ts";
 
-import type { Dep } from "./lib/types.ts";
-
-interface Config extends esbuild.BuildOptions {
-  cell: string;
-  package: string;
-  deps: Dep[];
-}
+import type { BundlerConfig } from "./lib/types.ts";
 
 const [configPath, outfile] = Deno.args;
-const { cell, package: pkg, deps, ...options } = JSON.parse(
+const { cell, package: pkg, deps, ...config } = JSON.parse(
   await Deno.readTextFile(configPath),
-) as Config;
-options.bundle = true;
-options.outfile = outfile;
+) as BundlerConfig;
 
-const cwd = Deno.cwd();
-const abs = (path: string): string =>
-  path.startsWith("/") ? path : `${cwd}/${path}`;
-
-if (options.nodePaths) {
-  options.nodePaths = options.nodePaths.map(abs);
-}
-
-const exists = async (path: string): Promise<boolean> => {
-  try {
-    return (await Deno.stat(path)).isFile;
-  } catch {
-    return false;
-  }
-};
-
-const resolveLabel = async (
-  importPath: string,
-): Promise<esbuild.OnResolveResult | undefined> => {
-  const label = canonicalize(importPath, cell, pkg);
-  const matched = matchDep(label, deps);
-  if (matched === undefined) {
-    return undefined;
-  }
-  const subpath = label.slice(matched.specifier.length + 1);
-
-  const root = abs(matched.transpiled);
-  const candidates = !subpath
-    ? matched.main != null ? [`${root}/${matched.main}.js`] : []
-    : [`${root}/${subpath}`, `${root}/${subpath}.js`];
-  for (const candidate of candidates) {
-    if (await exists(candidate)) {
-      return { path: candidate };
-    }
-  }
-
-  return {
-    errors: [
-      {
-        text: candidates.length === 0
-          ? `"${importPath}" has no main module`
-          : `"${importPath}" not found in ${matched.transpiled}`,
-      },
-    ],
-  };
+const options: esbuild.BuildOptions = {
+  ...config,
+  bundle: true,
+  outfile: outfile,
+  nodePaths: config.nodePaths != null ? config.nodePaths.map(abs) : undefined,
 };
 
 if (deps.length > 0) {
@@ -69,7 +21,16 @@ if (deps.length > 0) {
     {
       name: "buck-paths",
       setup(build: esbuild.PluginBuild) {
-        build.onResolve({ filter: /.*/ }, (args) => resolveLabel(args.path));
+        build.onResolve(
+          { filter: /.*/ },
+          async (args) => {
+            const resolved = await resolveLabel(args.path, cell, pkg, deps);
+            if (resolved === undefined || "path" in resolved) {
+              return resolved;
+            }
+            return { errors: [{ text: resolved.error }] };
+          },
+        );
       },
     },
   ];
