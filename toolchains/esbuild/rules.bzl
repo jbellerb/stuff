@@ -1,4 +1,4 @@
-load("//deno:node.bzl", "NodePackageInfo", "NodePackageTSet")
+load("//deno:node.bzl", "NodePackageInfo", "NodePackageTSet", "node_module")
 load(":defs.bzl", "EsbuildPluginInfo", "EsbuildToolchainInfo")
 
 def _joined_arg(arg):
