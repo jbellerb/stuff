@@ -1,4 +1,3 @@
-load("//deno:node.bzl", "NodePackage", "NodePackageInfo", "NodePackageTSet")
 load(":defs.bzl", "WasmToolchainInfo")
 
 _PREVIEW2_SHIM_MAP = {
@@ -16,7 +15,6 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
     if len(component.default_outputs) != 1:
         fail("Expected single component artifact.")
 
-    package = ctx.attrs.package_name or ctx.label.name
     out = ctx.actions.declare_output("out", dir = True)
 
     config = ctx.actions.write_json(
@@ -43,12 +41,22 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
     )
 
     return [
-        DefaultInfo(default_output = out),
-        NodePackageInfo(
-            lib = ctx.actions.tset(
-                NodePackageTSet,
-                value = NodePackage(package = package, contents = out),
-            ),
+        DefaultInfo(
+            default_output = out,
+            sub_targets = {
+                # the .js outputs load their sibling core modules by relative
+                # path, so consumers of a projection should also depend on the
+                # whole out dir
+                name: [DefaultInfo(
+                    default_output = out.project(name),
+                    other_outputs = [out],
+                )]
+                for name in [
+                    ctx.attrs.module_name + ".js",
+                    ctx.attrs.module_name + ".d.ts",
+                    "cores.js",
+                ]
+            },
         ),
     ]
 
@@ -62,11 +70,6 @@ jco_transpile = rule(
         "module_name": attrs.string(
             default = "component",
             doc = "Base name for the emitted module.",
-        ),
-        "package_name": attrs.option(
-            attrs.string(),
-            default = None,
-            doc = "Node package name for importing the output. Defaults to the rule name.",
         ),
         "shim_map": attrs.dict(
             key = attrs.string(),

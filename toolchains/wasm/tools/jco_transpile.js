@@ -12,7 +12,10 @@ const { files } = await transpileBytes(component, {
   name: name ?? "component",
   instantiation: instantiation ?? "async",
   map: map,
+  nodejsCompat: false,
+  minify: false,
   optimize: !!Deno.env.get("WASM_OPT"),
+  wasiShim: false,
 });
 
 const coreNames = [];
@@ -30,22 +33,8 @@ for (const [name, bytes] of Object.entries(files)) {
 }
 coreNames.sort();
 
-const coresJs = `${coreNames
-  .map(
-    (name, i) =>
-      `import core${i} from "./${name}" with { type: "bytes-gzip" };`,
-  )
-  .join("\n")}
-
-export const cores = Promise.all([
-${coreNames.map((_, i) => `  core${i},`).join("\n")}
-]).then(
-  ([
-${coreNames.map((_, i) => `    core${i},`).join("\n")}
-  ]) => ({
-${coreNames.map((name, i) => `    "${name}": core${i},`).join("\n")}
-  }),
-);
-`;
+const coresJs = coreNames
+  .map((name) => `export { default as "${name}" } from "./${name}";\n`)
+  .join("");
 
 await Deno.writeFile(`${outDir}/cores.js`, new TextEncoder().encode(coresJs));
