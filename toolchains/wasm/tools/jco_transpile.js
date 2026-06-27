@@ -12,6 +12,7 @@ const { files } = await transpileBytes(component, {
   name: name ?? "component",
   instantiation: instantiation ?? "async",
   map: map,
+  optimize: !!Deno.env.get("WASM_OPT"),
 });
 
 const coreNames = [];

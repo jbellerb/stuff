@@ -9,6 +9,13 @@ node_package(
     package_json = "stubs/terser/package.json",
 )
 
+node_package(
+    name = "binaryen-stub",
+    package = "binaryen",
+    srcs = subdir_glob([("stubs/binaryen", "bin/*.js")]),
+    package_json = "stubs/binaryen/package.json",
+)
+
 npm_package(
     name = "jco-transpile-0.3.6",
     package = "@bytecodealliance/jco-transpile",
@@ -16,6 +23,7 @@ npm_package(
     sha256 = "9d3992462dedd79a0ecfe65889b9d1be9ef7df0c9ebda8440b83a8c843a28f3f",
     deps = [
         "//third-party/npm/@bytecodealliance/preview2-shim:preview2-shim",
+        ":binaryen-stub",
         ":terser-stub",
     ],
 )

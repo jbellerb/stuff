@@ -3,7 +3,7 @@ load("//deno:rules.bzl", "deno_binary")
 deno_binary(
     name = "jco-transpile",
     main = "jco_transpile.js",
-    permissions = ["env", "read", "write"],
+    permissions = ["env", "read", "run", "write"],
     npm_deps = [
         "root//third-party/npm/@bytecodealliance/jco-transpile:jco-transpile",
     ],
