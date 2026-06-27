@@ -1,0 +1,14 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "preview2-shim-0.19.0",
+    package = "@bytecodealliance/preview2-shim",
+    version = "0.19.0",
+    sha256 = "625d787a571bb1dd4b4e1d0fe51e2ef2f0b24e689d7cfcaff6c47ee866dc3526",
+)
+
+alias(
+    name = "preview2-shim",
+    actual = ":preview2-shim-0.19.0",
+    visibility = ["PUBLIC"],
+)

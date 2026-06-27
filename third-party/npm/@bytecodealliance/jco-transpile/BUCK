@@ -1,0 +1,27 @@
+load("@prelude//utils:glob_defs.bzl", "subdir_glob")
+load("@toolchains//deno:node.bzl", "node_package")
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+node_package(
+    name = "terser-stub",
+    package = "terser",
+    srcs = subdir_glob([("stubs/terser", "*.js")]),
+    package_json = "stubs/terser/package.json",
+)
+
+npm_package(
+    name = "jco-transpile-0.3.6",
+    package = "@bytecodealliance/jco-transpile",
+    version = "0.3.6",
+    sha256 = "9d3992462dedd79a0ecfe65889b9d1be9ef7df0c9ebda8440b83a8c843a28f3f",
+    deps = [
+        "//third-party/npm/@bytecodealliance/preview2-shim:preview2-shim",
+        ":terser-stub",
+    ],
+)
+
+alias(
+    name = "jco-transpile",
+    actual = ":jco-transpile-0.3.6",
+    visibility = ["PUBLIC"],
+)
