@@ -56,6 +56,19 @@ genrule(
     executable = True,
 )
 
+http_file(
+    name = "wasi-snapshot-preview1-reactor-v46.0.1",
+    out = "wasi_snapshot_preview1.reactor.wasm",
+    urls = ["https://github.com/bytecodealliance/wasmtime/releases/download/v46.0.1/wasi_snapshot_preview1.reactor.wasm"],
+    sha256 = "0acb10959bd3c1d2e7903ef82212910bfc156ab5698ef3f2ff669474ba59fb0a",
+)
+
+alias(
+    name = "wasi-snapshot-preview1-reactor-adapter",
+    actual = ":wasi-snapshot-preview1-reactor-v46.0.1",
+    visibility = ["PUBLIC"],
+)
+
 wasm_toolchain(
     name = "wasm",
     wasm_opt = select({
