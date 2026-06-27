@@ -1,4 +1,4 @@
-load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo")
+load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxPlatformInfo", "CxxToolchainInfo")
 load(
     "@prelude//haskell:toolchain.bzl",
     "HaskellPlatformInfo",
@@ -117,7 +117,8 @@ def haskell_ghc_distr_impl(ctx: AnalysisContext) -> list[Provider]:
         # re-export the cxx toolchain this GHC distribution was installed
         # against. GHC always uses the paths provided here, so build rules need
         # to use the same toolchain for linking.
-        cxx_toolchain,
+        ctx.attrs.cxx_toolchain[CxxToolchainInfo],
+        ctx.attrs.cxx_toolchain[CxxPlatformInfo],
     ]
 
 haskell_ghc_distr = rule(
@@ -125,7 +126,7 @@ haskell_ghc_distr = rule(
     attrs = {
         "ghc_root": attrs.source(allow_directory = True),
         "cxx_toolchain": attrs.toolchain_dep(
-            providers = [CxxToolchainInfo],
+            providers = [CxxToolchainInfo, CxxPlatformInfo],
             default = "toolchains//:cxx",
         ),
         "bin_prefix": attrs.string(default = ""),
@@ -154,6 +155,7 @@ def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
         DefaultInfo(sub_targets = {"ghc": ctx.attrs.ghc_distr.providers}),
         ghc_distr,
         ctx.attrs.ghc_distr[CxxToolchainInfo],
+        ctx.attrs.ghc_distr[CxxPlatformInfo],
         HaskellToolchainInfo(
             compiler = ghc_distr.compiler,
             compiler_flags = ctx.attrs.compiler_flags,
