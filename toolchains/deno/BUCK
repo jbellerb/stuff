@@ -28,6 +28,15 @@ genrule(
     executable = True,
 )
 
+alias(
+    name = "binary",
+    actual = select({
+        "config//os:linux": ":deno-x86_64-unknown-linux-gnu",
+        "config//os:macos": ":deno-aarch64-apple-darwin",
+    }),
+    visibility = ["PUBLIC"],
+)
+
 deno_toolchain(
     name = "deno",
     deno = select({

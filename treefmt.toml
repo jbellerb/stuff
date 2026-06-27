@@ -10,6 +10,11 @@ walk = "jujutsu"
 command = "buildifier"
 includes = ["**/BUCK", "**/PACKAGE", "*.bzl"]
 
+[formatter.deno]
+command = "buck2"
+includes = ["*.js", "*.ts"]
+options = ["run", "toolchains//deno:binary", "--", "fmt"]
+
 [formatter.fourmolu]
 command = "fourmolu"
 options = ["-i", "-c"]

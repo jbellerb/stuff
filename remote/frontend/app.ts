@@ -84,7 +84,9 @@ class RemoteTerminal extends HTMLElement {
 
     const url = new URL(
       this.getAttribute("data-url") ||
-        `${window.location.hostname === "localhost" ? "ws" : "wss"}://${window.location.host}${window.location.pathname}`,
+        `${
+          window.location.hostname === "localhost" ? "ws" : "wss"
+        }://${window.location.host}${window.location.pathname}`,
     );
     this.#connect(url);
   }
@@ -125,11 +127,10 @@ class RemoteTerminal extends HTMLElement {
       }
 
       // TODO: display warning when reconnecting
-      const delay =
-        Math.min(
-          RECONNECT_BASE_DELAY * 2 ** this.#wsReconnectAttempts++,
-          RECONNECT_MAX_DELAY,
-        ) *
+      const delay = Math.min(
+        RECONNECT_BASE_DELAY * 2 ** this.#wsReconnectAttempts++,
+        RECONNECT_MAX_DELAY,
+      ) *
         (0.5 + Math.random() * 0.5);
       setTimeout(() => this.#connect(url), Math.floor(delay));
     });
@@ -166,10 +167,9 @@ class RemoteTerminal extends HTMLElement {
     } = this.#terminal.options;
     const showScrollbar =
       (this.#container && options.scrollbar?.showScrollbar) ?? true;
-    const scrollbarWidth =
-      options.scrollback === 0 || !showScrollbar
-        ? 0
-        : (options.scrollbar?.width ?? 14);
+    const scrollbarWidth = options.scrollback === 0 || !showScrollbar
+      ? 0
+      : (options.scrollbar?.width ?? 14);
 
     return [
       (this.#container?.clientWidth ?? 0) - scrollbarWidth,
