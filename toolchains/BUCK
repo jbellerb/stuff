@@ -45,12 +45,6 @@ toolchain_alias(
 )
 
 toolchain_alias(
-    name = "esbuild",
-    actual = "toolchains//esbuild:esbuild",
-    visibility = ["PUBLIC"],
-)
-
-toolchain_alias(
     name = "typescript",
     actual = "toolchains//typescript:typescript",
     visibility = ["PUBLIC"],
