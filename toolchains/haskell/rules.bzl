@@ -1,6 +1,10 @@
+load("@prelude//:rules_impl.bzl", "categorized_extra_attributes")
+load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo")
 load("@prelude//decls:haskell_rules.bzl", "haskell_rules")
 load(
     "@prelude//haskell:haskell.bzl",
+    "haskell_binary_impl",
+    "haskell_library_impl",
     prelude_haskell_prebuilt_library_impl = "haskell_prebuilt_library_impl",
 )
 load(
@@ -89,4 +93,36 @@ def _haskell_prebuilt_library_impl(ctx: AnalysisContext) -> list[Provider]:
 haskell_prebuilt_library = rule(
     impl = _haskell_prebuilt_library_impl,
     attrs = haskell_rules.haskell_prebuilt_library.attrs,
+)
+
+# `haskell_library` and `haskell_binary` wrap the prelude's rules, but default
+# the cxx toolchain to the one GHC was installed with. This keeps linking
+# consistent when using a hermetic toolchain (e.g. when building WASM targets).
+
+haskell_library = rule(
+    impl = haskell_library_impl,
+    attrs = (
+        haskell_rules.haskell_library.attrs |
+        categorized_extra_attributes["haskell"]["haskell_library"] |
+        {
+            "_cxx_toolchain": attrs.toolchain_dep(
+                default = "toolchains//:haskell",
+                providers = [CxxToolchainInfo],
+            ),
+        }
+    ),
+)
+
+haskell_binary = rule(
+    impl = haskell_binary_impl,
+    attrs = (
+        haskell_rules.haskell_binary.attrs |
+        categorized_extra_attributes["haskell"]["haskell_binary"] |
+        {
+            "_cxx_toolchain": attrs.toolchain_dep(
+                default = "toolchains//:haskell",
+                providers = [CxxToolchainInfo],
+            ),
+        }
+    ),
 )

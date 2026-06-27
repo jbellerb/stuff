@@ -148,7 +148,7 @@ haskell_wasm_binary = rule(
         {
             "link_style": attrs.string(default = "static"),
             "_cxx_toolchain": attrs.toolchain_dep(
-                default = "toolchains//haskell:cxx-wasm32-wasi-sdk",
+                default = "toolchains//:haskell",
                 providers = [CxxToolchainInfo],
             ),
         }

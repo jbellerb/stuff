@@ -114,6 +114,10 @@ def haskell_ghc_distr_impl(ctx: AnalysisContext) -> list[Provider]:
             os = os,
             version = ctx.attrs.version,
         ),
+        # re-export the cxx toolchain this GHC distribution was installed
+        # against. GHC always uses the paths provided here, so build rules need
+        # to use the same toolchain for linking.
+        cxx_toolchain,
     ]
 
 haskell_ghc_distr = rule(
@@ -149,6 +153,7 @@ def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(sub_targets = {"ghc": ctx.attrs.ghc_distr.providers}),
         ghc_distr,
+        ctx.attrs.ghc_distr[CxxToolchainInfo],
         HaskellToolchainInfo(
             compiler = ghc_distr.compiler,
             compiler_flags = ctx.attrs.compiler_flags,
