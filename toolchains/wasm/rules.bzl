@@ -1,8 +1,8 @@
-load(":defs.bzl", "BinaryenToolchainInfo")
+load(":defs.bzl", "WasmToolchainInfo")
 load(":wasm_transition.bzl", "wasm_transition")
 
 def _wasm_optimize_impl(ctx: AnalysisContext) -> list[Provider]:
-    binaryen_toolchain = ctx.attrs._binaryen_toolchain[BinaryenToolchainInfo]
+    wasm_toolchain = ctx.attrs._wasm_toolchain[WasmToolchainInfo]
 
     output = ctx.actions.declare_output(ctx.label.name + ".wasm")
 
@@ -11,7 +11,7 @@ def _wasm_optimize_impl(ctx: AnalysisContext) -> list[Provider]:
         fail("Expected single output artifact.")
 
     cmd = cmd_args([
-        binaryen_toolchain.wasm_opt,
+        wasm_toolchain.wasm_opt,
         ctx.attrs.options,
         bin.default_outputs[0],
         "-o",
@@ -35,10 +35,10 @@ wasm_optimize = rule(
             default = [],
             doc = "Additional arguments to pass to wasm-opt.",
         ),
-        "_binaryen_toolchain": attrs.default_only(
+        "_wasm_toolchain": attrs.default_only(
             attrs.toolchain_dep(
-                default = "toolchains//:binaryen",
-                providers = [BinaryenToolchainInfo],
+                default = "toolchains//:wasm",
+                providers = [WasmToolchainInfo],
             ),
         ),
     },

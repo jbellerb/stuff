@@ -5,6 +5,7 @@ load("@prelude//haskell:haskell.bzl", "haskell_binary_impl")
 load("@prelude//transitions:utils.bzl", "transition_utils")
 load("//deno:defs.bzl", "DenoToolchainInfo")
 load("//deno:npm.bzl", "NodePackage", "NodePackageInfo", "NodePackageTSet")
+load("//wasm:wasm_transition.bzl", "wasm_transition")
 load(":defs.bzl", "HaskellGHCDistrInfo", "haskell_ghc_distr_impl")
 
 HaskellGHCWasmDistrInfo = provider(
@@ -111,35 +112,6 @@ haskell_ghc_wasm_distr = rule(
     },
 )
 
-def _wasm_ghc_transition_impl(platform: PlatformInfo, refs: struct) -> PlatformInfo:
-    cpu = refs.cpu[ConstraintSettingInfo].label
-    os = refs.os[ConstraintSettingInfo].label
-
-    updated_constraints = transition_utils.filtered_platform_constraints(
-        platform,
-        [cpu, os],
-    )
-    updated_constraints[cpu] = refs.wasm32[ConstraintValueInfo]
-    updated_constraints[os] = refs.wasi[ConstraintValueInfo]
-
-    return PlatformInfo(
-        label = "wasm_ghc_transition",
-        configuration = ConfigurationInfo(
-            constraints = updated_constraints,
-            values = platform.configuration.values,
-        ),
-    )
-
-wasm_ghc_transition = transition(
-    impl = _wasm_ghc_transition_impl,
-    refs = {
-        "cpu": "config//cpu/constraints:cpu",
-        "wasm32": "config//cpu/constraints:wasm32",
-        "os": "config//os/constraints:os",
-        "wasi": "config//os/constraints:wasi",
-    },
-)
-
 haskell_wasm_binary = rule(
     impl = haskell_binary_impl,
     attrs = (
@@ -153,7 +125,7 @@ haskell_wasm_binary = rule(
             ),
         }
     ),
-    cfg = wasm_ghc_transition,
+    cfg = wasm_transition,
     doc = """
     A `haskell_wasm_binary()` rule represents a group of Haskell sources and
     deps which build a WebAssembly executable. It applies the WebAssembly
@@ -216,7 +188,7 @@ haskell_wasm_exports = rule(
             providers = [HaskellGHCWasmDistrInfo],
         ),
     },
-    cfg = wasm_ghc_transition,
+    cfg = wasm_transition,
     doc = """
     A `haskell_wasm_exports()` rule represents a .wasm binary with embedded
     JSFFI annotations and generates a Node module for running the binary.

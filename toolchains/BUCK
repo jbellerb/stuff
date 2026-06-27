@@ -27,8 +27,8 @@ system_python_toolchain(
 )
 
 toolchain_alias(
-    name = "binaryen",
-    actual = "toolchains//binaryen:binaryen",
+    name = "wasm",
+    actual = "toolchains//wasm:wasm",
     visibility = ["PUBLIC"],
 )
 

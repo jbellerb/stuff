@@ -1,4 +1,4 @@
-load(":defs.bzl", "binaryen_toolchain")
+load(":defs.bzl", "wasm_toolchain")
 
 http_archive(
     name = "binaryen-version_129-arm64-macos.tar.gz",
@@ -28,8 +28,8 @@ genrule(
     executable = True,
 )
 
-binaryen_toolchain(
-    name = "binaryen",
+wasm_toolchain(
+    name = "wasm",
     wasm_opt = select({
         "config//os:linux": ":wasm-opt-x86_64-linux",
         "config//os:macos": ":wasm-opt-arm64-macos",
