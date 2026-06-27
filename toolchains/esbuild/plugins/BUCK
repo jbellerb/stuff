@@ -5,3 +5,9 @@ esbuild_plugin(
     source = "css-stylesheet.ts",
     visibility = ["PUBLIC"],
 )
+
+esbuild_plugin(
+    name = "gzip-binary",
+    source = "gzip-binary.ts",
+    visibility = ["PUBLIC"],
+)

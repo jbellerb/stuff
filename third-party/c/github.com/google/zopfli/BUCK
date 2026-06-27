@@ -1,0 +1,70 @@
+CFLAGS = [
+    "-W",
+    "-Wall",
+    "-Wextra",
+    "-ansi",
+    "-pedantic",
+    "-lm",
+    "-O3",
+    "-Wno-unused-function",
+    "-fPIC",
+]
+
+http_archive(
+    name = "zopfli-1.0.3",
+    urls = ["https://github.com/google/zopfli/archive/refs/tags/zopfli-1.0.3.tar.gz"],
+    sha256 = "e955a7739f71af37ef3349c4fa141c648e8775bceb2195be07e86f8e638814bd",
+    strip_prefix = "zopfli-zopfli-1.0.3/src",
+    sub_targets = {
+        "zopfli_lib": [
+            "zopfli/blocksplitter.c",
+            "zopfli/cache.c",
+            "zopfli/deflate.c",
+            "zopfli/gzip_container.c",
+            "zopfli/hash.c",
+            "zopfli/katajainen.c",
+            "zopfli/lz77.c",
+            "zopfli/squeeze.c",
+            "zopfli/tree.c",
+            "zopfli/util.c",
+            "zopfli/zlib_container.c",
+            "zopfli/zopfli_lib.c",
+        ],
+        "zopfli_lib_headers": [
+            "zopfli/blocksplitter.h",
+            "zopfli/cache.h",
+            "zopfli/deflate.h",
+            "zopfli/gzip_container.h",
+            "zopfli/hash.h",
+            "zopfli/katajainen.h",
+            "zopfli/lz77.h",
+            "zopfli/squeeze.h",
+            "zopfli/symbols.h",
+            "zopfli/tree.h",
+            "zopfli/util.h",
+            "zopfli/zlib_container.h",
+        ],
+        "zopfli_lib_exported_headers": [
+            "zopfli/zopfli.h",
+        ],
+        "zopfli_bin": [
+            "zopfli/zopfli_bin.c",
+        ],
+    },
+)
+
+cxx_library(
+    name = "zopflilib",
+    srcs = [":zopfli-1.0.3[zopfli_lib]"],
+    exported_headers = [":zopfli-1.0.3[zopfli_lib_exported_headers]"],
+    headers = [":zopfli-1.0.3[zopfli_lib_headers]"],
+    compiler_flags = CFLAGS,
+)
+
+cxx_binary(
+    name = "zopfli",
+    srcs = [":zopfli-1.0.3[zopfli_bin]"],
+    deps = [":zopflilib"],
+    compiler_flags = CFLAGS,
+    visibility = ["PUBLIC"],
+)
