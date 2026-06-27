@@ -15,6 +15,12 @@ def _joined_config_value(value):
     else:
         return _joined_arg(value)
 
+def _import_label(label: Label) -> str:
+    target = "{}//{}:{}".format(label.cell, label.package, label.name)
+    for sub in label.sub_target or []:
+        target += "[{}]".format(sub)
+    return target
+
 def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     esbuild_toolchain = ctx.attrs._esbuild_toolchain[EsbuildToolchainInfo]
 
@@ -58,16 +64,24 @@ def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
             {dep.package: dep.contents for dep in deps.traverse()},
         )
         options["nodePaths"] = cmd_args(node_modules)
-    if ctx.attrs.plugins:
-        options["plugins"] = [
-            (plugin[EsbuildPluginInfo].name, plugin[EsbuildPluginInfo].source)
-            for plugin in ctx.attrs.plugins
-        ]
-    if ctx.attrs.plugin_config:
-        options["pluginConfig"] = {
-            plugin: {key: _joined_config_value(value) for key, value in config.items()}
-            for plugin, config in ctx.attrs.plugin_config.items()
-        }
+    buck_plugin = ctx.attrs._buck_plugin[EsbuildPluginInfo]
+    options["plugins"] = [
+        (plugin[EsbuildPluginInfo].name, plugin[EsbuildPluginInfo].source)
+        for plugin in ctx.attrs.plugins
+    ] + [(buck_plugin.name, buck_plugin.source)]
+    plugin_config = {
+        plugin: {key: _joined_config_value(value) for key, value in config.items()}
+        for plugin, config in ctx.attrs.plugin_config.items()
+    }
+    plugin_config[buck_plugin.name] = plugin_config.get(buck_plugin.name, {}) | {
+        "cell": str(ctx.label.cell),
+        "package": ctx.label.package,
+        "imports": {
+            _import_label(dep.label): dep[DefaultInfo].default_outputs[0]
+            for dep in ctx.attrs.imports
+        },
+    }
+    options["pluginConfig"] = plugin_config
 
     bundle_cfg = ctx.actions.write_json(
         ctx.actions.declare_output("bundle.json").as_output(),
@@ -77,7 +91,10 @@ def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
 
     bundle = cmd_args(
         [esbuild_toolchain.esbuild_build, bundle_cfg, output.as_output()],
-        hidden = ctx.attrs.srcs,
+        hidden = ctx.attrs.srcs + [
+            dep[DefaultInfo].other_outputs
+            for dep in ctx.attrs.imports
+        ],
     )
 
     ctx.actions.run(
@@ -105,6 +122,11 @@ esbuild_bundle = rule(
             attrs.dep(providers = [NodePackageInfo]),
             default = [],
             doc = "A list of dependencies to include in NODE_PATH.",
+        ),
+        "imports": attrs.list(
+            attrs.dep(),
+            default = [],
+            doc = "Targets whose outputs may be imported with the buck: scheme.",
         ),
         "outfile": attrs.option(
             attrs.string(),
@@ -178,6 +200,12 @@ esbuild_bundle = rule(
             ),
             default = {},
             doc = "Per-plugin config objects, passed as JSON to the matching plugin.",
+        ),
+        "_buck_plugin": attrs.default_only(
+            attrs.exec_dep(
+                default = "toolchains//esbuild/plugins:buck",
+                providers = [EsbuildPluginInfo],
+            ),
         ),
         "_esbuild_toolchain": attrs.default_only(
             attrs.toolchain_dep(

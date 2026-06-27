@@ -13,13 +13,14 @@ const gzipBinaryPlugin = (opts?: GzipBinaryPluginOpts): esbuild.Plugin => {
         (opts?.extensions ?? []).map((e) => `${e}$`).join("|"),
       );
       build.onResolve({ filter }, async (args) => {
-        if (args.with.type !== "bytes-gzip" || args.resolveDir === "") {
+        if (args.resolveDir === "" || args.pluginData?.resolved) {
           return;
         }
 
         const result = await build.resolve(args.path, {
           kind: args.kind,
           resolveDir: args.resolveDir,
+          pluginData: { resolved: true },
         });
         if (result.errors.length > 0) {
           return { errors: result.errors };

@@ -4,13 +4,18 @@ const cssStyleSheetPlugin = {
   name: "css-stylesheet",
   setup(build) {
     build.onResolve({ filter: /\.css/ }, async (args) => {
-      if (args.with.type !== "stylesheet" || args.resolveDir === "") {
+      if (
+        args.with.type !== "stylesheet" ||
+        args.resolveDir === "" ||
+        args.pluginData?.resolved
+      ) {
         return;
       }
 
       const result = await build.resolve(args.path, {
         kind: args.kind,
         resolveDir: args.resolveDir,
+        pluginData: { resolved: true },
       });
       if (result.errors.length > 0) {
         return { errors: result.errors };
