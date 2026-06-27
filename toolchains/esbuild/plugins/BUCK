@@ -1,0 +1,7 @@
+load("//esbuild:defs.bzl", "esbuild_plugin")
+
+esbuild_plugin(
+    name = "css-stylesheet",
+    source = "css-stylesheet.ts",
+    visibility = ["PUBLIC"],
+)

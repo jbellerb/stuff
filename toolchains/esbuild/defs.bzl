@@ -1,7 +1,33 @@
+EsbuildPluginInfo = provider(
+    fields = {
+        "name": provider_field(str),
+        "source": provider_field(Artifact),
+    },
+)
+
 EsbuildToolchainInfo = provider(
     fields = {
         "esbuild": provider_field(Artifact),
         "esbuild_build": provider_field(RunInfo),
+    },
+)
+
+def _esbuild_plugin_impl(ctx: AnalysisContext) -> list[Provider]:
+    return [
+        DefaultInfo(),
+        EsbuildPluginInfo(
+            name = ctx.label.name,
+            source = ctx.attrs.source,
+        ),
+    ]
+
+esbuild_plugin = rule(
+    impl = _esbuild_plugin_impl,
+    attrs = {
+        "source": attrs.source(
+            doc = "The plugin module. Its default export is either an esbuild.Plugin or an " +
+                  "(opts) => esbuild.Plugin factory.",
+        ),
     },
 )
 

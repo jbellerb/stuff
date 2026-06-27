@@ -8,7 +8,7 @@ options.outfile = Deno.args[1];
 if (plugins && Array.isArray(plugins) && plugins.length > 0) {
   options.plugins = await Promise.all(
     plugins.map(
-      async (path) => (await import(`${Deno.cwd()}/${path}`)).default,
+      async ([_name, path]) => (await import(`${Deno.cwd()}/${path}`)).default,
     ),
   );
 }

@@ -16,7 +16,7 @@ esbuild_bundle(
     platform = "browser",
     target = TARGETS,
     minify = True,
-    plugins = ["plugins/esbuild-cssstylesheet.ts"],
+    plugins = ["toolchains//esbuild/plugins:css-stylesheet"],
     visibility = ["//remote/..."],
 )
 

@@ -1,5 +1,5 @@
 load("//deno:npm.bzl", "NodePackageInfo", "NodePackageTSet")
-load(":defs.bzl", "EsbuildToolchainInfo")
+load(":defs.bzl", "EsbuildPluginInfo", "EsbuildToolchainInfo")
 
 def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     esbuild_toolchain = ctx.attrs._esbuild_toolchain[EsbuildToolchainInfo]
@@ -44,8 +44,11 @@ def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
             {dep.package: dep.contents for dep in deps.traverse()},
         )
         options["nodePaths"] = cmd_args(node_modules)
-    if ctx.attrs.plugins != []:
-        options["plugins"] = cmd_args(ctx.attrs.plugins)
+    if ctx.attrs.plugins:
+        options["plugins"] = [
+            (plugin[EsbuildPluginInfo].name, plugin[EsbuildPluginInfo].source)
+            for plugin in ctx.attrs.plugins
+        ]
 
     bundle_cfg = ctx.actions.write_json(
         ctx.actions.declare_output("bundle.json").as_output(),
@@ -140,7 +143,7 @@ esbuild_bundle = rule(
             doc = "Map file extensions to esbuild loaders.",
         ),
         "plugins": attrs.list(
-            attrs.source(),
+            attrs.dep(providers = [EsbuildPluginInfo]),
             default = [],
             doc = "A list of esbuild plugins to apply during bundling.",
         ),
