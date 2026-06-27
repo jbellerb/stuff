@@ -1,6 +1,20 @@
 load("//deno:node.bzl", "NodePackageInfo", "NodePackageTSet")
 load(":defs.bzl", "EsbuildPluginInfo", "EsbuildToolchainInfo")
 
+def _joined_arg(arg):
+    # write_json serializes a cmd_args as a list, unless it has a delimiter
+    # set. Wrap all attrs.arg() with a delimiter to collapse them back into
+    # a plain string.
+    return cmd_args(arg, delimiter = "")
+
+def _joined_config_value(value):
+    if type(value) == "list":
+        return [_joined_arg(v) for v in value]
+    elif type(value) == "dict":
+        return {k: _joined_arg(v) for k, v in value.items()}
+    else:
+        return _joined_arg(value)
+
 def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     esbuild_toolchain = ctx.attrs._esbuild_toolchain[EsbuildToolchainInfo]
 
@@ -49,6 +63,11 @@ def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
             (plugin[EsbuildPluginInfo].name, plugin[EsbuildPluginInfo].source)
             for plugin in ctx.attrs.plugins
         ]
+    if ctx.attrs.plugin_config:
+        options["pluginConfig"] = {
+            plugin: {key: _joined_config_value(value) for key, value in config.items()}
+            for plugin, config in ctx.attrs.plugin_config.items()
+        }
 
     bundle_cfg = ctx.actions.write_json(
         ctx.actions.declare_output("bundle.json").as_output(),
@@ -146,6 +165,19 @@ esbuild_bundle = rule(
             attrs.dep(providers = [EsbuildPluginInfo]),
             default = [],
             doc = "A list of esbuild plugins to apply during bundling.",
+        ),
+        "plugin_config": attrs.dict(
+            attrs.string(),
+            attrs.dict(
+                attrs.string(),
+                attrs.one_of(
+                    attrs.arg(),
+                    attrs.list(attrs.arg()),
+                    attrs.dict(attrs.string(), attrs.arg()),
+                ),
+            ),
+            default = {},
+            doc = "Per-plugin config objects, passed as JSON to the matching plugin.",
         ),
         "_esbuild_toolchain": attrs.default_only(
             attrs.toolchain_dep(

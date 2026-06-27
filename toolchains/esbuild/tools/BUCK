@@ -11,7 +11,6 @@ npm_package(
 deno_binary(
     name = "esbuild_build",
     main = "esbuild_build.js",
-    skip_check = True,
     permissions = ["env", "read", "run", "write"],
     unstable_features = ["detect-cjs"],
     npm_deps = [":esbuild-0.28.0"],
