@@ -4,7 +4,7 @@ load("@prelude//decls:haskell_rules.bzl", "haskell_rules")
 load("@prelude//haskell:haskell.bzl", "haskell_binary_impl")
 load("@prelude//transitions:utils.bzl", "transition_utils")
 load("//deno:defs.bzl", "DenoToolchainInfo")
-load("//deno:npm.bzl", "NodePackage", "NodePackageInfo", "NodePackageTSet")
+load("//deno:node.bzl", "NodePackage", "NodePackageInfo", "NodePackageTSet")
 load("//wasm:wasm_transition.bzl", "wasm_transition")
 load(":defs.bzl", "HaskellGHCDistrInfo", "haskell_ghc_distr_impl")
 

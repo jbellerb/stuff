@@ -1,5 +1,5 @@
 load(":defs.bzl", "DenoToolchainInfo")
-load(":npm.bzl", "NodePackageInfo", "NodePackageTSet")
+load(":node.bzl", "NodePackageInfo")
 
 def _deno_binary_impl(ctx: AnalysisContext) -> list[Provider]:
     deno_toolchain = ctx.attrs._deno_toolchain[DenoToolchainInfo]

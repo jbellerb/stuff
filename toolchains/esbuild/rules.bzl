@@ -1,4 +1,4 @@
-load("//deno:npm.bzl", "NodePackageInfo", "NodePackageTSet")
+load("//deno:node.bzl", "NodePackageInfo", "NodePackageTSet")
 load(":defs.bzl", "EsbuildPluginInfo", "EsbuildToolchainInfo")
 
 def _esbuild_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
