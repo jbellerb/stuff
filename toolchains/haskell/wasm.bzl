@@ -3,8 +3,15 @@ load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo")
 load("@prelude//decls:haskell_rules.bzl", "haskell_rules")
 load("@prelude//haskell:haskell.bzl", "haskell_binary_impl")
 load("@prelude//transitions:utils.bzl", "transition_utils")
-load("//haskell/lib/package_db.bzl", "HaskellGHCPackageDBInfo")
+load("//deno:defs.bzl", "DenoToolchainInfo")
+load("//deno:npm.bzl", "NodePackage", "NodePackageInfo", "NodePackageTSet")
 load(":defs.bzl", "HaskellGHCDistrInfo", "haskell_ghc_distr_impl")
+
+HaskellGHCWasmDistrInfo = provider(
+    fields = {
+        "post_linker": provider_field(RunInfo),
+    },
+)
 
 def _haskell_ghc_wasm_distr_impl(ctx: AnalysisContext) -> list[Provider]:
     providers = haskell_ghc_distr_impl(ctx)
@@ -61,7 +68,18 @@ exit "$status"
         else:
             new_providers.append(provider)
 
-    return new_providers
+    post_linker = cmd_args([
+        ctx.attrs._deno_toolchain[DenoToolchainInfo].deno,
+        "run",
+        "--no-check",
+        "--allow-read",
+        "--allow-write",
+        ctx.attrs.ghc_root.project("lib/post-link.mjs"),
+    ])
+
+    return new_providers + [
+        HaskellGHCWasmDistrInfo(post_linker = RunInfo(args = post_linker)),
+    ]
 
 haskell_ghc_wasm_distr = rule(
     impl = _haskell_ghc_wasm_distr_impl,
@@ -82,6 +100,12 @@ haskell_ghc_wasm_distr = rule(
             attrs.exec_dep(
                 providers = [RunInfo],
                 default = "//haskell/tools:install_ghc",
+            ),
+        ),
+        "_deno_toolchain": attrs.default_only(
+            attrs.toolchain_dep(
+                default = "toolchains//:deno",
+                providers = [DenoToolchainInfo],
             ),
         ),
     },
@@ -135,6 +159,67 @@ haskell_wasm_binary = rule(
     deps which build a WebAssembly executable. It applies the WebAssembly
     platform transition automatically, so the binary and its dependencies are
     built for WebAssembly regardless of the target platform.
+    """,
+)
+
+def _haskell_wasm_exports_impl(ctx: AnalysisContext) -> list[Provider]:
+    package_name = ctx.attrs.package_name or ctx.label.name
+
+    output = ctx.actions.declare_output(ctx.label.name, dir = True)
+
+    cmd = cmd_args([
+        "sh",
+        "-c",
+        r"""
+package_name=$1
+input=$2
+output=$3
+shift 3
+
+mkdir -p "$output"
+
+"$@" -i "$input" -o "$output/main.js"
+
+cat > "$output/package.json" << EOF
+{
+  "name": "$package_name",
+  "main": "./main.js"
+}
+EOF
+""",
+        "--",
+        package_name,
+        ctx.attrs.binary,
+        output.as_output(),
+        ctx.attrs._haskell_wasm_distr[HaskellGHCWasmDistrInfo].post_linker,
+    ])
+
+    ctx.actions.run(cmd, category = "ghc_wasm_post_linker", identifier = ctx.label.name)
+
+    return [
+        DefaultInfo(default_output = output),
+        NodePackageInfo(
+            lib = ctx.actions.tset(
+                NodePackageTSet,
+                value = NodePackage(package = package_name, contents = output),
+            ),
+        ),
+    ]
+
+haskell_wasm_exports = rule(
+    impl = _haskell_wasm_exports_impl,
+    attrs = {
+        "package_name": attrs.option(attrs.string(), default = None),
+        "binary": attrs.source(),
+        "_haskell_wasm_distr": attrs.toolchain_dep(
+            default = "toolchains//:haskell[ghc]",
+            providers = [HaskellGHCWasmDistrInfo],
+        ),
+    },
+    cfg = wasm_ghc_transition,
+    doc = """
+    A `haskell_wasm_exports()` rule represents a .wasm binary with embedded
+    JSFFI annotations and generates a Node module for running the binary.
     """,
 )
 

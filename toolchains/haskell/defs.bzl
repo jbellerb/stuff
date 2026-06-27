@@ -147,7 +147,7 @@ def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
     ghc_distr = ctx.attrs.ghc_distr[HaskellGHCDistrInfo]
 
     return [
-        DefaultInfo(),
+        DefaultInfo(sub_targets = {"ghc": ctx.attrs.ghc_distr.providers}),
         ghc_distr,
         HaskellToolchainInfo(
             compiler = ghc_distr.compiler,
