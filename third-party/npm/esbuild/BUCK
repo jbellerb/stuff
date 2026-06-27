@@ -1,0 +1,14 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "esbuild-0.28.0",
+    package = "esbuild",
+    version = "0.28.0",
+    sha256 = "a26129dd91dd4cf0286ca5e35f98c1901bdd67175c0cdc5ca665cfba382d2b7e",
+)
+
+alias(
+    name = "esbuild",
+    actual = ":esbuild-0.28.0",
+    visibility = ["PUBLIC"],
+)
