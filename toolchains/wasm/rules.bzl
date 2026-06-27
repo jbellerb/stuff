@@ -70,11 +70,11 @@ def _wasm_component_impl(ctx: AnalysisContext) -> list[Provider]:
     if ctx.attrs.adapter != None:
         cmd.add("--adapt", ctx.attrs.adapter[DefaultInfo].default_outputs[0])
 
-    ctx.actions.run(cmd, category = "wasi_component", identifier = ctx.label.name)
+    ctx.actions.run(cmd, category = "wasm_component", identifier = ctx.label.name)
 
     return [DefaultInfo(default_output = output)]
 
-wasi_component = rule(
+wasm_component = rule(
     impl = _wasm_component_impl,
     attrs = {
         "adapter": attrs.option(
