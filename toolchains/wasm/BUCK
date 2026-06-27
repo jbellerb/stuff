@@ -28,11 +28,43 @@ genrule(
     executable = True,
 )
 
+http_archive(
+    name = "wasm-tools-1.252.0-aarch64-macos.tar.gz",
+    sha256 = "c4c0f8560d996e47313aadf8df745e4d15eef38090e671384eafcb06d8d135fa",
+    strip_prefix = "wasm-tools-1.252.0-aarch64-macos",
+    urls = ["https://github.com/bytecodealliance/wasm-tools/releases/download/v1.252.0/wasm-tools-1.252.0-aarch64-macos.tar.gz"],
+)
+
+http_archive(
+    name = "wasm-tools-1.252.0-x86_64-linux.tar.gz",
+    sha256 = "097b1181d5b2bc3f2ebc44b4e72edf18308902023f1f1483a1a7dc1268ea988d",
+    strip_prefix = "wasm-tools-1.252.0-x86_64-linux",
+    urls = ["https://github.com/bytecodealliance/wasm-tools/releases/download/v1.252.0/wasm-tools-1.252.0-x86_64-linux.tar.gz"],
+)
+
+genrule(
+    name = "wasm-tools-arm64-macos",
+    out = "wasm-tools",
+    cmd = "ln -sF $(location :wasm-tools-1.252.0-aarch64-macos.tar.gz)/wasm-tools $OUT",
+    executable = True,
+)
+
+genrule(
+    name = "wasm-tools-x86_64-linux",
+    out = "wasm-tools",
+    cmd = "ln -sF $(location :wasm-tools-1.252.0-x86_64-linux.tar.gz)/wasm-tools $OUT",
+    executable = True,
+)
+
 wasm_toolchain(
     name = "wasm",
     wasm_opt = select({
         "config//os:linux": ":wasm-opt-x86_64-linux",
         "config//os:macos": ":wasm-opt-arm64-macos",
+    }),
+    wasm_tools = select({
+        "config//os:linux": ":wasm-tools-x86_64-linux",
+        "config//os:macos": ":wasm-tools-arm64-macos",
     }),
     visibility = ["toolchains//..."],
 )
