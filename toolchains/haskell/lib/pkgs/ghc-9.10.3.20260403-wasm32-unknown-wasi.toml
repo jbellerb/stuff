@@ -421,6 +421,7 @@ depends = [
 name = "system-cxx-std-lib"
 id = "system-cxx-std-lib-1.0"
 version = "1.0"
+virtual = true
 depends = []
 
 [[package]]

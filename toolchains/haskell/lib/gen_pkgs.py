@@ -77,6 +77,7 @@ lib_prefix = "{lib_prefix}"
     for package in packages:
         pkg_id = package_field_raw(package, "id", db)
         pkg_version = package_field_raw(package, "version", db)
+        pkg_hs_libraries = package_field_raw(package, "hs-libraries", db)
         pkg_depends = package_field_raw(package, "depends", db)
 
         pkg_db += f"""
@@ -84,7 +85,11 @@ lib_prefix = "{lib_prefix}"
 name = "{package}"
 id = "{pkg_id}"
 version = "{pkg_version}"
-depends = ["""
+"""
+        if not pkg_hs_libraries:
+            pkg_db += """virtual = true
+"""
+        pkg_db += """depends = ["""
         if pkg_depends:
             for dep in pkg_depends.split(" "):
                 pkg_db += f"""

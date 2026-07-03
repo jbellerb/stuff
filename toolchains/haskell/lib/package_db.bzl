@@ -101,7 +101,7 @@ def _collect_boot_library_libs(
         actions: AnalysisActions,
         pkg: dict[str, typing.Any],
         db: Artifact,
-        import_dir: Artifact,
+        import_dir: Artifact | None,
         all_libs: dict[LinkStyle, list[Artifact]],
         deps_infos: list[HaskellLinkInfo],
         profiling_enabled: bool) -> typing.Any:
@@ -114,7 +114,7 @@ def _collect_boot_library_libs(
         hlibinfos[link_style] = HaskellLibraryInfo(
             name = pkg["name"],
             db = db,
-            import_dirs = {profiling_enabled: import_dir},
+            import_dirs = {profiling_enabled: import_dir} if import_dir else {},
             stub_dirs = [],
             id = pkg["id"],
             libs = libs,
@@ -148,17 +148,30 @@ def _haskell_boot_library(
         os: str,
         version: str,
         deps: list[_PseudoProviderCollection]) -> _PseudoProviderCollection:
-    import_dir = libs.project(pkg["id"])
+    # virtual packages (e.g. system-cxx-std-lib) exist only in the package db
+    # and don't ship libraries to project out of the GHC root
+    if pkg.get("virtual", False):
+        import_dir = None
+        shared_lib = None
+        libs_by_style = {}
+        prof_libs_by_style = {}
+    else:
+        import_dir = libs.project(pkg["id"])
 
-    static_lib = import_dir.project("libHS{}.a".format(pkg["id"]))
-    static_prof_lib = import_dir.project("libHS{}_p.a".format(pkg["id"]))
-    shared_lib = libs.project(
-        "libHS{}-ghc{}.{}".format(
-            pkg["id"],
-            version,
-            LINKERS[_to_linker_type(os)].default_shared_library_extension,
-        ),
-    )
+        static_lib = import_dir.project("libHS{}.a".format(pkg["id"]))
+        static_prof_lib = import_dir.project("libHS{}_p.a".format(pkg["id"]))
+        shared_lib = libs.project(
+            "libHS{}-ghc{}.{}".format(
+                pkg["id"],
+                version,
+                LINKERS[_to_linker_type(os)].default_shared_library_extension,
+            ),
+        )
+        libs_by_style = {
+            LinkStyle("static"): [static_lib],
+            LinkStyle("shared"): [shared_lib],
+        }
+        prof_libs_by_style = {LinkStyle("static"): [static_prof_lib]}
 
     deps_infos = _collect_dep_infos(deps, "HaskellLinkInfo")
     native_infos = _collect_dep_infos(deps, "MergedLinkInfo")
@@ -171,7 +184,7 @@ def _haskell_boot_library(
         pkg,
         db,
         import_dir,
-        {LinkStyle("static"): [static_lib], LinkStyle("shared"): [shared_lib]},
+        libs_by_style,
         deps_infos,
         False,
     )
@@ -180,7 +193,7 @@ def _haskell_boot_library(
         pkg,
         db,
         import_dir,
-        {LinkStyle("static"): [static_prof_lib]},
+        prof_libs_by_style,
         deps_infos,
         True,
     )
@@ -190,7 +203,7 @@ def _haskell_boot_library(
             output = shared_lib,
             unstripped_output = shared_lib,
         ),
-    })
+    } if shared_lib else {})
 
     return {
         "DefaultInfo": DefaultInfo(),
@@ -232,7 +245,7 @@ def _haskell_boot_library(
                     exported_deps = [dep["LinkableGraph"] for dep in deps],
                     link_infos = link_infos,
                     shared_libs = shared_libs,
-                    default_soname = shared_lib.basename,
+                    default_soname = shared_lib.basename if shared_lib else None,
                 ),
             ),
             deps = [dep["LinkableGraph"] for dep in deps],
