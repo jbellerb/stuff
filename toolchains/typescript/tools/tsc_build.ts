@@ -11,6 +11,7 @@ interface Config {
   deps: Dep[];
   packages: { pkg: string; path: string }[];
   lib?: string[];
+  alias?: Record<string, string>;
 }
 
 const [configPath, outDir] = Deno.args;
@@ -141,19 +142,21 @@ const system: ts.System = {
   },
 };
 
+const alias = config.alias ?? {};
 const host = ts.createIncrementalCompilerHost(options, system);
 host.resolveModuleNameLiterals = (literals, containingFile, redirected, opts) =>
-  literals.map((literal) =>
-    resolveLabel(literal.text) ??
+  literals.map((literal) => {
+    const target = alias[literal.text] ?? literal.text;
+    return resolveLabel(target) ??
       ts.resolveModuleName(
-        literal.text,
+        target,
         containingFile,
         opts,
         system,
         undefined,
         redirected,
-      )
-  );
+      );
+  });
 
 const program = ts.createProgram({
   rootNames: Object.keys(config.srcs).map((file) => `${ROOT}/${file}`),

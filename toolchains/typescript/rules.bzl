@@ -91,6 +91,7 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
         "deps": dep_modules.project_as_json("module"),
         "packages": packages.project_as_json("package"),
         "lib": lib.project_as_args("lib"),
+        "alias": getattr(ctx.attrs, "alias", {}),
     }
 
     tsc_cfg = ctx.actions.write_json(
@@ -204,6 +205,8 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
         options["external"] = ctx.attrs.external
     if ctx.attrs.define != {}:
         options["define"] = ctx.attrs.define
+    if ctx.attrs.alias != {}:
+        options["alias"] = ctx.attrs.alias
 
     node_packages = {
         package.package: package.contents
@@ -273,6 +276,16 @@ typescript_bundle = rule(
             attrs.string(),
             default = {},
             doc = "Replace global identifiers with constant expressions.",
+        ),
+        "alias": attrs.dict(
+            attrs.string(),
+            attrs.string(),
+            default = {},
+            doc = """
+            Remap bare import specifiers to other packages, for both type
+            checking and bundling (e.g. {"obsidian": "obsidian-mock"} to swap in
+            a mock). The target must be provided by a dep.
+            """,
         ),
     },
 )
