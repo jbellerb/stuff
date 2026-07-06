@@ -8,8 +8,9 @@ options.outfile = Deno.args[1];
 if (plugins && Array.isArray(plugins) && plugins.length > 0) {
   const pluginNames = new Set(plugins.map(([name, _path]) => name));
 
-  const config =
-    pluginConfig && typeof pluginConfig === "object" ? pluginConfig : {};
+  const config = pluginConfig && typeof pluginConfig === "object"
+    ? pluginConfig
+    : {};
   for (const key of Object.keys(config)) {
     if (!pluginNames.has(key)) {
       throw new Error(

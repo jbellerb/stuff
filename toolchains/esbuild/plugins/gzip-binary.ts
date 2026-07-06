@@ -59,7 +59,8 @@ const gzipBinaryPlugin = (opts?: GzipBinaryPluginOpts): esbuild.Plugin => {
               return {
                 errors: [
                   {
-                    text: `gzip-binary: zopfli returned non-zero exit code: ${output.code}`,
+                    text:
+                      `gzip-binary: zopfli returned non-zero exit code: ${output.code}`,
                   },
                 ],
               };
@@ -77,7 +78,8 @@ const gzipBinaryPlugin = (opts?: GzipBinaryPluginOpts): esbuild.Plugin => {
               return {
                 errors: [
                   {
-                    text: `gzip-binary: failed to compress ${args.path}: ${err}`,
+                    text:
+                      `gzip-binary: failed to compress ${args.path}: ${err}`,
                   },
                 ],
               };

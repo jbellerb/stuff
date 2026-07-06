@@ -1,4 +1,4 @@
-import { Terminal } from "@xterm/xterm";
+import { type ITerminalOptions, Terminal } from "@xterm/xterm";
 
 import xtermStylesheet from "@xterm/xterm/css/xterm.css" with { type: "stylesheet" };
 
@@ -54,9 +54,8 @@ class RemoteTerminal extends HTMLElement {
 
   #ws: WebSocket | null = null;
   #wsReconnectAttempts: number = 0;
-  #wsPending: Queue<
-    string | ArrayBufferLike | ArrayBufferView<ArrayBufferLike>
-  > = new Queue();
+  #wsPending: Queue<string | ArrayBuffer | ArrayBufferView<ArrayBuffer>> =
+    new Queue();
 
   static #textEncoder = new TextEncoder();
 
@@ -151,7 +150,7 @@ class RemoteTerminal extends HTMLElement {
     }
   }
 
-  #send(data: string | ArrayBufferLike | ArrayBufferView<ArrayBufferLike>) {
+  #send(data: string | ArrayBuffer | ArrayBufferView<ArrayBuffer>) {
     if (this.#ws?.readyState === WebSocket.OPEN) {
       this.#ws.send(data);
     } else {
@@ -160,13 +159,17 @@ class RemoteTerminal extends HTMLElement {
   }
 
   #terminalSize(): [number, number] {
+    // TODO: remove manual typing when the scrollbar options are added to
+    // ITerminalOptions
+    const options: ITerminalOptions & {
+      scrollbar?: { showScrollbar?: boolean; width?: number };
+    } = this.#terminal.options;
     const showScrollbar =
-      (this.#container && this.#terminal.options.scrollbar?.showScrollbar) ??
-      true;
+      (this.#container && options.scrollbar?.showScrollbar) ?? true;
     const scrollbarWidth =
-      this.#terminal.options.scrollback === 0 || !showScrollbar
+      options.scrollback === 0 || !showScrollbar
         ? 0
-        : (this.#terminal.options.scrollbar?.width ?? 14);
+        : (options.scrollbar?.width ?? 14);
 
     return [
       (this.#container?.clientWidth ?? 0) - scrollbarWidth,
@@ -177,7 +180,15 @@ class RemoteTerminal extends HTMLElement {
   #handleResize() {
     // TODO: replace this with the dimensions API once the next xterm.js
     // version is released.
-    const dims = this.#terminal._core._renderService.dimensions;
+    const dims = (
+      this.#terminal as unknown as {
+        _core: {
+          _renderService: {
+            dimensions: { css: { cell: { width: number; height: number } } };
+          };
+        };
+      }
+    )._core._renderService.dimensions;
 
     const [width, height] = this.#terminalSize();
     const cols = Math.floor(width / dims.css.cell.width);
