@@ -1,3 +1,5 @@
+load("@root//tools/reflink/defs.bzl", "reflink_dir")
+
 NodePackage = record(
     package = str,
     contents = Artifact,
@@ -40,7 +42,12 @@ def _node_package_impl(ctx: AnalysisContext) -> list[Provider]:
     srcs["package.json"] = package_json
 
     contents = ctx.actions.declare_output(ctx.label.name, dir = True)
-    ctx.actions.symlinked_dir(contents.as_output(), srcs)
+    reflink_dir(
+        ctx.actions,
+        ctx.attrs._reflinker[RunInfo],
+        contents.as_output(),
+        [(src, path) for path, src in srcs.items()],
+    )
 
     return [
         DefaultInfo(default_output = contents),
@@ -90,6 +97,10 @@ node_package = rule(
             default = [],
             doc = "The package dependencies.",
         ),
+        "_reflinker": attrs.default_only(attrs.exec_dep(
+            providers = [RunInfo],
+            default = "root//tools/reflink:reflink",
+        )),
     },
 )
 

@@ -72,3 +72,38 @@ reflink_project = rule(
     },
     doc = "Project files from a source directory.",
 )
+
+def reflink_dir(
+        actions: AnalysisActions,
+        reflinker: RunInfo,
+        output: OutputArtifact,
+        entries: list[(typing.Any, str)]):
+    actions.run(
+        cmd_args([
+            "sh",
+            "-c",
+            r"""
+reflink=$1
+output=$2
+
+shift 2
+
+for arg in "$@"
+do
+    from="${arg%%:*}"
+    to="$output/${arg#*:}"
+
+    mkdir -p "$(dirname "$to")"
+    "$reflink" --auto "$from" "$to"
+done
+""",
+            "--",
+            reflinker,
+            output,
+            cmd_args([
+                cmd_args([src, path], delimiter = ":")
+                for src, path in entries
+            ]),
+        ]),
+        category = "reflink_dir",
+    )

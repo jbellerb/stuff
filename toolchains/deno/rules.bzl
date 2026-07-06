@@ -1,3 +1,4 @@
+load("@root//tools/reflink:defs.bzl", "reflink_dir")
 load(":defs.bzl", "DenoToolchainInfo")
 load(":node.bzl", "NodePackageInfo")
 
@@ -15,37 +16,15 @@ def _deno_binary_impl(ctx: AnalysisContext) -> list[Provider]:
         #
         # TODO: should toolchains have a separate set of third-party packages?
         node_modules = ctx.actions.declare_output("node_modules", dir = True)
-        reflink = cmd_args([
-            "sh",
-            "-c",
-            r"""
-reflink=$1
-output=$2
-
-shift 2
-
-for arg in "$@"
-do
-    from="${arg%%:*}"
-    to="$output/${arg#*:}"
-
-    mkdir -p "$(dirname "$to")"
-    "$reflink" --auto "$from" "$to"
-done
-""",
-            "--",
+        reflink_dir(
+            ctx.actions,
             ctx.attrs._reflinker[RunInfo],
             node_modules.as_output(),
-            cmd_args([
-                cmd_args([package.contents, package.package], delimiter = ":")
+            [
+                (package.contents, package.package)
                 for dep in ctx.attrs.npm_deps
                 for package in dep[NodePackageInfo].lib.traverse()
-            ]),
-        ])
-        ctx.actions.run(
-            reflink,
-            category = "reflink_dir",
-            identifier = ctx.label.name,
+            ],
         )
         cfg["nodeModulesDir"] = "manual"
         hidden.append(node_modules)
