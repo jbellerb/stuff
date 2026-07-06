@@ -29,6 +29,15 @@ genrule(
     executable = True,
 )
 
+alias(
+    name = "binary",
+    actual = select({
+        "config//os:linux": ":esbuild-x86_64-linux",
+        "config//os:macos": ":esbuild-aarch64-darwin",
+    }),
+    visibility = ["PUBLIC"],
+)
+
 esbuild_bundler(
     name = "bundler",
     esbuild = select({

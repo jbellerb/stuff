@@ -1,6 +1,6 @@
 import { type ITerminalOptions, Terminal } from "@xterm/xterm";
 
-import xtermStylesheet from "@xterm/xterm/css/xterm.css" with { type: "stylesheet" };
+import xtermStylesheet from ":xterm-css";
 
 const RECONNECT_BASE_DELAY = 500;
 const RECONNECT_MAX_DELAY = 30000;
