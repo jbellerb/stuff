@@ -66,15 +66,8 @@ def _split_deps(deps: list[Dependency]) -> (list, list):
 def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
     toolchain = ctx.attrs._typescript_toolchain[TypeScriptToolchainInfo]
 
-    srcs = _normalize_srcs(ctx.attrs.srcs)
-
-    main = None
-    if ctx.attrs.main != None:
-        main = _strip_ts_ext(ctx.attrs.main.short_path)
-    elif "index.ts" in srcs:
-        main = "index"
-    elif len(srcs) == 1:
-        main = _strip_ts_ext(srcs.keys()[0])
+    main = ctx.attrs.main
+    srcs = _normalize_srcs(ctx.attrs.extra_srcs) | {main.short_path: main}
 
     ts_deps, package_children = _split_deps(ctx.attrs.deps)
     packages = ctx.actions.tset(NodePackageTSet, children = package_children)
@@ -119,7 +112,7 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
                 TypeScriptModuleTSet,
                 value = TypeScriptModule(
                     specifier = _canonical_label(ctx.label),
-                    main = main,
+                    main = _strip_ts_ext(main.short_path),
                     transpiled = output,
                 ),
                 children = [dep.transpiled for dep in ts_deps],
@@ -130,18 +123,16 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
     ]
 
 _typescript_library_attrs = {
-    "srcs": attrs.named_set(
+    "main": attrs.source(
+        doc = """
+        The main entrypoint of the library. This is the file a bare import of
+        this library's label resolves to.
+        """,
+    ),
+    "extra_srcs": attrs.named_set(
         attrs.source(),
         default = [],
-        doc = "The TypeScript sources.",
-    ),
-    "main": attrs.option(
-        attrs.source(),
-        default = None,
-        doc = """
-        The module a bare import of this library's label resolves to. Defaults
-        to index.ts if present, or the only source.
-        """,
+        doc = "The other TypeScript sources.",
     ),
     "deps": attrs.list(
         attrs.dep(),
@@ -179,11 +170,6 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     bundler = toolchain.bundler
 
     entry_module = info.transpiled.value
-    entry = ctx.attrs.entry if ctx.attrs.entry != None else entry_module.main
-    if entry == None:
-        fail("{}: has no main module and entry is unset".format(
-            _canonical_label(ctx.label),
-        ))
 
     if ctx.attrs.outfile:
         outfile = ctx.attrs.outfile
@@ -198,7 +184,10 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
         "package": ctx.label.package,
         "deps": info.transpiled.project_as_json("module"),
         "entryPoints": [
-            cmd_args([entry_module.transpiled, "{}.js".format(entry)], delimiter = "/"),
+            cmd_args(
+                [entry_module.transpiled, "{}.js".format(entry_module.main)],
+                delimiter = "/",
+            ),
         ],
     }
     if ctx.attrs.format != None:
@@ -245,11 +234,6 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
 typescript_bundle = rule(
     impl = _typescript_bundle_impl,
     attrs = _typescript_library_attrs | {
-        "entry": attrs.option(
-            attrs.string(),
-            default = None,
-            doc = "Entrypoint module, without extension. Defaults to the main module.",
-        ),
         "outfile": attrs.option(
             attrs.string(),
             default = None,

@@ -18,7 +18,7 @@ css_stylesheet(
 
 typescript_bundle(
     name = "bundle-js",
-    srcs = ["app.ts"],
+    main = "app.ts",
     deps = [
         ":xterm-css",
         "//third-party/npm/@xterm/xterm:xterm",
