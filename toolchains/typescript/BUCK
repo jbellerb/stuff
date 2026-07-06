@@ -1,0 +1,8 @@
+load(":defs.bzl", "typescript_toolchain")
+
+typescript_toolchain(
+    name = "typescript",
+    tsc_build = "//typescript/tools:tsc_build",
+    bundler = "//esbuild:bundler",
+    visibility = ["toolchains//..."],
+)

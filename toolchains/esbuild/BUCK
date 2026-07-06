@@ -1,3 +1,4 @@
+load("//typescript:esbuild.bzl", "esbuild_bundler")
 load(":defs.bzl", "esbuild_toolchain")
 
 http_archive(
@@ -26,6 +27,16 @@ genrule(
     out = "esbuild",
     cmd = "ln -sF $(location :linux-x64-0.28.0.tgz)/bin/esbuild $OUT",
     executable = True,
+)
+
+esbuild_bundler(
+    name = "bundler",
+    esbuild = select({
+        "config//os:linux": ":esbuild-x86_64-linux",
+        "config//os:macos": ":esbuild-aarch64-darwin",
+    }),
+    bundle = "//typescript/tools:esbuild_bundle",
+    visibility = ["toolchains//..."],
 )
 
 esbuild_toolchain(

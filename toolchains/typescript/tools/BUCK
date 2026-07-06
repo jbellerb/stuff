@@ -1,0 +1,19 @@
+load("//deno:rules.bzl", "deno_binary")
+
+deno_binary(
+    name = "esbuild_bundle",
+    main = "esbuild_bundle.ts",
+    srcs = ["lib/util.ts", "lib/types.ts"],
+    permissions = ["env", "read", "run", "write"],
+    npm_deps = ["root//third-party/npm/esbuild:esbuild"],
+    visibility = ["//esbuild/..."],
+)
+
+deno_binary(
+    name = "tsc_build",
+    main = "tsc_build.ts",
+    srcs = ["lib/util.ts", "lib/types.ts"],
+    permissions = ["env", "read", "sys", "write"],
+    npm_deps = ["root//third-party/npm/typescript:typescript"],
+    visibility = ["//typescript/..."],
+)
