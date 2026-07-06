@@ -89,7 +89,7 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
         children = [dep.lib for dep in ts_deps],
     )
 
-    output = ctx.actions.declare_output(ctx.label.name, dir = True)
+    output = ctx.actions.declare_output(ctx.label.name + "_dist", dir = True)
 
     config = {
         "cell": str(ctx.label.cell),
