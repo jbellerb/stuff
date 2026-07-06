@@ -1,4 +1,3 @@
-load("//typescript:esbuild.bzl", "esbuild_bundler")
 load(":defs.bzl", "esbuild_toolchain")
 
 http_archive(
@@ -36,16 +35,6 @@ alias(
         "config//os:macos": ":esbuild-aarch64-darwin",
     }),
     visibility = ["PUBLIC"],
-)
-
-esbuild_bundler(
-    name = "bundler",
-    esbuild = select({
-        "config//os:linux": ":esbuild-x86_64-linux",
-        "config//os:macos": ":esbuild-aarch64-darwin",
-    }),
-    bundle = "//typescript/tools:esbuild_bundle",
-    visibility = ["toolchains//..."],
 )
 
 esbuild_toolchain(

@@ -6,7 +6,7 @@ deno_binary(
     srcs = ["lib/util.ts", "lib/types.ts"],
     permissions = ["env", "read", "run", "write"],
     npm_deps = ["root//third-party/npm/esbuild:esbuild"],
-    visibility = ["//esbuild/..."],
+    visibility = ["//typescript/..."],
 )
 
 deno_binary(
