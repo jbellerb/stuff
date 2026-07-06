@@ -35,7 +35,7 @@ def _npm_package_impl(ctx: AnalysisContext) -> list[Provider]:
         output_name = ctx.label.name,
         ext_type = "tar.gz",
         excludes = [],
-        strip_prefix = "package",
+        strip_prefix = ctx.attrs.strip_prefix,
         sub_targets = [],
         exec_deps = ctx.attrs._archive_exec_deps[HttpArchiveExecDeps],
         prefer_local = True,
@@ -67,6 +67,13 @@ npm_package = rule(
             attrs.string(),
             default = None,
             doc = "The SHA-256 hash of the downloaded archive.",
+        ),
+        "strip_prefix": attrs.string(
+            default = "package",
+            doc = """
+            Leading path to strip from the archive. npm tarballs root at
+            `package/`, but some (e.g. `@types/node`) use a different directory.
+            """,
         ),
         "deps": attrs.list(
             attrs.dep(providers = [NodePackageInfo]),
