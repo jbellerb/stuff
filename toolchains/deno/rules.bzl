@@ -34,6 +34,7 @@ do
 done
 """,
             "--",
+            ctx.attrs._reflinker[RunInfo],
             node_modules.as_output(),
             cmd_args([
                 cmd_args([package.contents, package.package], delimiter = ":")
@@ -47,6 +48,7 @@ done
             identifier = ctx.label.name,
         )
         cfg["nodeModulesDir"] = "manual"
+        hidden.append(node_modules)
 
     deno_cfg = ctx.actions.write_json(
         ctx.actions.declare_output("deno.json").as_output(),
