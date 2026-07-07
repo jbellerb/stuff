@@ -1,0 +1,15 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "vfs-1.6.4",
+    package = "@typescript/vfs",
+    version = "1.6.4",
+    sha256 = "50edbf7462aee21fe84c00fe7a5e41cb3ba2166938c5da11e19a0831e2b042ed",
+    deps = ["//third-party/npm/debug:debug"],
+)
+
+alias(
+    name = "vfs",
+    actual = ":vfs-1.6.4",
+    visibility = ["PUBLIC"],
+)

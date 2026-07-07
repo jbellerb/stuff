@@ -1,0 +1,14 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "protobuf-2.12.1",
+    package = "@bufbuild/protobuf",
+    version = "2.12.1",
+    sha256 = "57edfcc03900783c0d348de3b874ef4819a3b386280105875c3bb3efb6a2856e",
+)
+
+alias(
+    name = "protobuf",
+    actual = ":protobuf-2.12.1",
+    visibility = ["PUBLIC"],
+)

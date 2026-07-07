@@ -1,0 +1,15 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "debug-4.4.3",
+    package = "debug",
+    version = "4.4.3",
+    sha256 = "89c1ac9c946ee8905a875837114528e97eeae35e03be3190584b2216af43e4a7",
+    deps = ["//third-party/npm/ms:ms"],
+)
+
+alias(
+    name = "debug",
+    actual = ":debug-4.4.3",
+    visibility = ["PUBLIC"],
+)

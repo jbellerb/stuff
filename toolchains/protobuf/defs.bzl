@@ -25,7 +25,10 @@ def _protobuf_plugin_impl(ctx: AnalysisContext) -> list[Provider]:
         ctx.actions.declare_output(
             "plugin-{}-wrapper.sh".format(language),
         ),
-        cmd_args(["#!/usr/bin/env sh", ctx.attrs.plugin[RunInfo].args]),
+        cmd_args([
+            "#!/usr/bin/env sh",
+            cmd_args("exec", ctx.attrs.plugin[RunInfo].args, '"$@"', delimiter = " "),
+        ]),
         with_inputs = True,
         is_executable = True,
     )
@@ -138,6 +141,12 @@ def _protobuf_library_impl(ctx: AnalysisContext) -> list[Provider]:
         protobuf_toolchain.protoc_wrapper,
         ctx.attrs.language,
         output.as_output(),
+        # anchor each source at its own directory so protoc sees basenames as
+        # the canonical names and generated files land at the root of $OUT
+        [
+            cmd_args(src, parent = 1, format = "--proto_path={}")
+            for src in ctx.attrs.srcs
+        ],
         [
             cmd_args("--{}_opt".format(ctx.attrs.language), opt, delimiter = "=")
             for opt in ctx.attrs.options

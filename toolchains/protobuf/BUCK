@@ -98,12 +98,23 @@ protobuf_plugin(
     extensions = ["_grpc.pb.go"],
 )
 
+protobuf_plugin(
+    name = "protobuf-es-plugin",
+    plugin = "//protobuf/plugins:protoc-gen-es",
+    language = "es",
+    extensions = ["_pb.js", "_pb.d.ts"],
+)
+
 protobuf_toolchain(
     name = "protobuf",
     protoc = select({
         "config//os:linux": ":protoc-linux-amd64",
         "config//os:macos": ":protoc-darwin-arm64",
     }),
-    plugins = [":protobuf-go-plugin", ":protobuf-go-grpc-plugin"],
+    plugins = [
+        ":protobuf-es-plugin",
+        ":protobuf-go-plugin",
+        ":protobuf-go-grpc-plugin",
+    ],
     visibility = ["toolchains//..."],
 )

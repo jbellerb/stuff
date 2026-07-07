@@ -1,0 +1,18 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "protoc-gen-es-2.12.1",
+    package = "@bufbuild/protoc-gen-es",
+    version = "2.12.1",
+    sha256 = "7293123cad26d63e309eac04a70c5d5f61ef3a66c4e2c6fa5a3c6a76ea3b4a85",
+    deps = [
+        "//third-party/npm/@bufbuild/protobuf:protobuf",
+        "//third-party/npm/@bufbuild/protoplugin:protoplugin",
+    ],
+)
+
+alias(
+    name = "protoc-gen-es",
+    actual = ":protoc-gen-es-2.12.1",
+    visibility = ["PUBLIC"],
+)

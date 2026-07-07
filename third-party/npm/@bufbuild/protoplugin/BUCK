@@ -1,0 +1,19 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "protoplugin-2.12.1",
+    package = "@bufbuild/protoplugin",
+    version = "2.12.1",
+    sha256 = "2f6230b35d2b338ba6b79e732a903381d9d58b72987809bc78d44e1124bde356",
+    deps = [
+        "//third-party/npm/@bufbuild/protobuf:protobuf",
+        "//third-party/npm/@typescript/vfs:vfs",
+        "//third-party/npm/typescript:typescript",
+    ],
+)
+
+alias(
+    name = "protoplugin",
+    actual = ":protoplugin-2.12.1",
+    visibility = ["PUBLIC"],
+)
