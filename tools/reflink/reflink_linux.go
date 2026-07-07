@@ -34,7 +34,7 @@ func reflink(src, dst string) (srcFile, dstFile *os.File, err error) {
 		return
 	}
 
-	var errs, errd, err error
+	var errs, errd error
 	errs = srcConn.Control(func(srcFd uintptr) {
 		errd = dstConn.Control(func(dstFd uintptr) {
 			err = unix.IoctlFileClone(int(dstFd), int(srcFd))
