@@ -7,21 +7,46 @@ def _deno_binary_impl(ctx: AnalysisContext) -> list[Provider]:
     cfg = {"lock": False}
     hidden = []
     if ctx.attrs.npm_deps != []:
-        # workspace members must be nested under the workspace root, so we
-        # symlink each package into a `workspace/` dir beside deno.json.
+        # npm packages' real paths must be nested under the workspace root,
+        # so we copy each package into a `node_modules/` dir beside deno.json.
         # Traverse each dependency's own transitive set rather than merging them
         # into a fresh TSet. TSets can't cross cell boundaries, so this is
         # required for toolchain rules to call third-party dependencies.
         #
         # TODO: should toolchains have a separate set of third-party packages?
-        members = {
-            package.package: package.contents
-            for dep in ctx.attrs.npm_deps
-            for package in dep[NodePackageInfo].lib.traverse()
-        }
-        workspace = ctx.actions.symlinked_dir("workspace", members)
-        cfg["workspace"] = ["./workspace/" + package for package in members]
-        hidden.append(workspace)
+        node_modules = ctx.actions.declare_output("node_modules", dir = True)
+        reflink = cmd_args([
+            "sh",
+            "-c",
+            r"""
+reflink=$1
+output=$2
+
+shift 2
+
+for arg in "$@"
+do
+    from="${arg%%:*}"
+    to="$output/${arg#*:}"
+
+    mkdir -p "$(dirname "$to")"
+    "$reflink" --auto "$from" "$to"
+done
+""",
+            "--",
+            node_modules.as_output(),
+            cmd_args([
+                cmd_args([package.contents, package.package], delimiter = ":")
+                for dep in ctx.attrs.npm_deps
+                for package in dep[NodePackageInfo].lib.traverse()
+            ]),
+        ])
+        ctx.actions.run(
+            reflink,
+            category = "reflink_dir",
+            identifier = ctx.label.name,
+        )
+        cfg["nodeModulesDir"] = "manual"
 
     deno_cfg = ctx.actions.write_json(
         ctx.actions.declare_output("deno.json").as_output(),
@@ -110,6 +135,12 @@ deno_binary = rule(
             attrs.toolchain_dep(
                 default = "toolchains//:deno",
                 providers = [DenoToolchainInfo],
+            ),
+        ),
+        "_reflinker": attrs.default_only(
+            attrs.exec_dep(
+                providers = [RunInfo],
+                default = "root//tools/reflink:reflink",
             ),
         ),
     },
