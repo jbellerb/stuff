@@ -2,5 +2,8 @@
 root = .
 toolchains = toolchains
 
+[build]
+execution_platforms = root//platforms:default-execution-platform
+
 [project]
 ignore = .direnv, .git, .jj

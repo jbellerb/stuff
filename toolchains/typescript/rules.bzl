@@ -102,9 +102,13 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
     )
 
     ctx.actions.run(
-        cmd_args([toolchain.tsc_build, tsc_cfg, output.as_output()]),
+        cmd_args([tsc_cfg, output.as_output()]),
         category = "tsc",
         identifier = ctx.label.name,
+        exe = WorkerRunInfo(
+            worker = toolchain.tsc_build,
+            exe = toolchain.tsc_build.exe,
+        ),
     )
 
     return [

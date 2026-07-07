@@ -7,7 +7,7 @@ TypeScriptBundlerInfo = provider(
 
 TypeScriptToolchainInfo = provider(
     fields = {
-        "tsc_build": provider_field(RunInfo),
+        "tsc_build": provider_field(WorkerInfo),
         "bundler": provider_field(TypeScriptBundlerInfo),
     },
 )
@@ -16,7 +16,7 @@ def _typescript_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(),
         TypeScriptToolchainInfo(
-            tsc_build = ctx.attrs.tsc_build[RunInfo],
+            tsc_build = WorkerInfo(exe = ctx.attrs.tsc_build[RunInfo].args),
             bundler = ctx.attrs.bundler[TypeScriptBundlerInfo],
         ),
     ]

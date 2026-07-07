@@ -1,0 +1,9 @@
+load("@prelude//platforms:defs.bzl", "host_configuration")
+load(":defs.bzl", "execution_platform_with_workers")
+
+execution_platform_with_workers(
+    name = "default-execution-platform",
+    cpu_configuration = host_configuration.cpu,
+    os_configuration = host_configuration.os,
+    visibility = ["PUBLIC"],
+)

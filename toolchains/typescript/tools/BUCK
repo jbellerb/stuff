@@ -1,4 +1,6 @@
+load("//deno:node.bzl", "node_package")
 load("//deno:rules.bzl", "deno_binary")
+load("//protobuf:defs.bzl", "protobuf_library")
 
 deno_binary(
     name = "esbuild_bundle",
@@ -36,11 +38,39 @@ deno_binary(
     visibility = ["//typescript/..."],
 )
 
+http_file(
+    name = "worker.proto",
+    sha256 = "3b88a78eec0b8b401235de47166bf06cbd17904a08ba68ffb6c9dc18d1a52270",
+    urls = ["https://raw.githubusercontent.com/facebook/buck2/refs/tags/2026-04-15/app/buck2_worker_proto/worker.proto"],
+)
+
+protobuf_library(
+    name = "worker_pb",
+    srcs = [":worker.proto"],
+    language = "es",
+)
+
+node_package(
+    name = "worker-proto",
+    package = "buck2-worker-proto",
+    type = "module",
+    srcs = {
+        "worker_pb.js": ":worker_pb[worker_pb.js]",
+        "worker_pb.d.ts": ":worker_pb[worker_pb.d.ts]",
+    },
+)
+
 deno_binary(
     name = "tsc_build",
     main = "tsc_build.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],
     permissions = ["env", "read", "sys", "write"],
-    npm_deps = ["root//third-party/npm/typescript:typescript"],
+    npm_deps = [
+        ":worker-proto",
+        "root//third-party/npm/@bufbuild/protobuf:protobuf",
+        "root//third-party/npm/@grpc/grpc-js:grpc-js",
+        "root//third-party/npm/@types/node:node",
+        "root//third-party/npm/typescript:typescript",
+    ],
     visibility = ["//typescript/..."],
 )

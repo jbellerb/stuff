@@ -8,7 +8,7 @@ http_file(
 
 _mod_mapping = [
     "module=tools/installer/third-party/buckproto/install",
-    "M$(location :install.proto)=tools/installer/third-party/buckproto/install",
+    "Minstall.proto=tools/installer/third-party/buckproto/install",
 ]
 
 protobuf_library(

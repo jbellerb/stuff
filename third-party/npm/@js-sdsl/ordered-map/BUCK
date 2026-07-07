@@ -1,0 +1,14 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "ordered-map-4.4.2",
+    package = "@js-sdsl/ordered-map",
+    version = "4.4.2",
+    sha256 = "445977543e62c08dbeb285a177b05d484485bcd4fda80ad5014d29c454f47476",
+)
+
+alias(
+    name = "ordered-map",
+    actual = ":ordered-map-4.4.2",
+    visibility = ["PUBLIC"],
+)
