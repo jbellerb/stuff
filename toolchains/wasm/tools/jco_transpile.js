@@ -1,6 +1,6 @@
 import { transpileBytes } from "npm:@bytecodealliance/jco-transpile";
 
-const { input, name, instantiation, map, compress, compressor } = JSON.parse(
+const { input, name, compress, compressor } = JSON.parse(
   await Deno.readTextFile(Deno.args[0]),
 );
 const outDir = Deno.args[1];
@@ -10,12 +10,15 @@ await Deno.mkdir(outDir, { recursive: true });
 const component = await Deno.readFile(input);
 const { files } = await transpileBytes(component, {
   name: name ?? "component",
-  instantiation: instantiation ?? "async",
-  map: map,
+  instantiation: "async",
   nodejsCompat: false,
   minify: false,
   optimize: !!Deno.env.get("WASM_OPT"),
   wasiShim: false,
+  // jco silently maps versioned imports to their unversioned names when no
+  // map is provided. At least we'll make that behavior explicit with a no-op
+  // map.
+  map: { "wasi:*": "wasi:*" },
 });
 
 const cores = [];

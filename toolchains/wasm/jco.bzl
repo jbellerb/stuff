@@ -8,16 +8,6 @@ load(
 )
 load(":defs.bzl", "WasmToolchainInfo")
 
-_PREVIEW2_SHIM_MAP = {
-    "wasi:cli/*": "@bytecodealliance/preview2-shim/cli#*",
-    "wasi:clocks/*": "@bytecodealliance/preview2-shim/clocks#*",
-    "wasi:filesystem/*": "@bytecodealliance/preview2-shim/filesystem#*",
-    "wasi:http/*": "@bytecodealliance/preview2-shim/http#*",
-    "wasi:io/*": "@bytecodealliance/preview2-shim/io#*",
-    "wasi:random/*": "@bytecodealliance/preview2-shim/random#*",
-    "wasi:sockets/*": "@bytecodealliance/preview2-shim/sockets#*",
-}
-
 def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
     component = ctx.attrs.component[DefaultInfo]
     if len(component.default_outputs) != 1:
@@ -29,8 +19,6 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
         ctx.actions.declare_output("jco.json").as_output(),
         {
             "input": component.default_outputs[0],
-            "instantiation": "async",
-            "map": ctx.attrs.shim_map,
             "name": ctx.attrs.module_name,
             "compress": ctx.attrs.compress,
             "compressor": ctx.attrs.compressor[RunInfo] if ctx.attrs.compressor else None,
@@ -51,23 +39,22 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
     )
 
     return [
-        DefaultInfo(
-            default_output = out,
-            sub_targets = {
-                # the .js outputs load their sibling core modules by relative
-                # path, so consumers of a projection should also depend on the
-                # whole out dir
-                name: [DefaultInfo(
-                    default_output = out.project(name),
-                    other_outputs = [out],
-                )]
-                for name in [
-                    ctx.attrs.module_name + ".js",
-                    ctx.attrs.module_name + ".d.ts",
-                    "cores.js",
-                    "cores.d.ts",
-                ]
-            },
+        DefaultInfo(default_output = out),
+        TypeScriptLibraryInfo(
+            transpiled = ctx.actions.tset(
+                TypeScriptModuleTSet,
+                value = TypeScriptModule(
+                    specifier = "{}//{}:{}".format(
+                        ctx.label.cell,
+                        ctx.label.package,
+                        ctx.label.name,
+                    ),
+                    main = ctx.attrs.module_name,
+                    transpiled = out,
+                ),
+            ),
+            lib = ctx.actions.tset(TypeScriptLibTSet, value = []),
+            packages = ctx.actions.tset(NodePackageTSet),
         ),
     ]
 
@@ -81,12 +68,6 @@ jco_transpile = rule(
         "module_name": attrs.string(
             default = "component",
             doc = "Base name for the emitted module.",
-        ),
-        "shim_map": attrs.dict(
-            key = attrs.string(),
-            value = attrs.string(),
-            default = _PREVIEW2_SHIM_MAP,
-            doc = "Mapping of WASI interfaces to shim packages.",
         ),
         "optimize": attrs.bool(
             default = False,
