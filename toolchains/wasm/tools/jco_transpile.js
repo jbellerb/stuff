@@ -60,9 +60,7 @@ const compressBinary = async (bytes) => {
 
     const status = await child.status;
     if (!status.success) {
-      throw new Error(
-        `compressor returned non-zero exit code: ${status.code}`,
-      );
+      throw new Error(`compressor returned non-zero exit code: ${status.code}`);
     }
     return new Uint8Array(output.stdout);
   } else {
@@ -102,13 +100,11 @@ await Deno.writeTextFile(
 
 const cores = {
 ${await Promise.all(
-    Object.entries(cores).map(
-      async ([name, bytes]) =>
-        `  "${name}": "${
-          (compress ? await compressBinary(bytes) : bytes).toBase64()
-        }",`,
-    ),
-  ).then((cores) => cores.join("\n"))}
+  Object.entries(cores).map(
+    async ([name, bytes]) =>
+      `  "${name}": "${(compress ? await compressBinary(bytes) : bytes).toBase64()}",`,
+  ),
+).then((cores) => cores.join("\n"))}
 };
 
 export const getCoreModule = (name) => {

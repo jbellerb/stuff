@@ -81,18 +81,20 @@ const resolveLabel = (
 
   const root = abs(matched.transpiled);
   const candidates = !subpath
-    ? matched.main != null ? [`${root}/${matched.main}.d.ts`] : []
-    // remap .js to .d.ts since we only care about types
-    : [`${root}/${subpath.replace(/\.js$/, "")}.d.ts`, `${root}/${subpath}`];
+    ? matched.main != null
+      ? [`${root}/${matched.main}.d.ts`]
+      : []
+    : // remap .js to .d.ts since we only care about types
+      [`${root}/${subpath.replace(/\.js$/, "")}.d.ts`, `${root}/${subpath}`];
   const found = candidates.find((path) => ts.sys.fileExists(path));
 
   return {
     resolvedModule: found
       ? {
-        resolvedFileName: found,
-        extension: ts.Extension.Dts,
-        isExternalLibraryImport: true,
-      }
+          resolvedFileName: found,
+          extension: ts.Extension.Dts,
+          isExternalLibraryImport: true,
+        }
       : undefined,
   };
 };
@@ -140,7 +142,7 @@ const system: ts.System = {
   realpath(path) {
     return path === ROOT || path.startsWith(`${ROOT}/`)
       ? path
-      : ts.sys.realpath?.(path) ?? "";
+      : (ts.sys.realpath?.(path) ?? "");
   },
 };
 
@@ -149,7 +151,8 @@ const host = ts.createIncrementalCompilerHost(options, system);
 host.resolveModuleNameLiterals = (literals, containingFile, redirected, opts) =>
   literals.map((literal) => {
     const target = alias[literal.text] ?? literal.text;
-    return resolveLabel(target) ??
+    return (
+      resolveLabel(target) ??
       ts.resolveModuleName(
         target,
         containingFile,
@@ -157,7 +160,8 @@ host.resolveModuleNameLiterals = (literals, containingFile, redirected, opts) =>
         system,
         undefined,
         redirected,
-      );
+      )
+    );
   });
 
 const program = ts.createProgram({

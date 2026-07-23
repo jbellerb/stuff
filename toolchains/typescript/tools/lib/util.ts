@@ -79,7 +79,9 @@ export async function resolveLabel(
 
   const root = abs(matched.transpiled);
   const candidates = !subpath
-    ? matched.main != null ? [`${root}/${matched.main}.js`] : []
+    ? matched.main != null
+      ? [`${root}/${matched.main}.js`]
+      : []
     : [`${root}/${subpath}`, `${root}/${subpath}.js`];
   for (const candidate of candidates) {
     if (await exists(candidate)) {
@@ -88,8 +90,9 @@ export async function resolveLabel(
   }
 
   return {
-    error: candidates.length === 0
-      ? `"${importPath}" has no main module`
-      : `"${importPath}" not found in ${matched.transpiled}`,
+    error:
+      candidates.length === 0
+        ? `"${importPath}" has no main module`
+        : `"${importPath}" not found in ${matched.transpiled}`,
   };
 }

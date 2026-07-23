@@ -12,9 +12,12 @@ const SOURCEMAP_MODES: Record<string, rolldown.OutputOptions["sourcemap"]> = {
 };
 
 const [configPath, outfile] = Deno.args;
-const { cell, package: pkg, deps, ...config } = JSON.parse(
-  await Deno.readTextFile(configPath),
-) as BundlerConfig;
+const {
+  cell,
+  package: pkg,
+  deps,
+  ...config
+} = JSON.parse(await Deno.readTextFile(configPath)) as BundlerConfig;
 
 const options: rolldown.BuildOptions = {
   input: config.entryPoints,
@@ -26,9 +29,8 @@ const options: rolldown.BuildOptions = {
     file: outfile,
     format: config.format,
     minify: config.minify,
-    sourcemap: config.sourcemap != null
-      ? SOURCEMAP_MODES[config.sourcemap]
-      : undefined,
+    sourcemap:
+      config.sourcemap != null ? SOURCEMAP_MODES[config.sourcemap] : undefined,
   },
   transform: {
     target: config.target,
