@@ -65,6 +65,12 @@ alias(
     visibility = ["PUBLIC"],
 )
 
+alias(
+    name = "oxlint",
+    actual = "//typescript/tools:oxlint",
+    visibility = ["PUBLIC"],
+)
+
 typescript_toolchain(
     name = "typescript",
     tsc_build = "//typescript/tools:tsc_build",

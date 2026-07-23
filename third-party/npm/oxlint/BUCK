@@ -1,0 +1,32 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "binding-darwin-arm64-1.75.0",
+    package = "@oxlint/binding-darwin-arm64",
+    version = "1.75.0",
+    sha256 = "0986f2d904f8898f309fc3391357fa4e54c4657914a6168becf21f94a416e471",
+)
+
+npm_package(
+    name = "binding-linux-x64-gnu-1.75.0",
+    package = "@oxlint/binding-linux-x64-gnu",
+    version = "1.75.0",
+    sha256 = "5c7872fd0fdd55a48145e5d559085823557204cfc6c76aa5180fa22864b12532",
+)
+
+npm_package(
+    name = "oxlint-1.75.0",
+    package = "oxlint",
+    version = "1.75.0",
+    sha256 = "31d34240f5edd9ec52bb2f68395d8ff25c17c783e7fcb11c432e494488c201c0",
+    deps = select({
+        "config//os:linux": [":binding-linux-x64-gnu-1.75.0"],
+        "config//os:macos": [":binding-darwin-arm64-1.75.0"],
+    }),
+)
+
+alias(
+    name = "oxlint",
+    actual = ":oxlint-1.75.0",
+    visibility = ["PUBLIC"],
+)

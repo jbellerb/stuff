@@ -289,3 +289,53 @@ typescript_bundle = rule(
         ),
     },
 )
+
+def _oxlint_lint_impl(ctx: AnalysisContext) -> list[Provider]:
+    oxlint = ctx.attrs._oxlint_cli[RunInfo].args
+
+    config = {}
+    if ctx.attrs.categories:
+        config["categories"] = ctx.attrs.categories
+    if ctx.attrs.rules:
+        config["rules"] = ctx.attrs.rules
+    if ctx.attrs.env:
+        config["env"] = ctx.attrs.env
+    if ctx.attrs.globals:
+        config["globals"] = ctx.attrs.globals
+
+    oxlintrc = ctx.actions.write_json(
+        ctx.actions.declare_output("oxlintrc.json").as_output(),
+        config,
+    )
+
+    command = cmd_args([
+        oxlint,
+        "--config",
+        oxlintrc,
+        ctx.attrs.srcs,
+    ])
+
+    return [
+        DefaultInfo(),
+        ExternalRunnerTestInfo(
+            type = "oxlint",
+            command = [command],
+        ),
+    ]
+
+oxlint_lint = rule(
+    impl = _oxlint_lint_impl,
+    attrs = {
+        "srcs": attrs.list(attrs.source(), doc = "The JS/TS sources to lint."),
+        "rules": attrs.dict(attrs.string(), attrs.string(), default = {}),
+        "categories": attrs.dict(attrs.string(), attrs.string(), default = {}),
+        "env": attrs.dict(attrs.string(), attrs.bool(), default = {}),
+        "globals": attrs.dict(attrs.string(), attrs.string(), default = {}),
+        "_oxlint_cli": attrs.default_only(
+            attrs.exec_dep(
+                default = "toolchains//typescript:oxlint",
+                providers = [RunInfo],
+            ),
+        ),
+    },
+)
