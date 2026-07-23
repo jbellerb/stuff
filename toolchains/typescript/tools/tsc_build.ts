@@ -12,6 +12,7 @@ interface Config {
   packages: { pkg: string; path: string }[];
   lib?: string[];
   alias?: Record<string, string>;
+  strict?: boolean;
 }
 
 const [configPath, outDir] = Deno.args;
@@ -108,7 +109,7 @@ const { options, errors } = ts.convertCompilerOptionsFromJson(
     // always emit esnext. the bundler downlevels to the final target
     target: "esnext",
     declaration: true,
-    strict: true,
+    strict: config.strict ?? true,
     isolatedModules: true,
     noEmitOnError: true,
     // rewrite imports so the bundler consumes the .js files directly

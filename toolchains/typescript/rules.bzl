@@ -92,6 +92,7 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
         "packages": packages.project_as_json("package"),
         "lib": lib.project_as_args("lib"),
         "alias": getattr(ctx.attrs, "alias", {}),
+        "strict": ctx.attrs.strict,
     }
 
     tsc_cfg = ctx.actions.write_json(
@@ -144,6 +145,10 @@ _typescript_library_attrs = {
         attrs.string(),
         default = [],
         doc = "tsconfig lib entries this library type checks against.",
+    ),
+    "strict": attrs.bool(
+        default = True,
+        doc = "Whether to type check under strict mode.",
     ),
     "_typescript_toolchain": attrs.default_only(
         attrs.toolchain_dep(
