@@ -10,6 +10,15 @@ deno_binary(
 )
 
 deno_binary(
+    name = "oxfmt",
+    main = "oxfmt.ts",
+    skip_check = True,
+    permissions = ["env", "ffi", "read", "run", "sys", "write"],
+    npm_deps = ["root//third-party/npm/oxfmt:oxfmt"],
+    visibility = ["PUBLIC"],
+)
+
+deno_binary(
     name = "rolldown_bundle",
     main = "rolldown_bundle.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],

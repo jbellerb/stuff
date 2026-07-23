@@ -1,0 +1,32 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "binding-darwin-arm64-0.60.0",
+    package = "@oxfmt/binding-darwin-arm64",
+    version = "0.60.0",
+    sha256 = "0cdf925df400724e6af87e1259e61a634c90d0ddd99f278f445e14586b372c78",
+)
+
+npm_package(
+    name = "binding-linux-x64-gnu-0.60.0",
+    package = "@oxfmt/binding-linux-x64-gnu",
+    version = "0.60.0",
+    sha256 = "accccfb3eefb84fb7ff4dce0963a2a0ca9ea33ecb3a80c7eeb5661407b2fb829",
+)
+
+npm_package(
+    name = "oxfmt-0.60.0",
+    package = "oxfmt",
+    version = "0.60.0",
+    sha256 = "b4926144444c6282fdad21f8a9dc8d8d183c863f104a4a35e82c5867187ecf9c",
+    deps = ["//third-party/npm/tinypool:tinypool"] + select({
+        "config//os:linux": [":binding-linux-x64-gnu-0.60.0"],
+        "config//os:macos": [":binding-darwin-arm64-0.60.0"],
+    }),
+)
+
+alias(
+    name = "oxfmt",
+    actual = ":oxfmt-0.60.0",
+    visibility = ["PUBLIC"],
+)

@@ -59,6 +59,12 @@ constraint(
     ],
 )
 
+alias(
+    name = "oxfmt",
+    actual = "//typescript/tools:oxfmt",
+    visibility = ["PUBLIC"],
+)
+
 typescript_toolchain(
     name = "typescript",
     tsc_build = "//typescript/tools:tsc_build",

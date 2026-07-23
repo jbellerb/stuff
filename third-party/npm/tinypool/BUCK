@@ -1,0 +1,14 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "tinypool-2.1.0",
+    package = "tinypool",
+    version = "2.1.0",
+    sha256 = "5ce4583f6f99368b0b57e25233c9aaa870194abeaf6a406713889ecff37bb41e",
+)
+
+alias(
+    name = "tinypool",
+    actual = ":tinypool-2.1.0",
+    visibility = ["PUBLIC"],
+)
