@@ -17,14 +17,14 @@ http_archive(
 genrule(
     name = "wasm-opt-arm64-macos",
     out = "wasm-opt",
-    cmd = "ln -sF $(location :binaryen-version_129-arm64-macos.tar.gz)/bin/wasm-opt $OUT",
+    cmd = "ln -s $(location :binaryen-version_129-arm64-macos.tar.gz)/bin/wasm-opt $OUT",
     executable = True,
 )
 
 genrule(
     name = "wasm-opt-x86_64-linux",
     out = "wasm-opt",
-    cmd = "ln -sF $(location :binaryen-version_129-x86_64-linux.tar.gz)/bin/wasm-opt $OUT",
+    cmd = "ln -s $(location :binaryen-version_129-x86_64-linux.tar.gz)/bin/wasm-opt $OUT",
     executable = True,
 )
 
@@ -45,14 +45,14 @@ http_archive(
 genrule(
     name = "wasm-tools-arm64-macos",
     out = "wasm-tools",
-    cmd = "ln -sF $(location :wasm-tools-1.252.0-aarch64-macos.tar.gz)/wasm-tools $OUT",
+    cmd = "ln -s $(location :wasm-tools-1.252.0-aarch64-macos.tar.gz)/wasm-tools $OUT",
     executable = True,
 )
 
 genrule(
     name = "wasm-tools-x86_64-linux",
     out = "wasm-tools",
-    cmd = "ln -sF $(location :wasm-tools-1.252.0-x86_64-linux.tar.gz)/wasm-tools $OUT",
+    cmd = "ln -s $(location :wasm-tools-1.252.0-x86_64-linux.tar.gz)/wasm-tools $OUT",
     executable = True,
 )
 

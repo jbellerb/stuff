@@ -15,14 +15,14 @@ http_archive(
 genrule(
     name = "protoc-darwin-arm64",
     out = "protoc",
-    cmd = "ln -sF $(location :protoc-34.0-rc-2-osx-aarch_64)/bin/protoc $OUT",
+    cmd = "ln -s $(location :protoc-34.0-rc-2-osx-aarch_64)/bin/protoc $OUT",
     executable = True,
 )
 
 genrule(
     name = "protoc-linux-amd64",
     out = "protoc",
-    cmd = "ln -sF $(location :protoc-34.0-rc-2-linux-x86_64)/bin/protoc $OUT",
+    cmd = "ln -s $(location :protoc-34.0-rc-2-linux-x86_64)/bin/protoc $OUT",
     executable = True,
 )
 
@@ -41,14 +41,14 @@ http_archive(
 genrule(
     name = "protoc-gen-go-darwin-arm64",
     out = "protoc-gen-go",
-    cmd = "ln -sF $(location :protoc-gen-go.v1.36.11.darwin.arm64)/protoc-gen-go $OUT",
+    cmd = "ln -s $(location :protoc-gen-go.v1.36.11.darwin.arm64)/protoc-gen-go $OUT",
     executable = True,
 )
 
 genrule(
     name = "protoc-gen-go-linux-amd64",
     out = "protoc-gen-go",
-    cmd = "ln -sF $(location :protoc-gen-go.v1.36.11.linux.amd64)/protoc-gen-go $OUT",
+    cmd = "ln -s $(location :protoc-gen-go.v1.36.11.linux.amd64)/protoc-gen-go $OUT",
     executable = True,
 )
 
@@ -67,14 +67,14 @@ http_archive(
 genrule(
     name = "protoc-gen-go-grpc-darwin-arm64",
     out = "protoc-gen-go-grpc",
-    cmd = "ln -sF $(location :protoc-gen-go-grpc.v1.6.1.darwin.arm64)/protoc-gen-go-grpc $OUT",
+    cmd = "ln -s $(location :protoc-gen-go-grpc.v1.6.1.darwin.arm64)/protoc-gen-go-grpc $OUT",
     executable = True,
 )
 
 genrule(
     name = "protoc-gen-go-grpc-linux-amd64",
     out = "protoc-gen-go-grpc",
-    cmd = "ln -sF $(location :protoc-gen-go-grpc.v1.6.1.linux.amd64)/protoc-gen-go-grpc $OUT",
+    cmd = "ln -s $(location :protoc-gen-go-grpc.v1.6.1.linux.amd64)/protoc-gen-go-grpc $OUT",
     executable = True,
 )
 

@@ -19,14 +19,14 @@ http_archive(
 genrule(
     name = "esbuild-aarch64-darwin",
     out = "esbuild",
-    cmd = "ln -sF $(location :darwin-arm64-0.28.0.tgz)/bin/esbuild $OUT",
+    cmd = "ln -s $(location :darwin-arm64-0.28.0.tgz)/bin/esbuild $OUT",
     executable = True,
 )
 
 genrule(
     name = "esbuild-x86_64-linux",
     out = "esbuild",
-    cmd = "ln -sF $(location :linux-x64-0.28.0.tgz)/bin/esbuild $OUT",
+    cmd = "ln -s $(location :linux-x64-0.28.0.tgz)/bin/esbuild $OUT",
     executable = True,
 )
 

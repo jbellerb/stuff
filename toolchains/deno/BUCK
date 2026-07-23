@@ -17,14 +17,14 @@ remote_file(
 genrule(
     name = "deno-aarch64-apple-darwin",
     out = "deno",
-    cmd = "ln -sF $(location :deno-aarch64-apple-darwin.zip)/deno $OUT",
+    cmd = "ln -s $(location :deno-aarch64-apple-darwin.zip)/deno $OUT",
     executable = True,
 )
 
 genrule(
     name = "deno-x86_64-unknown-linux-gnu",
     out = "deno",
-    cmd = "ln -sF $(location :deno-x86_64-unknown-linux-gnu.zip)/deno $OUT",
+    cmd = "ln -s $(location :deno-x86_64-unknown-linux-gnu.zip)/deno $OUT",
     executable = True,
 )
 
