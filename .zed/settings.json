@@ -1,12 +1,56 @@
 {
   "languages": {
-    "JavaScript": { "language_servers": ["oxfmt", "oxlint"] },
-    "JSONC": { "formatter": { "language_server": { "name": "oxfmt" } } },
-    "Starlark": { "language_servers": ["buck2-lsp", "!starpls", "!tilt"] },
-    "TypeScript": { "language_servers": ["oxfmt", "oxlint"] }
+    "CSS": {
+      "language_servers": ["oxfmt", "oxlint"]
+    },
+    "Go": { "language_servers": ["gopls"] },
+    "Haskell": { "language_servers": ["hls"] },
+    "HTML": { "language_servers": [] },
+    "JavaScript": {
+      "format_on_save": "on",
+      "language_servers": ["oxfmt", "oxlint"]
+    },
+    "JSON": {
+      "formatter": { "language_server": { "name": "oxfmt" } },
+      "format_on_save": "on",
+      "language_servers": ["oxfmt"]
+    },
+    "JSONC": {
+      "formatter": { "language_server": { "name": "oxfmt" } },
+      "format_on_save": "on",
+      "language_servers": ["oxfmt"]
+    },
+    "Proto": { "language_servers": [] },
+    "Python": {
+      "formatter": { "language_server": { "name": "ruff" } },
+      "language_servers": ["pyrefly", "ruff"]
+    },
+    "Rust": { "language_servers": ["rust-analyzer"] },
+    "Starlark": {
+      "formatter": {
+        "external": {
+          "command": "direnv",
+          "arguments": ["exec", ".", "treefmt", "--stdin", "{buffer_path}"]
+        }
+      },
+      "language_servers": ["buck2-lsp"]
+    },
+    "Swift": { "language_servers": ["sourcekit-lsp"] },
+    "TOML": { "language_servers": [] },
+    "TypeScript": {
+      "format_on_save": "on",
+      "language_servers": ["oxfmt", "oxlint"]
+    },
+    "YAML": { "language_servers": [] }
   },
 
   "lsp": {
+    "buck2-lsp": {
+      "binary": {
+        "path": "direnv",
+        "arguments": ["exec", ".", "buck2", "lsp"]
+      }
+    },
     "gopls": {
       "initialization_options": {
         "build.workspaceFiles": [
@@ -15,6 +59,18 @@
           "**/*.bzl",
           "**/.buckconfig"
         ]
+      }
+    },
+    "oxfmt": {
+      "binary": {
+        "path": "direnv",
+        "arguments": ["exec", ".", "buck2", "run", "oxfmt", "--", "--lsp"]
+      }
+    },
+    "oxlint": {
+      "binary": {
+        "path": "direnv",
+        "arguments": ["exec", ".", "buck2", "run", "oxlint", "--", "--lsp"]
       }
     },
     "pyrefly": {
@@ -30,11 +86,25 @@
     "rust-analyzer": {
       "initialization_options": {
         "check": {
-          "overrideCommand": ["rust-project", "check", "$saved_file"]
+          "overrideCommand": [
+            "direnv",
+            "exec",
+            ".",
+            "rust-project",
+            "check",
+            "$saved_file"
+          ]
         },
         "workspace": {
           "discoverConfig": {
-            "command": ["rust-project", "develop-json", "{arg}"],
+            "command": [
+              "direnv",
+              "exec",
+              ".",
+              "rust-project",
+              "develop-json",
+              "{arg}"
+            ],
             "progressLabel": "buck2/rust-project",
             "filesToWatch": ["BUCK"]
           }
