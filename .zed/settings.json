@@ -47,8 +47,8 @@
   "lsp": {
     "buck2-lsp": {
       "binary": {
-        "path": "direnv",
-        "arguments": ["exec", ".", "buck2", "lsp"]
+        "path": "buck2/bin/buck2",
+        "arguments": ["lsp"]
       }
     },
     "gopls": {
@@ -63,14 +63,14 @@
     },
     "oxfmt": {
       "binary": {
-        "path": "direnv",
-        "arguments": ["exec", ".", "buck2", "run", "oxfmt", "--", "--lsp"]
+        "path": "buck2/bin/buck2",
+        "arguments": ["run", "oxfmt", "--", "--lsp"]
       }
     },
     "oxlint": {
       "binary": {
-        "path": "direnv",
-        "arguments": ["exec", ".", "buck2", "run", "oxlint", "--", "--lsp"]
+        "path": "buck2/bin/buck2",
+        "arguments": ["run", "oxlint", "--", "--lsp"]
       }
     },
     "pyrefly": {
@@ -87,24 +87,14 @@
       "initialization_options": {
         "check": {
           "overrideCommand": [
-            "direnv",
-            "exec",
-            ".",
-            "rust-project",
+            "./buck2/bin/rust-project",
             "check",
             "$saved_file"
           ]
         },
         "workspace": {
           "discoverConfig": {
-            "command": [
-              "direnv",
-              "exec",
-              ".",
-              "rust-project",
-              "develop-json",
-              "{arg}"
-            ],
+            "command": ["./buck2/bin/rust-project", "develop-json", "{arg}"],
             "progressLabel": "buck2/rust-project",
             "filesToWatch": ["BUCK"]
           }

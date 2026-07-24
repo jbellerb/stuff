@@ -21,7 +21,7 @@ options = ["-w"]
 includes = ["*.go"]
 
 [formatter.oxfmt]
-command = "buck2"
+command = "./buck2/bin/buck2"
 includes = ["*.css", "*.js", "*.ts"]
 options = ["run", "oxfmt", "--"]
 

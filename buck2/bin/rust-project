@@ -1,0 +1,91 @@
+#!/usr/bin/env dotslash
+
+{
+  "name": "rust-project",
+  "platforms": {
+    "macos-aarch64": {
+      "size": 948312,
+      "hash": "blake3",
+      "digest": "729607759a183f1b584c62bab2092cd9cec106627a8cd4f72c182bb86ad1d118",
+      "format": "zst",
+      "path": "rust-project-aarch64-apple-darwin",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/buck2/releases/download/2026-06-01/rust-project-aarch64-apple-darwin.zst"
+        }
+      ]
+    },
+    "windows-aarch64": {
+      "size": 826555,
+      "hash": "blake3",
+      "digest": "454a41741bc1ae4fda401334063b341ed514897d685fac37e7c27013faa8b663",
+      "format": "zst",
+      "path": "rust-project-aarch64-pc-windows-msvc.exe",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/buck2/releases/download/2026-06-01/rust-project-aarch64-pc-windows-msvc.exe.zst"
+        }
+      ]
+    },
+    "linux-aarch64": {
+      "size": 1103737,
+      "hash": "blake3",
+      "digest": "e5fc5e2befc29395a84418df4118729d850c8fb339186a5d7f42d24b3cba6164",
+      "format": "zst",
+      "path": "rust-project-aarch64-unknown-linux-musl",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/buck2/releases/download/2026-06-01/rust-project-aarch64-unknown-linux-musl.zst"
+        }
+      ]
+    },
+    "linux-riscv64": {
+      "size": 1090575,
+      "hash": "blake3",
+      "digest": "1bd0a5426a15915da5fcac1840a1c6997891e80bd245d8afb72fa66bb26f1daa",
+      "format": "zst",
+      "path": "rust-project-riscv64gc-unknown-linux-gnu",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/buck2/releases/download/2026-06-01/rust-project-riscv64gc-unknown-linux-gnu.zst"
+        }
+      ]
+    },
+    "macos-x86_64": {
+      "size": 1010056,
+      "hash": "blake3",
+      "digest": "66f43ff4044edf8469469b5928d87d31d49d5b7ac91866b985fade650e6b8c74",
+      "format": "zst",
+      "path": "rust-project-x86_64-apple-darwin",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/buck2/releases/download/2026-06-01/rust-project-x86_64-apple-darwin.zst"
+        }
+      ]
+    },
+    "windows-x86_64": {
+      "size": 862110,
+      "hash": "blake3",
+      "digest": "0f219846c103e8a71560b05cf39edd46fdd6992049d9f51df22937b28746e638",
+      "format": "zst",
+      "path": "rust-project-x86_64-pc-windows-msvc.exe",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/buck2/releases/download/2026-06-01/rust-project-x86_64-pc-windows-msvc.exe.zst"
+        }
+      ]
+    },
+    "linux-x86_64": {
+      "size": 1164874,
+      "hash": "blake3",
+      "digest": "6dfe5fae1f373aa9f999dbebb05db0f15d7f0bfb437d9d8ca95c923900692efd",
+      "format": "zst",
+      "path": "rust-project-x86_64-unknown-linux-musl",
+      "providers": [
+        {
+          "url": "https://github.com/facebook/buck2/releases/download/2026-06-01/rust-project-x86_64-unknown-linux-musl.zst"
+        }
+      ]
+    }
+  }
+}
