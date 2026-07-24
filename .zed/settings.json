@@ -1,7 +1,9 @@
 {
   "languages": {
-    "JSONC": { "formatter": { "language_server": { "name": "biome" } } },
-    "Starlark": { "language_servers": ["buck2-lsp", "!starpls", "!tilt"] }
+    "JavaScript": { "language_servers": ["oxfmt", "oxlint"] },
+    "JSONC": { "formatter": { "language_server": { "name": "oxfmt" } } },
+    "Starlark": { "language_servers": ["buck2-lsp", "!starpls", "!tilt"] },
+    "TypeScript": { "language_servers": ["oxfmt", "oxlint"] }
   },
 
   "lsp": {
