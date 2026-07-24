@@ -23,7 +23,7 @@ target_platform_detector_spec = \
   target:toolchains//...->prelude//platforms:default
 
 [buck2]
-file_watcher = notify
+file_watcher = watchman
 
 [build]
 execution_platforms = prelude//platforms:default
