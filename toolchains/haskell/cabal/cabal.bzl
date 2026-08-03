@@ -51,13 +51,9 @@ load(
 )
 load("@prelude//linking:types.bzl", "Linkage")
 load("//haskell/defs.bzl", "ghc_wrapper")
-load("//haskell/lib/pkgs.bzl", "BOOT_MANIFESTS")
 
-def _compile_setup_impl(ctx: AnalysisContext) -> list[Provider]:
+def _cabal_setup_script_impl(ctx: AnalysisContext) -> list[Provider]:
     toolchain = ctx.attrs._haskell_toolchain[HaskellToolchainInfo]
-
-    link_style = LinkStyle(ctx.attrs.link_style)
-    hlis = attr_deps_haskell_link_infos_sans_template_deps(ctx)
 
     setup_bin = ctx.actions.declare_output("setup")
     cmd = cmd_args([
@@ -74,39 +70,45 @@ def _compile_setup_impl(ctx: AnalysisContext) -> list[Provider]:
 
     packages_info = get_packages_info(
         ctx,
-        link_style,
+        # Setup.hs is always statically linked
+        LinkStyle("static"),
         specify_pkg_version = False,
         enable_profiling = False,
     )
     cmd.add(packages_info.exposed_package_args)
     cmd.add(packages_info.packagedb_args)
 
-    cmd.add(ctx.attrs.setup_src)
+    cmd.add(ctx.attrs.src)
     cmd.add("-o", setup_bin.as_output())
 
     ctx.actions.run(
         cmd,
         category = "haskell_compile_setup",
-        identifier = ctx.attrs.setup_src.short_path,
+        identifier = ctx.attrs.src.short_path,
     )
 
-    return [DefaultInfo(default_output = setup_bin)]
+    return [
+        DefaultInfo(default_output = setup_bin),
+        RunInfo(args = cmd_args(setup_bin)),
+    ]
 
-_compile_setup = anon_rule(
-    impl = _compile_setup_impl,
+cabal_setup_script = rule(
+    impl = _cabal_setup_script_impl,
     attrs = {
-        "setup_src": attrs.source(),
+        "src": attrs.source(),
         "deps": attrs.list(attrs.dep(), default = []),
-        "link_style": attrs.enum(LinkStyle.values()),
+        "platform_deps": attrs.list(
+            attrs.tuple(attrs.string(), attrs.list(attrs.dep())),
+            default = [],
+        ),
         "template_deps": attrs.default_only(
             attrs.list(attrs.exec_dep(providers = [HaskellLibraryProvider]), default = []),
         ),
-        # anon_rule doesn't support toolchain_dep or exec_dep with platform
-        # resolution
-        "_haskell_toolchain": attrs.dep(providers = [HaskellToolchainInfo]),
-    },
-    artifact_promise_mappings = {
-        "setup": lambda x: x[DefaultInfo].default_outputs[0],
+        "_haskell_toolchain": toolchains_common.haskell(),
+        "_cxx_toolchain": attrs.toolchain_dep(
+            default = "toolchains//:haskell",
+            providers = [CxxToolchainInfo],
+        ),
     },
 )
 
@@ -118,7 +120,6 @@ def _extract_dep_package_names(ctx: AnalysisContext, output_style: LibOutputStyl
 def _generate_cabal_file(
         ctx: AnalysisContext,
         package_name: str,
-        build_type: str,
         output_style: LibOutputStyle) -> Artifact:
     def _cabal_identifier_list(name: str, args) -> cmd_args:
         return cmd_args([
@@ -130,8 +131,9 @@ def _generate_cabal_file(
         "cabal-version: 3.0",
         "name: {}".format(package_name),
         "version: {}".format(ctx.attrs.version),
-        "build-type: {}".format(build_type),
-        "custom-setup: {}".format(ctx.attrs.custom_setup).rstrip(),
+        # we compile and invoke the Setup binary ourselves, so Cabal never needs
+        # to build it
+        "build-type: Simple",
         "library",
         cmd_args([
             cmd_args([
@@ -212,39 +214,16 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
     linker_info = cxx_toolchain.linker_info
 
     package_name = ctx.attrs.package or ctx.label.name
-    build_type = ctx.attrs.build_type or ("Custom" if ctx.attrs.custom_setup else "Simple")
 
-    if build_type == "Simple" or build_type == "Configure":
-        setup_src = ctx.attrs._setup_templates.project("Setup_Simple.hs")
-    elif build_type == "Custom":
-        if ctx.attrs.custom_setup:
-            setup_src = ctx.attrs.custom_setup
-        else:
-            setup_src = ctx.attrs.src.project("Setup.hs")
-    else:
-        fail("unrecognized build-type '{}'".format(build_type))
-    setup_deps = ctx.attrs.setup_deps or ctx.attrs._default_setup_deps
-
-    ghc_wrapper = ctx.actions.anon_target(
+    ghc_wrapper_bin = ctx.actions.anon_target(
         ghc_wrapper,
         {"_haskell_toolchain": ctx.attrs._haskell_toolchain},
     ).artifact("wrapper")
-
-    setup = ctx.actions.anon_target(
-        _compile_setup,
-        {
-            "setup_src": setup_src,
-            "deps": setup_deps,
-            # NOTE: Setup.hs is always statically linked
-            "link_style": "static",
-            "_haskell_toolchain": ctx.attrs._haskell_toolchain,
-        },
-    ).artifact("setup")
+    setup = ctx.attrs.setup[RunInfo]
 
     cabal_file = _generate_cabal_file(
         ctx,
         package_name,
-        build_type,
         # TODO: is it safe to assume deps don't change between output styles?
         LibOutputStyle("archive"),
     )
@@ -310,6 +289,11 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
         cmd_configure.add("--exact-configuration")
         cmd_configure.add("--package-db=clear")
 
+        # Cabal builds the GHCi library object itself by shelling out to a bare
+        # `ld -r`, which it resolves from PATH rather than the GHC toolchain.
+        # Modern GHC can load the `.a` directly, so skip this step.
+        cmd_configure.add("--disable-library-for-ghci")
+
         transitive_deps = ctx.actions.tset(
             HaskellLibraryInfoTSet,
             children = [li.info[link_style] for li in hlis],
@@ -335,7 +319,7 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
                     ))
 
         cmd_configure.add([
-            cmd_args(ghc_wrapper, format = "--with-ghc={}"),
+            cmd_args(ghc_wrapper_bin, format = "--with-ghc={}"),
             cmd_args(toolchain.packager, format = "--with-ghc-pkg={}"),
         ])
 
@@ -586,9 +570,12 @@ cabal_library = rule(
             "package": attrs.option(attrs.string(), default = None),
             "version": attrs.string(),
             "src": attrs.source(allow_directory = True),
-            "build_type": attrs.option(attrs.string(), default = None),
-            "custom_setup": attrs.option(attrs.source(), default = None),
-            "setup_deps": attrs.option(attrs.list(attrs.dep()), default = None),
+            # custom setup scripts should point this at a `cabal_setup_script`
+            # target
+            "setup": attrs.exec_dep(
+                providers = [RunInfo],
+                default = "toolchains//haskell/cabal/setup_templates:simple",
+            ),
             "exposed_modules": attrs.list(attrs.string(), default = []),
             "reexported_modules": attrs.list(attrs.string(), default = []),
             "other_modules": attrs.list(attrs.string(), default = []),
@@ -602,23 +589,11 @@ cabal_library = rule(
             "ld_options": attrs.list(attrs.string(), default = []),
             "extra_libraries": attrs.list(attrs.string(), default = []),
             "linker_flags": attrs.list(attrs.arg(), default = []),
-            "_setup_templates": attrs.default_only(
-                attrs.source(
-                    allow_directory = True,
-                    default = "toolchains//haskell/cabal:setup_templates",
-                ),
-            ),
-            "_default_setup_deps": attrs.default_only(
-                attrs.list(
-                    attrs.dep(),
-                    default = [
-                        "toolchains//haskell/lib:{}".format(pkg["name"])
-                        for pkg in BOOT_MANIFESTS.values()[0]["package"]
-                    ],
-                ),
-            ),
-            "_cxx_toolchain": toolchains_common.cxx(),
             "_haskell_toolchain": toolchains_common.haskell(),
+            "_cxx_toolchain": attrs.toolchain_dep(
+                default = "toolchains//:haskell",
+                providers = [CxxToolchainInfo],
+            ),
         } |
         buck.labels_arg()
     ),

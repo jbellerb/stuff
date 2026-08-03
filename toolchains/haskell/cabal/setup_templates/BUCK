@@ -1,0 +1,11 @@
+load("//haskell/cabal:cabal.bzl", "cabal_setup_script")
+
+cabal_setup_script(
+    name = "simple",
+    src = "Setup_Simple.hs",
+    deps = [
+        "toolchains//haskell/lib:Cabal",
+        "toolchains//haskell/lib:base",
+    ],
+    visibility = ["PUBLIC"],
+)
