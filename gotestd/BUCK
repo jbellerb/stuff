@@ -1,0 +1,8 @@
+go_binary(
+    name = "gt",
+    srcs = glob(["*.go"]),
+    deps = [
+        "//third-party/go/golang.org/x/term:term",
+    ],
+    visibility = ["PUBLIC"],
+)
