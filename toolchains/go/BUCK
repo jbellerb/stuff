@@ -9,17 +9,17 @@ load("@prelude//toolchains/go:go_toolchain.bzl", "go_distr", "go_toolchain")
 # not properly set GOROOT
 
 http_archive(
-    name = "archive_go1.25.7.darwin-arm64",
-    sha256 = "ff18369ffad05c57d5bed888b660b31385f3c913670a83ef557cdfd98ea9ae1b",
+    name = "archive_go1.26.5.darwin-arm64",
+    sha256 = "efb87ff28af9a188d0536ef5d42e63dd52ba8263cd7344a993cc48dd11dedb6a",
     strip_prefix = "go",
-    urls = ["https://go.dev/dl/go1.25.7.darwin-arm64.tar.gz"],
+    urls = ["https://go.dev/dl/go1.26.5.darwin-arm64.tar.gz"],
 )
 
 http_archive(
-    name = "archive_go1.25.7.linux-amd64",
-    sha256 = "12e6d6a191091ae27dc31f6efc630e3a3b8ba409baf3573d955b196fdf086005",
+    name = "archive_go1.26.5.linux-amd64",
+    sha256 = "5c2c3b16caefa1d968a94c1daca04a7ca301a496d9b086e17ad77bb81393f053",
     strip_prefix = "go",
-    urls = ["https://go.dev/dl/go1.25.7.linux-amd64.tar.gz"],
+    urls = ["https://go.dev/dl/go1.26.5.linux-amd64.tar.gz"],
 )
 
 go_bootstrap_distr(
@@ -29,8 +29,8 @@ go_bootstrap_distr(
         "config//os:macos": ("darwin", "arm64"),
     }),
     go_root = select({
-        "config//os:linux": ":archive_go1.25.7.linux-amd64",
-        "config//os:macos": ":archive_go1.25.7.darwin-arm64",
+        "config//os:linux": ":archive_go1.26.5.linux-amd64",
+        "config//os:macos": ":archive_go1.26.5.darwin-arm64",
     }),
 )
 
@@ -55,10 +55,10 @@ go_distr(
         "config//os:macos": ("darwin", "arm64"),
     }),
     go_root = select({
-        "config//os:linux": ":archive_go1.25.7.linux-amd64",
-        "config//os:macos": ":archive_go1.25.7.darwin-arm64",
+        "config//os:linux": ":archive_go1.26.5.linux-amd64",
+        "config//os:macos": ":archive_go1.26.5.darwin-arm64",
     }),
-    version = "1.25.7",
+    version = "1.26.5",
 )
 
 go_toolchain(
