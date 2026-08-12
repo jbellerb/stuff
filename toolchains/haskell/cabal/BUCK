@@ -1,0 +1,4 @@
+export_file(
+    name = "setup_templates",
+    visibility = ["PUBLIC"],
+)

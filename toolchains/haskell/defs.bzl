@@ -159,6 +159,7 @@ def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
         HaskellToolchainInfo(
             compiler = ghc_distr.compiler,
             compiler_flags = ctx.attrs.compiler_flags,
+            compiler_major_version = ghc_distr.version,
             linker = ghc_distr.linker,
             linker_flags = ctx.attrs.linker_flags,
             packager = ghc_distr.packager,
@@ -178,6 +179,34 @@ haskell_toolchain = rule(
         "linker_flags": attrs.list(attrs.arg(), default = []),
     },
     is_toolchain_rule = True,
+)
+
+def _ghc_wrapper_impl(ctx: AnalysisContext) -> list[Provider]:
+    toolchain = ctx.attrs._haskell_toolchain[HaskellToolchainInfo]
+
+    wrapper, _ = ctx.actions.write(
+        "ghc-wrapper.sh",
+        cmd_args(
+            cmd_args(toolchain.compiler, delimiter = " "),
+            format = """#!/usr/bin/env sh
+exec {} "$@"
+""",
+        ),
+        with_inputs = True,
+        is_executable = True,
+        allow_args = True,
+    )
+
+    return [DefaultInfo(default_output = wrapper)]
+
+ghc_wrapper = anon_rule(
+    impl = _ghc_wrapper_impl,
+    attrs = {
+        "_haskell_toolchain": attrs.dep(providers = [HaskellToolchainInfo]),
+    },
+    artifact_promise_mappings = {
+        "wrapper": lambda x: x[DefaultInfo].default_outputs[0],
+    },
 )
 
 def _exec_alias_impl(ctx):
