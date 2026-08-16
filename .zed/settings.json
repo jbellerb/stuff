@@ -52,6 +52,10 @@
       }
     },
     "gopls": {
+      "binary": {
+        "ignore_system_version": false,
+        "env": { "GOPACKAGESDRIVER": "./gopackagesdriver.sh" }
+      },
       "initialization_options": {
         "build.workspaceFiles": [
           "**/BUCK",

@@ -187,15 +187,9 @@ func handleConn(c net.Conn, ps *pubSub, stop func()) {
 	case CmdWatch:
 		sub := ps.subscribe()
 		defer ps.unsubscribe(sub)
-		for {
-			select {
-			case s, ok := <-sub:
-				if !ok {
-					return
-				}
-				if err := enc.Encode(s); err != nil {
-					return
-				}
+		for s := range sub {
+			if err := enc.Encode(s); err != nil {
+				return
 			}
 		}
 

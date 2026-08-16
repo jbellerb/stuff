@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"golang.org/x/term"
@@ -43,9 +44,10 @@ func tuiLoop(ctx context.Context, ws *WatchStream) error {
 		}
 	}()
 
+	var fConn syscall.RawConn
 	var oldState *term.State
 	var err error
-	if fConn, err := os.Stdin.SyscallConn(); err == nil {
+	if fConn, err = os.Stdin.SyscallConn(); err == nil {
 		fConn.Control(func(fd uintptr) {
 			oldState, err = term.MakeRaw(int(fd))
 		})

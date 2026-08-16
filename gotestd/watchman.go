@@ -96,6 +96,9 @@ func (w *Watchman) scan(stdout io.Reader) {
 		default:
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		panic(fmt.Errorf("watchman stdout scan error: %w", err))
+	}
 }
 
 // Changes receives a value each time matching files change.

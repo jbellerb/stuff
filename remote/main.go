@@ -286,7 +286,7 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func defaultShell() string {
 	uid := fmt.Sprintf("%d", os.Getuid())
 	data, _ := os.ReadFile("/etc/passwd")
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		fields := strings.SplitN(line, ":", 7)
 		if len(fields) == 7 && fields[2] == uid && fields[6] != "" {
 			return fields[6]
