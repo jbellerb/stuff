@@ -4,6 +4,6 @@ deno_binary(
     name = "protoc-gen-es",
     main = "protoc_gen_es.js",
     permissions = ["env", "read", "sys"],
-    npm_deps = ["root//third-party/npm/@bufbuild/protoc-gen-es:protoc-gen-es"],
+    npm_deps = ["root//third-party/js/npm/@bufbuild/protoc-gen-es:protoc-gen-es"],
     visibility = ["//protobuf/..."],
 )

@@ -13,7 +13,7 @@ export_file(
 
 css_stylesheet(
     name = "xterm-css",
-    package = "//third-party/npm/@xterm/xterm:xterm",
+    package = "//third-party/js/npm/@xterm/xterm:xterm",
     path = "css/xterm.css",
 )
 
@@ -22,7 +22,7 @@ typescript_bundle(
     main = "app.ts",
     deps = [
         ":xterm-css",
-        "//third-party/npm/@xterm/xterm:xterm",
+        "//third-party/js/npm/@xterm/xterm:xterm",
     ],
     lib = ["esnext", "dom", "dom.iterable"],
     format = "esm",

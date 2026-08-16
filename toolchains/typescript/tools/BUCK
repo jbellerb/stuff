@@ -7,7 +7,7 @@ deno_binary(
     main = "esbuild_bundle.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],
     permissions = ["env", "read", "run", "write"],
-    npm_deps = ["root//third-party/npm/esbuild:esbuild"],
+    npm_deps = ["root//third-party/js/npm/esbuild:esbuild"],
     visibility = ["//typescript/..."],
 )
 
@@ -16,7 +16,7 @@ deno_binary(
     main = "oxfmt.ts",
     skip_check = True,
     permissions = ["env", "ffi", "read", "run", "sys", "write"],
-    npm_deps = ["root//third-party/npm/oxfmt:oxfmt"],
+    npm_deps = ["root//third-party/js/npm/oxfmt:oxfmt"],
     visibility = ["PUBLIC"],
 )
 
@@ -25,7 +25,7 @@ deno_binary(
     main = "oxlint.ts",
     skip_check = True,
     permissions = ["env", "ffi", "read", "run", "sys", "write"],
-    npm_deps = ["root//third-party/npm/oxlint:oxlint"],
+    npm_deps = ["root//third-party/js/npm/oxlint:oxlint"],
     visibility = ["PUBLIC"],
 )
 
@@ -34,7 +34,7 @@ deno_binary(
     main = "rolldown_bundle.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],
     permissions = ["env", "ffi", "read", "run", "write"],
-    npm_deps = ["root//third-party/npm/rolldown:rolldown"],
+    npm_deps = ["root//third-party/js/npm/rolldown:rolldown"],
     visibility = ["//typescript/..."],
 )
 
@@ -67,10 +67,10 @@ deno_binary(
     permissions = ["env", "read", "sys", "write"],
     npm_deps = [
         ":worker-proto",
-        "root//third-party/npm/@bufbuild/protobuf:protobuf",
-        "root//third-party/npm/@grpc/grpc-js:grpc-js",
-        "root//third-party/npm/@types/node:node",
-        "root//third-party/npm/typescript:typescript",
+        "root//third-party/js/npm/@bufbuild/protobuf:protobuf",
+        "root//third-party/js/npm/@grpc/grpc-js:grpc-js",
+        "root//third-party/js/npm/@types/node:node",
+        "root//third-party/js/npm/typescript:typescript",
     ],
     visibility = ["//typescript/..."],
 )

@@ -5,7 +5,7 @@ npm_package(
     package = "@typescript/vfs",
     version = "1.6.4",
     sha256 = "50edbf7462aee21fe84c00fe7a5e41cb3ba2166938c5da11e19a0831e2b042ed",
-    deps = ["//third-party/npm/debug:debug"],
+    deps = ["//third-party/js/npm/debug:debug"],
 )
 
 alias(

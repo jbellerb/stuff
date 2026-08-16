@@ -19,7 +19,7 @@ npm_package(
     package = "rolldown",
     version = "1.1.5",
     sha256 = "1c5ed26d1c8d29fb9b35050679c411f3eaf8357e857873003a691df1e66dfdc9",
-    deps = ["//third-party/npm/@rolldown/pluginutils:pluginutils"] + select({
+    deps = ["//third-party/js/npm/@rolldown/pluginutils:pluginutils"] + select({
         "config//os:linux": [":binding-linux-x64-gnu-1.1.5"],
         "config//os:macos": [":binding-darwin-arm64-1.1.5"],
     }),

@@ -5,7 +5,7 @@ deno_binary(
     main = "jco_transpile.js",
     permissions = ["env", "read", "run", "write"],
     npm_deps = [
-        "root//third-party/npm/@bytecodealliance/jco-transpile:jco-transpile",
+        "root//third-party/js/npm/@bytecodealliance/jco-transpile:jco-transpile",
     ],
     visibility = ["PUBLIC"],
 )
