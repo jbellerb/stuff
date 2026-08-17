@@ -55,6 +55,7 @@ load("//haskell/defs.bzl", "ghc_wrapper")
 def _cabal_setup_script_impl(ctx: AnalysisContext) -> list[Provider]:
     toolchain = ctx.attrs._haskell_toolchain[HaskellToolchainInfo]
 
+    setup_output = ctx.actions.declare_output("output-setup", dir = True)
     setup_bin = ctx.actions.declare_output("setup")
     cmd = cmd_args([
         toolchain.compiler,
@@ -64,6 +65,7 @@ def _cabal_setup_script_impl(ctx: AnalysisContext) -> list[Provider]:
         "-i",
         "-hide-all-packages",
         "-no-user-package-db",
+        cmd_args(setup_output.as_output(), format = "-outputdir={}"),
         # TODO: add threading support to prebuilt boot libs
         # "-threaded",
     ])
@@ -88,7 +90,7 @@ def _cabal_setup_script_impl(ctx: AnalysisContext) -> list[Provider]:
     )
 
     return [
-        DefaultInfo(default_output = setup_bin),
+        DefaultInfo(default_output = setup_bin, other_outputs = [setup_output]),
         RunInfo(args = cmd_args(setup_bin)),
     ]
 
