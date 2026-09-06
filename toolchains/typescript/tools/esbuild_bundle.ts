@@ -25,7 +25,13 @@ if (deps.length > 0) {
       name: "buck-paths",
       setup(build: esbuild.PluginBuild) {
         build.onResolve({ filter: /.*/ }, async (args) => {
-          const resolved = await resolveLabel(args.path, cell, pkg, deps);
+          const resolved = await resolveLabel(
+            args.path,
+            cell,
+            pkg,
+            deps,
+            args.importer,
+          );
           if (resolved === undefined || "path" in resolved) {
             return resolved;
           }

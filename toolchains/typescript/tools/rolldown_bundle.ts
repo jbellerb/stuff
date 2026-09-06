@@ -48,8 +48,8 @@ if (deps.length > 0) {
   const plugins: rolldown.Plugin[] = [
     {
       name: "buck-paths",
-      resolveId: async (source: string) => {
-        const resolved = await resolveLabel(source, cell, pkg, deps);
+      resolveId: async (source: string, importer) => {
+        const resolved = await resolveLabel(source, cell, pkg, deps, importer);
         if (resolved === undefined) {
           return null;
         }

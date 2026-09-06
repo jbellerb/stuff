@@ -64,12 +64,22 @@ export async function resolveLabel(
   cell: string,
   pkg: string,
   deps: Dep[],
+  importer?: string,
 ): Promise<{ path: string } | { error: string } | undefined> {
   // return early if this can't possibly be a buck2 target
   if (!importPath.startsWith(":") && !importPath.includes("//")) {
     return undefined;
   }
 
+  // Relative Buck labels belong to the importing library, not the bundle target.
+  const owner =
+    importer &&
+    deps.find((dep) => abs(importer).startsWith(`${abs(dep.transpiled)}/`));
+  if (owner) {
+    const [ownerCell, ownerTarget] = owner.specifier.split("//");
+    cell = ownerCell;
+    pkg = ownerTarget.slice(0, ownerTarget.lastIndexOf(":"));
+  }
   const label = canonicalize(importPath, cell, pkg);
   const matched = matchDep(label, deps);
   if (matched === undefined) {
