@@ -73,7 +73,7 @@ reflink_project = rule(
     doc = "Project files from a source directory.",
 )
 
-def reflink_dir(actions: AnalysisActions, reflinker: RunInfo, output: OutputArtifact, entries: list[(typing.Any, str)]):
+def reflink_dir(actions: AnalysisActions, reflinker: RunInfo, output: OutputArtifact, entries: list[(typing.Any, str)], identifier: [str, None] = None):
     actions.run(
         cmd_args(
             [
@@ -101,4 +101,5 @@ done
             ]
         ),
         category = "reflink_dir",
+        identifier = identifier,
     )
