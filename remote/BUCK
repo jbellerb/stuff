@@ -6,7 +6,7 @@ go_binary(
     ],
     embed_srcs = {
         "index.html": "//remote/frontend:index",
-        "index.js": "//remote/frontend:bundle-js",
+        "index.js": "//remote/frontend:bundle-js[index.js]",
         "main.css": "//remote/frontend:bundle-css",
     },
     visibility = ["PUBLIC"],

@@ -11,7 +11,7 @@ const SOURCEMAP_MODES: Record<string, rolldown.OutputOptions["sourcemap"]> = {
   both: "inline",
 };
 
-const [configPath, outfile] = Deno.args;
+const [configPath, outdir, urlsPath] = Deno.args;
 const {
   cell,
   package: pkg,
@@ -20,13 +20,26 @@ const {
 } = JSON.parse(await Deno.readTextFile(configPath)) as BundlerConfig;
 
 const options: rolldown.BuildOptions = {
-  input: config.entryPoints,
+  input: Object.fromEntries(
+    Object.entries(config.entryPoints).map(([name, path]) => [
+      name.slice(0, -3),
+      path,
+    ]),
+  ),
   resolve: {
     alias: config.alias,
     modules: config.nodePaths != null ? config.nodePaths.map(abs) : undefined,
   },
   output: {
-    file: outfile,
+    dir: outdir,
+    entryFileNames: config.hashNames ? "[name].[hash].js" : "[name].js",
+    chunkFileNames: config.hashNames
+      ? "chunks/[name].[hash].js"
+      : "chunks/[name].js",
+    assetFileNames: config.hashNames
+      ? "[name].[hash][extname]"
+      : "[name][extname]",
+    codeSplitting: config.splitting,
     format: config.format,
     minify: config.minify,
     sourcemap:
@@ -64,4 +77,52 @@ if (deps.length > 0) {
   options.plugins = plugins;
 }
 
+const urls: Record<string, string> = {};
+const references = new Map<string, string>();
+options.plugins = [
+  options.plugins,
+  {
+    name: "buck-assets",
+    async buildStart() {
+      for (const [name, source] of Object.entries(config.assets ?? {})) {
+        references.set(
+          name,
+          this.emitFile({
+            type: "asset",
+            name,
+            ...(config.hashNames ? {} : { fileName: name }),
+            source: await Deno.readFile(source),
+          }),
+        );
+      }
+    },
+    generateBundle(_options, bundle) {
+      const reservedNames = new Set([
+        ...Object.keys(config.entryPoints),
+        ...references.keys(),
+      ]);
+      for (const [name, reference] of references) {
+        urls[name] = `/${this.getFileName(reference)}`;
+      }
+      for (const output of Object.values(bundle)) {
+        if (output.type === "chunk") {
+          let name = `${output.name}.js`;
+          if (!output.isEntry) {
+            if (reservedNames.has(name)) {
+              name = `chunks/${output.name}.js`;
+              let suffix = 2;
+              while (reservedNames.has(name)) {
+                name = `chunks/${output.name}.${suffix++}.js`;
+              }
+            }
+            reservedNames.add(name);
+          }
+          urls[name] = `/${output.fileName}`;
+        }
+      }
+    },
+  },
+];
+
 await rolldown.build(options);
+await Deno.writeTextFile(urlsPath, JSON.stringify(urls));

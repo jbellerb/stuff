@@ -1,21 +1,34 @@
+import { relative, resolve } from "node:path";
 import * as esbuild from "npm:esbuild";
 
 import { abs, resolveLabel } from "./lib/util.ts";
 
 import type { BundlerConfig } from "./lib/types.ts";
 
-const [configPath, outfile] = Deno.args;
+const [configPath, outdir, urlsPath] = Deno.args;
 const {
   cell,
   package: pkg,
   deps,
+  assets,
+  hashNames,
+  entryPoints,
   ...config
 } = JSON.parse(await Deno.readTextFile(configPath)) as BundlerConfig;
 
 const options: esbuild.BuildOptions = {
   ...config,
   bundle: true,
-  outfile: outfile,
+  outdir,
+  entryPoints: Object.fromEntries(
+    Object.entries(entryPoints).map(([name, path]) => [
+      name.slice(0, -3),
+      path,
+    ]),
+  ),
+  entryNames: hashNames ? "[dir]/[name].[hash]" : "[dir]/[name]",
+  chunkNames: hashNames ? "chunks/[name].[hash]" : "chunks/[name]",
+  metafile: true,
   nodePaths: config.nodePaths != null ? config.nodePaths.map(abs) : undefined,
 };
 
@@ -42,4 +55,16 @@ if (deps.length > 0) {
   ];
 }
 
-await esbuild.build(options);
+if (Object.keys(assets ?? {}).length)
+  throw new Error("Static asset emission requires Rolldown");
+const result = await esbuild.build(options);
+const urls: Record<string, string> = {};
+for (const [path, output] of Object.entries(result.metafile!.outputs)) {
+  if (!output.entryPoint) continue;
+  for (const [name, entry] of Object.entries(entryPoints)) {
+    if (resolve(output.entryPoint) === resolve(entry)) {
+      urls[name] = `/${relative(outdir, path)}`;
+    }
+  }
+}
+await Deno.writeTextFile(urlsPath, JSON.stringify(urls));

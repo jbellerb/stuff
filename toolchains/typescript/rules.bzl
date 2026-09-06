@@ -1,5 +1,5 @@
 load("//deno:node.bzl", "NodePackageInfo", "NodePackageTSet")
-load(":defs.bzl", "TypeScriptToolchainInfo")
+load(":defs.bzl", "TypeScriptBundleInfo", "TypeScriptToolchainInfo")
 
 TypeScriptModule = record(
     main = field([str, None], default = None),
@@ -128,12 +128,7 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
     ]
 
 _typescript_library_attrs = {
-    "alias": attrs.dict(
-        attrs.string(),
-        attrs.string(),
-        default = {},
-        doc = "Import aliases used during type checking.",
-    ),
+    "alias": attrs.dict(attrs.string(), attrs.string(), default = {}, doc = "Import aliases used during type checking."),
     "deps": attrs.list(
         attrs.dep(),
         default = [],
@@ -173,37 +168,43 @@ typescript_library = rule(
 )
 
 def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
-    # wrap _typescript_library_impl instead of reimplementing the build logic
-    # here. This works as long as both rules don't have any conflicting attrs.
-    lib_providers = _typescript_library_impl(ctx)
-    info = None
-    for provider in lib_providers:
-        if isinstance(provider, TypeScriptLibraryInfo):
-            info = provider
+    bundler = ctx.attrs._typescript_toolchain[TypeScriptToolchainInfo].bundler
+    if not ctx.attrs.entrypoints:
+        fail("entrypoints must not be empty")
+    if ctx.attrs.splitting and (not bundler.supports_splitting or ctx.attrs.format != "esm"):
+        fail("splitting requires the Rolldown bundler and format = 'esm'")
+    if ctx.attrs.assets and not bundler.supports_splitting:
+        fail("emitting assets requires the Rolldown bundler")
 
-    toolchain = ctx.attrs._typescript_toolchain[TypeScriptToolchainInfo]
-    bundler = toolchain.bundler
+    if not ctx.attrs.splitting and len(ctx.attrs.entrypoints) != 1:
+        fail("splitting = False requires exactly one entrypoint")
 
-    entry_module = info.transpiled.value
+    entries = {}
+    libraries = []
+    for name, dep in ctx.attrs.entrypoints.items():
+        if not name.endswith(".js") or name.startswith("/") or ".." in name.split("/"):
+            fail("entrypoint names must be relative .js paths: {}".format(name))
+        if name in ctx.attrs.assets:
+            fail("entrypoint and asset names overlap: {}".format(name))
+        info = dep[TypeScriptLibraryInfo]
+        module = info.transpiled.value
+        if module.main == None:
+            fail("entrypoint library has no JavaScript main: {}".format(dep.label))
+        entries[name] = cmd_args([module.transpiled, module.main + ".js"], delimiter = "/")
+        libraries.append(info)
 
-    if ctx.attrs.outfile:
-        outfile = ctx.attrs.outfile
-    else:
-        outfile = ctx.label.name
-        if not ctx.label.name.endswith(".js"):
-            outfile += ".js"
-    output = ctx.actions.declare_output(outfile)
-
+    modules = ctx.actions.tset(TypeScriptModuleTSet, children = [info.transpiled for info in libraries])
+    packages = ctx.actions.tset(NodePackageTSet, children = [info.packages for info in libraries])
+    output = ctx.actions.declare_output("bundle", dir = True)
+    urls = ctx.actions.declare_output("urls.json")
     options = {
+        "assets": ctx.attrs.assets,
         "cell": str(ctx.label.cell),
-        "deps": info.transpiled.project_as_json("module"),
-        "entryPoints": [
-            cmd_args(
-                [entry_module.transpiled, "{}.js".format(entry_module.main)],
-                delimiter = "/",
-            ),
-        ],
+        "deps": modules.project_as_json("module"),
+        "entryPoints": entries,
+        "hashNames": ctx.attrs.hash_names,
         "package": ctx.label.package,
+        "splitting": ctx.attrs.splitting,
     }
     if ctx.attrs.format != None:
         options["format"] = ctx.attrs.format
@@ -222,7 +223,7 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     if ctx.attrs.alias != {}:
         options["alias"] = ctx.attrs.alias
 
-    node_packages = {package.package: package.contents for package in info.packages.traverse()}
+    node_packages = {package.package: package.contents for package in packages.traverse()}
     if node_packages:
         node_modules = ctx.actions.declare_output("node_modules", dir = True)
         ctx.actions.symlinked_dir(node_modules.as_output(), node_packages)
@@ -237,52 +238,62 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     )
 
     ctx.actions.run(
-        cmd_args([bundler.bundle, bundle_cfg, output.as_output()]),
+        cmd_args(
+            [bundler.bundle, bundle_cfg, output.as_output(), urls.as_output()],
+        ),
         category = "bundle",
         env = bundler.env,
         identifier = ctx.label.name,
     )
 
-    return [DefaultInfo(default_output = output)]
+    sub_targets = {}
+    if not ctx.attrs.hash_names:
+        sub_targets = {name: [DefaultInfo(default_output = output.project(name))] for name in ctx.attrs.entrypoints}
+    return [
+        DefaultInfo(default_output = output, other_outputs = [urls], sub_targets = sub_targets),
+        TypeScriptBundleInfo(directory = output, urls = urls),
+    ]
 
 typescript_bundle = rule(
     impl = _typescript_bundle_impl,
-    attrs = _typescript_library_attrs
-    | {
+    attrs = {
         "alias": attrs.dict(
             attrs.string(),
             attrs.string(),
             default = {},
             doc = """
-            Remap bare import specifiers to other packages, for both type
-            checking and bundling (e.g. {"obsidian": "obsidian-mock"} to swap in
-            a mock). The target must be provided by a dep.
+            Remap imports during bundling. For type checking, configure aliases
+            on the entrypoint libraries too.
             """,
         ),
+        "assets": attrs.dict(attrs.string(), attrs.source(), default = {}),
         "define": attrs.dict(
             attrs.string(),
             attrs.string(),
             default = {},
             doc = "Replace global identifiers with constant expressions.",
         ),
+        "entrypoints": attrs.dict(
+            attrs.string(),
+            attrs.dep(providers = [TypeScriptLibraryInfo]),
+        ),
         "external": attrs.list(
             attrs.string(),
             default = [],
             doc = "Packages to exclude from the bundle.",
         ),
-        "format": attrs.option(
-            attrs.enum(["iife", "cjs", "esm"]),
-            default = None,
+        "format": attrs.enum(
+            ["iife", "cjs", "esm"],
+            default = "esm",
             doc = "Output format for the generated JavaScript bundle.",
+        ),
+        "hash_names": attrs.bool(
+            default = False,
+            doc = "Include content hashes in output filenames.",
         ),
         "minify": attrs.bool(
             default = False,
             doc = "Minify the output.",
-        ),
-        "outfile": attrs.option(
-            attrs.string(),
-            default = None,
-            doc = "The output filename. Defaults to the rule name with a .js extension.",
         ),
         "platform": attrs.option(
             attrs.enum(["browser", "node", "neutral"]),
@@ -294,11 +305,16 @@ typescript_bundle = rule(
             default = None,
             doc = "Sourcemap generation mode.",
         ),
+        "splitting": attrs.bool(
+            default = False,
+            doc = "Share ESM chunks across entrypoints. Requires ESM and Rolldown.",
+        ),
         "target": attrs.list(
             attrs.string(),
             default = [],
             doc = "Target environments for the generated JavaScript.",
         ),
+        "_typescript_toolchain": _typescript_library_attrs["_typescript_toolchain"],
     },
 )
 

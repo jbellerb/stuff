@@ -6,7 +6,10 @@ deno_binary(
     name = "esbuild_bundle",
     srcs = ["lib/util.ts", "lib/types.ts"],
     main = "esbuild_bundle.ts",
-    npm_deps = ["root//third-party/js/npm/esbuild:esbuild"],
+    npm_deps = [
+        "root//third-party/js/npm/esbuild:esbuild",
+        "root//third-party/js/npm/@types/node:node",
+    ],
     permissions = ["env", "read", "run", "write"],
     visibility = ["//typescript/..."],
 )

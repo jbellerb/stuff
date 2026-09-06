@@ -1,5 +1,5 @@
 load("@toolchains//css:rules.bzl", "css_bundle")
-load("@toolchains//typescript:rules.bzl", "oxlint_lint", "typescript_bundle")
+load("@toolchains//typescript:rules.bzl", "oxlint_lint", "typescript_bundle", "typescript_library")
 load(":defs.bzl", "css_stylesheet")
 
 TARGETS = ["chrome142", "firefox140", "safari18", "ios18"]
@@ -17,15 +17,19 @@ css_stylesheet(
     path = "css/xterm.css",
 )
 
-typescript_bundle(
-    name = "bundle-js",
+typescript_library(
+    name = "app",
     deps = [
         ":xterm-css",
         "//third-party/js/npm/@xterm/xterm:xterm",
     ],
-    format = "esm",
     lib = ["esnext", "dom", "dom.iterable"],
     main = "app.ts",
+)
+
+typescript_bundle(
+    name = "bundle-js",
+    entrypoints = {"index.js": ":app"},
     minify = True,
     platform = "browser",
     target = TARGETS,

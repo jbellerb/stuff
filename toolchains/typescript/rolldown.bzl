@@ -5,6 +5,7 @@ def _rolldown_bundler_impl(ctx: AnalysisContext) -> list[Provider]:
         DefaultInfo(),
         TypeScriptBundlerInfo(
             bundle = ctx.attrs.bundle[RunInfo],
+            supports_splitting = True,
         ),
     ]
 

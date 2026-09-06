@@ -2,8 +2,11 @@ TypeScriptBundlerInfo = provider(
     fields = {
         "bundle": provider_field(RunInfo),
         "env": provider_field(dict, default = {}),
+        "supports_splitting": provider_field(bool, default = False),
     },
 )
+
+TypeScriptBundleInfo = provider(fields = ["directory", "urls"])
 
 TypeScriptToolchainInfo = provider(
     fields = {

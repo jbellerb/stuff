@@ -1,0 +1,16 @@
+load("@toolchains//deno:npm.bzl", "npm_package")
+
+npm_package(
+    name = "node-24.0.0",
+    deps = ["//third-party/js/npm/undici-types:undici-types"],
+    package = "@types/node",
+    sha256 = "25fd0a720a9a298c9203d35ab17d0714e3f965cde5abb0a9e8e0617a87e89596",
+    strip_prefix = "node",
+    version = "24.0.0",
+)
+
+alias(
+    name = "node",
+    actual = ":node-24.0.0",
+    visibility = ["PUBLIC"],
+)
