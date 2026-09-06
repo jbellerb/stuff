@@ -71,6 +71,6 @@ deno_binary(
         "root//third-party/js/npm/@types/node:node",
         "root//third-party/js/npm/typescript:typescript",
     ],
-    permissions = ["env", "read", "sys", "write"],
+    permissions = ["env", "net", "read", "sys", "write"],
     visibility = ["//typescript/..."],
 )
