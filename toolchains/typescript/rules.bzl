@@ -128,6 +128,12 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
     ]
 
 _typescript_library_attrs = {
+    "alias": attrs.dict(
+        attrs.string(),
+        attrs.string(),
+        default = {},
+        doc = "Import aliases used during type checking.",
+    ),
     "deps": attrs.list(
         attrs.dep(),
         default = [],
