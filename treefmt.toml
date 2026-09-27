@@ -6,10 +6,6 @@ excludes = [
 
 walk = "jujutsu"
 
-[formatter.buildifier]
-command = "buildifier"
-includes = ["**/BUCK", "**/PACKAGE", "*.bzl"]
-
 [formatter.fourmolu]
 command = "fourmolu"
 options = ["-i", "-c"]
@@ -34,6 +30,12 @@ options = ["format"]
 command = "rustfmt"
 includes = ["*.rs"]
 options = ["--config", "skip_children=true", "--edition", "2024"]
+
+[formatter.starlark_fmt]
+command = "./buck2/bin/starlark_fmt"
+includes = ["**/BUCK", "**/PACKAGE", "*.bzl"]
+options = ["--config", "./starlark_fmt.json", "fmt"]
+stdin-options = ["--config", "./starlark_fmt.json", "stdin", "--path", "$path"]
 
 [formatter.swift]
 command = "swift"

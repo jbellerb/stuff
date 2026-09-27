@@ -1,0 +1,10 @@
+{
+  "IsSortableListArg": {},
+  "SortableBlacklist": {},
+  "NamePriority": {
+    "name": -99,
+    "impl": -50,
+    "srcs": -10,
+    "visibility": 50
+  }
+}
