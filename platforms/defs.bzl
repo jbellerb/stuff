@@ -8,7 +8,6 @@ def _execution_platform_with_workers_impl(ctx: AnalysisContext) -> list[Provider
 
     name = ctx.label.raw_target()
     platform = ExecutionPlatformInfo(
-        label = name,
         configuration = cfg,
         executor_config = CommandExecutorConfig(
             local_enabled = True,
@@ -17,17 +16,19 @@ def _execution_platform_with_workers_impl(ctx: AnalysisContext) -> list[Provider
                 "build",
                 "use_persistent_workers",
                 "true",
-            ).lower() == "true",
+            ).lower()
+            == "true",
         ),
+        label = name,
     )
 
     return [
         DefaultInfo(),
         platform,
-        PlatformInfo(label = str(name), configuration = cfg),
+        PlatformInfo(configuration = cfg, label = str(name)),
         ExecutionPlatformRegistrationInfo(
-            platforms = [platform],
             exec_marker_constraint = get_exec_platform_marker(),
+            platforms = [platform],
         ),
     ]
 

@@ -4,37 +4,37 @@ load("//protobuf:defs.bzl", "protobuf_library")
 
 deno_binary(
     name = "esbuild_bundle",
-    main = "esbuild_bundle.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],
-    permissions = ["env", "read", "run", "write"],
+    main = "esbuild_bundle.ts",
     npm_deps = ["root//third-party/js/npm/esbuild:esbuild"],
+    permissions = ["env", "read", "run", "write"],
     visibility = ["//typescript/..."],
 )
 
 deno_binary(
     name = "oxfmt",
     main = "oxfmt.ts",
-    skip_check = True,
-    permissions = ["env", "ffi", "read", "run", "sys", "write"],
     npm_deps = ["root//third-party/js/npm/oxfmt:oxfmt"],
+    permissions = ["env", "ffi", "read", "run", "sys", "write"],
+    skip_check = True,
     visibility = ["PUBLIC"],
 )
 
 deno_binary(
     name = "oxlint",
     main = "oxlint.ts",
-    skip_check = True,
-    permissions = ["env", "ffi", "read", "run", "sys", "write"],
     npm_deps = ["root//third-party/js/npm/oxlint:oxlint"],
+    permissions = ["env", "ffi", "read", "run", "sys", "write"],
+    skip_check = True,
     visibility = ["PUBLIC"],
 )
 
 deno_binary(
     name = "rolldown_bundle",
-    main = "rolldown_bundle.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],
-    permissions = ["env", "ffi", "read", "run", "write"],
+    main = "rolldown_bundle.ts",
     npm_deps = ["root//third-party/js/npm/rolldown:rolldown"],
+    permissions = ["env", "ffi", "read", "run", "write"],
     visibility = ["//typescript/..."],
 )
 
@@ -52,19 +52,18 @@ protobuf_library(
 
 node_package(
     name = "worker-proto",
+    srcs = {
+        "worker_pb.d.ts": ":worker_pb[worker_pb.d.ts]",
+        "worker_pb.js": ":worker_pb[worker_pb.js]",
+    },
     package = "buck2-worker-proto",
     type = "module",
-    srcs = {
-        "worker_pb.js": ":worker_pb[worker_pb.js]",
-        "worker_pb.d.ts": ":worker_pb[worker_pb.d.ts]",
-    },
 )
 
 deno_binary(
     name = "tsc_build",
-    main = "tsc_build.ts",
     srcs = ["lib/util.ts", "lib/types.ts"],
-    permissions = ["env", "read", "sys", "write"],
+    main = "tsc_build.ts",
     npm_deps = [
         ":worker-proto",
         "root//third-party/js/npm/@bufbuild/protobuf:protobuf",
@@ -72,5 +71,6 @@ deno_binary(
         "root//third-party/js/npm/@types/node:node",
         "root//third-party/js/npm/typescript:typescript",
     ],
+    permissions = ["env", "read", "sys", "write"],
     visibility = ["//typescript/..."],
 )

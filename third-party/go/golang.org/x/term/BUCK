@@ -19,10 +19,10 @@ http_archive(
 
 go_library(
     name = "term",
-    package_name = "golang.org/x/term",
     srcs = [":golang.org/x/term__srcs[.]"],
     deps = [
         "//third-party/go/golang.org/x/sys:unix",
     ],
+    package_name = "golang.org/x/term",
     visibility = ["PUBLIC"],
 )

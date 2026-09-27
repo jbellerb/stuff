@@ -16,8 +16,8 @@ css_toolchain = rule(
     impl = _css_toolchain_impl,
     attrs = {
         "lightningcss": attrs.exec_dep(
-            providers = [RunInfo],
             doc = "The Lightning CSS CLI binary.",
+            providers = [RunInfo],
         ),
     },
     is_toolchain_rule = True,

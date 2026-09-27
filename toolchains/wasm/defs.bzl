@@ -18,12 +18,12 @@ wasm_toolchain = rule(
     impl = _wasm_toolchain_impl,
     attrs = {
         "wasm_opt": attrs.exec_dep(
-            providers = [RunInfo],
             doc = "The wasm-opt binary.",
+            providers = [RunInfo],
         ),
         "wasm_tools": attrs.exec_dep(
-            providers = [RunInfo],
             doc = "The wasm-tools binary.",
+            providers = [RunInfo],
         ),
     },
     is_toolchain_rule = True,

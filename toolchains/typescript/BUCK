@@ -18,16 +18,16 @@ http_archive(
 
 genrule(
     name = "esbuild-aarch64-darwin",
-    out = "esbuild",
     cmd = "ln -s $(location :darwin-arm64-0.28.0.tgz)/bin/esbuild $OUT",
     executable = True,
+    out = "esbuild",
 )
 
 genrule(
     name = "esbuild-x86_64-linux",
-    out = "esbuild",
     cmd = "ln -s $(location :linux-x64-0.28.0.tgz)/bin/esbuild $OUT",
     executable = True,
+    out = "esbuild",
 )
 
 alias(
@@ -41,8 +41,8 @@ alias(
 
 esbuild_bundler(
     name = "esbuild-bundler",
-    esbuild = ":esbuild",
     bundle = "//typescript/tools:esbuild_bundle",
+    esbuild = ":esbuild",
 )
 
 rolldown_bundler(
@@ -73,10 +73,10 @@ alias(
 
 typescript_toolchain(
     name = "typescript",
-    tsc_build = "//typescript/tools:tsc_build",
     bundler = select({
         ":bundler[esbuild]": ":esbuild-bundler",
         ":bundler[rolldown]": ":rolldown-bundler",
     }),
+    tsc_build = "//typescript/tools:tsc_build",
     visibility = ["toolchains//..."],
 )

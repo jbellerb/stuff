@@ -17,23 +17,23 @@ def _install_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(),
         InstallInfo(
-            installer = ctx.attrs._installer.label,
             files = files,
+            installer = ctx.attrs._installer.label,
         ),
     ]
 
 install = rule(
     impl = _install_impl,
     attrs = {
-        "srcs": attrs.dict(
-            key = attrs.string(),
-            value = attrs.dep(),
-            doc = "Mapping from destination paths to source targets.",
-        ),
         "deps": attrs.list(
             attrs.dep(providers = [InstallInfo]),
             default = [],
             doc = "Additional install targets to include.",
+        ),
+        "srcs": attrs.dict(
+            doc = "Mapping from destination paths to source targets.",
+            key = attrs.string(),
+            value = attrs.dep(),
         ),
         "_installer": attrs.default_only(
             attrs.exec_dep(default = "//tools/installer:installer"),

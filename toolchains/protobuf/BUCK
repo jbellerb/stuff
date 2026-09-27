@@ -14,16 +14,16 @@ http_archive(
 
 genrule(
     name = "protoc-darwin-arm64",
-    out = "protoc",
     cmd = "ln -s $(location :protoc-34.0-rc-2-osx-aarch_64)/bin/protoc $OUT",
     executable = True,
+    out = "protoc",
 )
 
 genrule(
     name = "protoc-linux-amd64",
-    out = "protoc",
     cmd = "ln -s $(location :protoc-34.0-rc-2-linux-x86_64)/bin/protoc $OUT",
     executable = True,
+    out = "protoc",
 )
 
 http_archive(
@@ -40,16 +40,16 @@ http_archive(
 
 genrule(
     name = "protoc-gen-go-darwin-arm64",
-    out = "protoc-gen-go",
     cmd = "ln -s $(location :protoc-gen-go.v1.36.11.darwin.arm64)/protoc-gen-go $OUT",
     executable = True,
+    out = "protoc-gen-go",
 )
 
 genrule(
     name = "protoc-gen-go-linux-amd64",
-    out = "protoc-gen-go",
     cmd = "ln -s $(location :protoc-gen-go.v1.36.11.linux.amd64)/protoc-gen-go $OUT",
     executable = True,
+    out = "protoc-gen-go",
 )
 
 http_archive(
@@ -66,55 +66,55 @@ http_archive(
 
 genrule(
     name = "protoc-gen-go-grpc-darwin-arm64",
-    out = "protoc-gen-go-grpc",
     cmd = "ln -s $(location :protoc-gen-go-grpc.v1.6.1.darwin.arm64)/protoc-gen-go-grpc $OUT",
     executable = True,
+    out = "protoc-gen-go-grpc",
 )
 
 genrule(
     name = "protoc-gen-go-grpc-linux-amd64",
-    out = "protoc-gen-go-grpc",
     cmd = "ln -s $(location :protoc-gen-go-grpc.v1.6.1.linux.amd64)/protoc-gen-go-grpc $OUT",
     executable = True,
+    out = "protoc-gen-go-grpc",
 )
 
 protobuf_plugin(
     name = "protobuf-go-plugin",
+    extensions = [".pb.go"],
+    language = "go",
     plugin = select({
         "config//os:linux": ":protoc-gen-go-linux-amd64",
         "config//os:macos": ":protoc-gen-go-darwin-arm64",
     }),
-    language = "go",
-    extensions = [".pb.go"],
 )
 
 protobuf_plugin(
     name = "protobuf-go-grpc-plugin",
+    extensions = ["_grpc.pb.go"],
+    language = "go-grpc",
     plugin = select({
         "config//os:linux": ":protoc-gen-go-grpc-linux-amd64",
         "config//os:macos": ":protoc-gen-go-grpc-darwin-arm64",
     }),
-    language = "go-grpc",
-    extensions = ["_grpc.pb.go"],
 )
 
 protobuf_plugin(
     name = "protobuf-es-plugin",
-    plugin = "//protobuf/plugins:protoc-gen-es",
-    language = "es",
     extensions = ["_pb.js", "_pb.d.ts"],
+    language = "es",
+    plugin = "//protobuf/plugins:protoc-gen-es",
 )
 
 protobuf_toolchain(
     name = "protobuf",
-    protoc = select({
-        "config//os:linux": ":protoc-linux-amd64",
-        "config//os:macos": ":protoc-darwin-arm64",
-    }),
     plugins = [
         ":protobuf-es-plugin",
         ":protobuf-go-plugin",
         ":protobuf-go-grpc-plugin",
     ],
+    protoc = select({
+        "config//os:linux": ":protoc-linux-amd64",
+        "config//os:macos": ":protoc-darwin-arm64",
+    }),
     visibility = ["toolchains//..."],
 )

@@ -1,15 +1,15 @@
 ProtobufPluginInfo = provider(
     fields = {
-        "plugin_wrapper": provider_field(Artifact),
-        "language": provider_field(str),
         "extensions": provider_field(list[str]),
+        "language": provider_field(str),
+        "plugin_wrapper": provider_field(Artifact),
     },
 )
 
 ProtobufToolchainInfo = provider(
     fields = {
-        "protoc_wrapper": provider_field(Artifact),
         "plugins": provider_field(list[ProtobufPluginInfo]),
+        "protoc_wrapper": provider_field(Artifact),
     },
 )
 
@@ -19,7 +19,7 @@ def _protobuf_plugin_impl(ctx: AnalysisContext) -> list[Provider]:
         if ctx.label.name.startswith("protoc-gen-"):
             language = ctx.label.name.removeprefix("protoc-gen-")
         else:
-            fail("Language was not provided and plugin name is not in the format \"protoc-gen-LANG\"")
+            fail('Language was not provided and plugin name is not in the format "protoc-gen-LANG"')
 
     wrapper = ctx.actions.write(
         ctx.actions.declare_output(
@@ -29,31 +29,22 @@ def _protobuf_plugin_impl(ctx: AnalysisContext) -> list[Provider]:
             "#!/usr/bin/env sh",
             cmd_args("exec", ctx.attrs.plugin[RunInfo].args, '"$@"', delimiter = " "),
         ]),
-        with_inputs = True,
         is_executable = True,
+        with_inputs = True,
     )
 
     return [
         DefaultInfo(),
         ProtobufPluginInfo(
-            plugin_wrapper = wrapper,
-            language = language,
             extensions = ctx.attrs.extensions or [".pb.{}".format(language)],
+            language = language,
+            plugin_wrapper = wrapper,
         ),
     ]
 
 protobuf_plugin = rule(
     impl = _protobuf_plugin_impl,
     attrs = {
-        "plugin": attrs.exec_dep(
-            providers = [RunInfo],
-            doc = "The plugin executable. This will be named something like \"protoc-gen-LANG\".",
-        ),
-        "language": attrs.option(
-            attrs.string(),
-            default = None,
-            doc = "The language this plugin builds for.",
-        ),
         "extensions": attrs.list(
             attrs.string(),
             default = [],
@@ -64,6 +55,15 @@ protobuf_plugin = rule(
             be "_bar.pb.baz".
             """,
         ),
+        "language": attrs.option(
+            attrs.string(),
+            default = None,
+            doc = "The language this plugin builds for.",
+        ),
+        "plugin": attrs.exec_dep(
+            doc = 'The plugin executable. This will be named something like "protoc-gen-LANG".',
+            providers = [RunInfo],
+        ),
     },
 )
 
@@ -71,10 +71,7 @@ def _protobuf_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
     plugins = [p[ProtobufPluginInfo] for p in ctx.attrs.plugins]
     protoc = cmd_args([
         ctx.attrs.protoc[RunInfo].args,
-        [
-            cmd_args("--plugin=protoc-gen-{}".format(p.language), p.plugin_wrapper, delimiter = "=")
-            for p in plugins
-        ],
+        [cmd_args("--plugin=protoc-gen-{}".format(p.language), p.plugin_wrapper, delimiter = "=") for p in plugins],
     ])
 
     wrapper = ctx.actions.write(
@@ -87,29 +84,29 @@ def _protobuf_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
             'mkdir -p "$OUTPUT"',
             cmd_args([protoc, '"--${LANG}_out=$OUTPUT"', '"$@"'], delimiter = " "),
         ]),
-        with_inputs = True,
         is_executable = True,
+        with_inputs = True,
     )
 
     return [
         DefaultInfo(),
         ProtobufToolchainInfo(
-            protoc_wrapper = wrapper,
             plugins = plugins,
+            protoc_wrapper = wrapper,
         ),
     ]
 
 protobuf_toolchain = rule(
     impl = _protobuf_toolchain_impl,
     attrs = {
-        "protoc": attrs.exec_dep(
-            providers = [RunInfo],
-            doc = "The protoc binary.",
-        ),
         "plugins": attrs.list(
             attrs.exec_dep(providers = [ProtobufPluginInfo]),
             default = [],
             doc = "The language plugins protoc will build with.",
+        ),
+        "protoc": attrs.exec_dep(
+            doc = "The protoc binary.",
+            providers = [RunInfo],
         ),
     },
     is_toolchain_rule = True,
@@ -118,23 +115,14 @@ protobuf_toolchain = rule(
 def _protobuf_library_impl(ctx: AnalysisContext) -> list[Provider]:
     protobuf_toolchain = ctx.attrs._protobuf_toolchain[ProtobufToolchainInfo]
 
-    plugin_candidates = [
-        p
-        for p in protobuf_toolchain.plugins
-        if p.language == ctx.attrs.language
-    ]
+    plugin_candidates = [p for p in protobuf_toolchain.plugins if p.language == ctx.attrs.language]
     if len(plugin_candidates) == 0:
         fail("No protoc plugin named '{}'".format(ctx.attrs.language))
     plugin = plugin_candidates[0]
 
     output = ctx.actions.declare_output(ctx.label.name, dir = True)
     default_outputs = [
-        output.project(name, hide_prefix = True)
-        for name in [
-            src.basename.removesuffix(".proto") + ext
-            for src in ctx.attrs.srcs
-            for ext in plugin.extensions
-        ]
+        output.project(name, hide_prefix = True) for name in [src.basename.removesuffix(".proto") + ext for src in ctx.attrs.srcs for ext in plugin.extensions]
     ]
 
     cmd = cmd_args([
@@ -143,14 +131,8 @@ def _protobuf_library_impl(ctx: AnalysisContext) -> list[Provider]:
         output.as_output(),
         # anchor each source at its own directory so protoc sees basenames as
         # the canonical names and generated files land at the root of $OUT
-        [
-            cmd_args(src, parent = 1, format = "--proto_path={}")
-            for src in ctx.attrs.srcs
-        ],
-        [
-            cmd_args("--{}_opt".format(ctx.attrs.language), opt, delimiter = "=")
-            for opt in ctx.attrs.options
-        ],
+        [cmd_args(src, format = "--proto_path={}", parent = 1) for src in ctx.attrs.srcs],
+        [cmd_args("--{}_opt".format(ctx.attrs.language), opt, delimiter = "=") for opt in ctx.attrs.options],
         ctx.attrs.srcs,
     ])
 
@@ -159,21 +141,13 @@ def _protobuf_library_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(
             default_outputs = default_outputs,
-            sub_targets = {
-                out.short_path: [DefaultInfo(out)]
-                for out in default_outputs
-            },
+            sub_targets = {out.short_path: [DefaultInfo(out)] for out in default_outputs},
         ),
     ]
 
 protobuf_library = rule(
     impl = _protobuf_library_impl,
     attrs = {
-        "srcs": attrs.list(
-            attrs.source(),
-            default = [],
-            doc = "The source protobuf files.",
-        ),
         "language": attrs.string(
             doc = "The languages to compile a protobuf implementations for.",
         ),
@@ -181,6 +155,11 @@ protobuf_library = rule(
             attrs.arg(),
             default = [],
             doc = "Options to pass to the protoc plugin.",
+        ),
+        "srcs": attrs.list(
+            attrs.source(),
+            default = [],
+            doc = "The source protobuf files.",
         ),
         "_protobuf_toolchain": attrs.default_only(
             attrs.toolchain_dep(

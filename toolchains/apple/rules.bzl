@@ -16,36 +16,30 @@ def _fix_platforms(**kwargs):
 # override some of the attrs since their default values select based on
 # Meta-internal constraints
 apple_common_attrs = {
-    "_enable_library_evolution": attrs.bool(default = False),
     "enable_distributed_thinlto": attrs.bool(default = False),
     "_apple_tools": attrs.dep(
         default = "//apple:apple-tools",
         providers = [AppleToolsInfo],
     ),
+    "_enable_library_evolution": attrs.bool(default = False),
 }
 
 _apple_info_plist = rule(
     impl = apple_rules.apple_info_plist.impl,
-    attrs = (
-        apple_rules.apple_info_plist.attrs |
-        apple_common_attrs
-    ),
+    attrs = (apple_rules.apple_info_plist.attrs | apple_common_attrs),
 )
 
 _apple_binary = rule(
     impl = apple_rules.apple_binary.impl,
-    attrs = (
-        apple_rules.apple_binary.attrs |
-        apple_common_attrs
-    ),
+    attrs = (apple_rules.apple_binary.attrs | apple_common_attrs),
 )
 
 _apple_library = rule(
     impl = apple_rules.apple_library.impl,
     attrs = (
-        apple_rules.apple_library.attrs |
-        apple_common_attrs |
-        {
+        apple_rules.apple_library.attrs
+        | apple_common_attrs
+        | {
             "_swift_enable_testing": attrs.bool(default = False),
         }
     ),
@@ -55,26 +49,26 @@ _apple_library = rule(
 _apple_test = rule(
     impl = apple_test_impl,
     attrs = (
-        apple_rules.apple_test.attrs |
-        apple_common_attrs |
-        {
-            "extension": attrs.string(default = "xctest"),
-            "_fast_adhoc_signing_enabled_default": attrs.bool(default = True),
-            "_skip_adhoc_resigning_scrubbed_frameworks_default": attrs.bool(default = False),
-            "_strict_provisioning_profile_search_default": attrs.bool(default = True),
+        apple_rules.apple_test.attrs
+        | apple_common_attrs
+        | {
+            "copy_public_framework_headers": attrs.option(attrs.bool(), default = None),
             "entitlements_verification_check_enabled": attrs.bool(default = False),
+            "extension": attrs.string(default = "xctest"),
+            "privacy_manifest": attrs.option(attrs.source(), default = None),
             "versioned_macos_bundle": attrs.bool(default = False),
-            "_watch_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
+            "_apple_xctoolchain": attrs.toolchain_dep(default = "//:apple-default"),
+            "_code_signing_configuration": attrs.enum(CodeSignConfiguration.values(), default = "none"),
+            "_fast_adhoc_signing_enabled_default": attrs.bool(default = True),
+            "_ipad_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
+            "_iphone_booted_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
+            "_iphone_unbooted_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
             "_provisioning_profile_sources": attrs.dep(default = "//apple:no_binary"),
             "_provisioning_profile_sources_enabled": attrs.bool(default = False),
             "_provisioning_profiles": attrs.dep(default = "//apple:no_binary"),
-            "_iphone_unbooted_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
-            "_iphone_booted_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
-            "_ipad_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
-            "privacy_manifest": attrs.option(attrs.source(), default = None),
-            "copy_public_framework_headers": attrs.option(attrs.bool(), default = None),
-            "_code_signing_configuration": attrs.enum(CodeSignConfiguration.values(), default = "none"),
-            "_apple_xctoolchain": attrs.toolchain_dep(default = "//:apple-default"),
+            "_skip_adhoc_resigning_scrubbed_frameworks_default": attrs.bool(default = False),
+            "_strict_provisioning_profile_search_default": attrs.bool(default = True),
+            "_watch_simulator": attrs.transition_dep(cfg = clear_platform_transition, default = "//apple:no_apple_simulators"),
         }
     ),
     uses_plugins = apple_rules.apple_library.uses_plugins,

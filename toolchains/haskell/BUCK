@@ -19,29 +19,29 @@ http_archive(
 haskell_ghc_distr(
     name = "ghc-9.10.3-x86_64-ubuntu20_04-linux",
     ghc_root = ":ghc-9.10.3-x86_64-ubuntu20_04-linux.tar.xz",
-    target = "x86_64-ubuntu20_04-linux",
     host = "x86_64-ubuntu20_04-linux",
-    version = "9.10.3",
     package_manifest = BOOT_MANIFESTS["ghc-9.10.3-x86_64-ubuntu20_04-linux"],
+    target = "x86_64-ubuntu20_04-linux",
+    version = "9.10.3",
 )
 
 haskell_ghc_distr(
     name = "ghc-9.10.3-aarch64-apple-darwin",
     ghc_root = ":ghc-9.10.3-aarch64-apple-darwin.tar.xz",
-    target = "aarch64-apple-darwin",
     host = "aarch64-apple-darwin",
-    version = "9.10.3",
     package_manifest = BOOT_MANIFESTS["ghc-9.10.3-aarch64-apple-darwin"],
+    target = "aarch64-apple-darwin",
+    version = "9.10.3",
 )
 
 alias(
     name = "ghc-9.10.3",
     actual = select({
-        "config//cpu:x86_64": select({
-            "config//os:linux": ":ghc-9.10.3-x86_64-ubuntu20_04-linux",
-        }),
         "config//cpu:arm64": select({
             "config//os:macos": ":ghc-9.10.3-aarch64-apple-darwin",
+        }),
+        "config//cpu:x86_64": select({
+            "config//os:linux": ":ghc-9.10.3-x86_64-ubuntu20_04-linux",
         }),
     }),
 )
@@ -85,15 +85,15 @@ http_archive(
 [
     wasi_sdk_binary(
         name = "wasi-sdk-{}".format(name),
+        binary = binary,
         sdk = select({
-            "config//cpu:x86_64": select({
-                "config//os:linux": ":wasi-sdk-x86_64-linux.tar.gz",
-            }),
             "config//cpu:arm64": select({
                 "config//os:macos": ":wasi-sdk-aarch64-darwin.tar.gz",
             }),
+            "config//cpu:x86_64": select({
+                "config//os:linux": ":wasi-sdk-x86_64-linux.tar.gz",
+            }),
         }),
-        binary = binary,
     )
     for name, binary in [
         ("wasm32-wasi-clang", "bin/wasm32-wasi-clang"),
@@ -110,10 +110,13 @@ http_archive(
 
 cxx_toolchain(
     name = "cxx-wasm32-wasi-sdk",
-    platform_name = "wasm32-wasi",
-    compiler_type = "clang",
+    archiver = ":wasi-sdk-llvm-ar",
+    archiver_supports_argfiles = True,
+    archiver_type = "gnu",  # prelude's Haskell rules don't support type "wasm"
+    asm_compiler = ":wasi-sdk-wasm32-wasi-clang",
+    assembler = ":wasi-sdk-wasm32-wasi-clang",
+    bolt = ":wasi-sdk-llvm-strip",
     c_compiler = ":wasi-sdk-wasm32-wasi-clang",
-    c_compiler_type = "clang",
     c_compiler_flags = [
         "--target=wasm32-unknown-wasi",
         "-Wno-error=int-conversion",
@@ -124,10 +127,9 @@ cxx_toolchain(
         "-Qunused-arguments",
         "-I$(location :libffi-wasm)/include",
     ],
-    asm_compiler = ":wasi-sdk-wasm32-wasi-clang",
-    assembler = ":wasi-sdk-wasm32-wasi-clang",
+    c_compiler_type = "clang",
+    compiler_type = "clang",
     cxx_compiler = ":wasi-sdk-wasm32-wasi-clang++",
-    cxx_compiler_type = "clang",
     cxx_compiler_flags = [
         "--target=wasm32-unknown-wasi",
         "-fno-exceptions",
@@ -138,6 +140,8 @@ cxx_toolchain(
         "-msimd128",
         "-I$(location :libffi-wasm)/include",
     ],
+    cxx_compiler_type = "clang",
+    generate_linker_maps = False,
     linker = ":wasi-sdk-wasm-ld",
     linker_flags = [
         "--target=wasm32-unknown-wasi",
@@ -145,50 +149,46 @@ cxx_toolchain(
         "-L$(location :libffi-wasm)/lib",
     ],
     linker_type = "gnu",
-    split_debug_mode = "none",
-    generate_linker_maps = False,
-    archiver = ":wasi-sdk-llvm-ar",
-    archiver_type = "gnu",  # prelude's Haskell rules don't support type "wasm"
-    archiver_supports_argfiles = True,
     nm = ":wasi-sdk-llvm-nm",
     objcopy_for_shared_library_interface = ":wasi-sdk-llvm-objcopy",
     objdump = ":wasi-sdk-llvm-objdump",
-    ranlib = ":wasi-sdk-llvm-ranlib",
-    strip = ":wasi-sdk-llvm-strip",
-    bolt = ":wasi-sdk-llvm-strip",
     object_file_extension = "o",
+    platform_name = "wasm32-wasi",
+    ranlib = ":wasi-sdk-llvm-ranlib",
+    split_debug_mode = "none",
     static_library_extension = "a",
+    strip = ":wasi-sdk-llvm-strip",
     visibility = ["PUBLIC"],
 )
 
 haskell_ghc_wasm_distr(
     name = "ghc-9.10.3.20260403-wasm32-wasi-x86_64-ubuntu20_04-linux",
-    ghc_root = ":wasm32-wasi-ghc-9.10.tar.xz",
-    cxx_toolchain = ":cxx-wasm32-wasi-sdk",
     bin_prefix = "wasm32-wasi-",
+    cxx_toolchain = ":cxx-wasm32-wasi-sdk",
+    ghc_root = ":wasm32-wasi-ghc-9.10.tar.xz",
     host = "x86_64-ubuntu20_04-linux",
-    version = "9.10.3.20260403",
     package_manifest = BOOT_MANIFESTS["ghc-9.10.3.20260403-wasm32-unknown-wasi"],
+    version = "9.10.3.20260403",
 )
 
 haskell_ghc_wasm_distr(
     name = "ghc-9.10.3.20260403-wasm32-wasi-aarch64-apple-darwin",
-    ghc_root = ":wasm32-wasi-ghc-gmp-aarch64-darwin-9.10.tar.xz",
-    cxx_toolchain = ":cxx-wasm32-wasi-sdk",
     bin_prefix = "wasm32-wasi-",
+    cxx_toolchain = ":cxx-wasm32-wasi-sdk",
+    ghc_root = ":wasm32-wasi-ghc-gmp-aarch64-darwin-9.10.tar.xz",
     host = "aarch64-apple-darwin",
-    version = "9.10.3.20260403",
     package_manifest = BOOT_MANIFESTS["ghc-9.10.3.20260403-wasm32-unknown-wasi"],
+    version = "9.10.3.20260403",
 )
 
 alias(
     name = "ghc-9.10.3.20260403-wasm32-wasi",
     actual = select({
-        "config//cpu:x86_64": select({
-            "config//os:linux": ":ghc-9.10.3.20260403-wasm32-wasi-x86_64-ubuntu20_04-linux",
-        }),
         "config//cpu:arm64": select({
             "config//os:macos": ":ghc-9.10.3.20260403-wasm32-wasi-aarch64-apple-darwin",
+        }),
+        "config//cpu:x86_64": select({
+            "config//os:linux": ":ghc-9.10.3.20260403-wasm32-wasi-x86_64-ubuntu20_04-linux",
         }),
     }),
 )
@@ -196,18 +196,18 @@ alias(
 exec_alias(
     name = "ghc",
     actual = select({
-        "config//os:wasi": ":ghc-9.10.3.20260403-wasm32-wasi",
         "DEFAULT": ":ghc-9.10.3",
+        "config//os:wasi": ":ghc-9.10.3.20260403-wasm32-wasi",
     }),
     visibility = ["//haskell/..."],
 )
 
 haskell_toolchain(
     name = "haskell",
-    ghc_distr = select({
-        "config//os:wasi": ":ghc-9.10.3.20260403-wasm32-wasi",
-        "DEFAULT": ":ghc-9.10.3",
-    }),
     compiler_flags = ["-XGHC2024"],
+    ghc_distr = select({
+        "DEFAULT": ":ghc-9.10.3",
+        "config//os:wasi": ":ghc-9.10.3.20260403-wasm32-wasi",
+    }),
     visibility = ["//..."],
 )

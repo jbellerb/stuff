@@ -2,8 +2,8 @@ load("//deno:node.bzl", "NodePackageInfo", "NodePackageTSet")
 load(":defs.bzl", "TypeScriptToolchainInfo")
 
 TypeScriptModule = record(
-    specifier = str,
     main = field([str, None], default = None),
+    specifier = str,
     # directory of tsc-emitted .js and .d.ts files.
     transpiled = Artifact,
 )
@@ -24,16 +24,15 @@ TypeScriptLibTSet = transitive_set(
 
 TypeScriptLibraryInfo = provider(
     fields = {
-        "transpiled": provider_field(TypeScriptModuleTSet),
         "lib": provider_field(TypeScriptLibTSet),
         # npm packages needed to resolve imports in this library and the .d.ts
         # files it re-exports.
         "packages": provider_field(NodePackageTSet),
+        "transpiled": provider_field(TypeScriptModuleTSet),
     },
 )
 
-def _normalize_srcs(
-        srcs: [list[Artifact], dict[str, Artifact]]) -> dict[str, Artifact]:
+def _normalize_srcs(srcs: [list[Artifact], dict[str, Artifact]]) -> dict[str, Artifact]:
     if type(srcs) == type({}):
         return srcs
     else:
@@ -45,7 +44,7 @@ def _canonical_label(label: Label) -> str:
 def _strip_ts_ext(path: str) -> [str, None]:
     for ext in [".ts", ".tsx", ".mts", ".cts"]:
         if path.endswith(ext):
-            return path[:-len(ext)]
+            return path[: -len(ext)]
     return None
 
 def _split_deps(deps: list[Dependency]) -> (list, list):
@@ -78,20 +77,20 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
 
     lib = ctx.actions.tset(
         TypeScriptLibTSet,
-        value = ctx.attrs.lib,
         children = [dep.lib for dep in ts_deps],
+        value = ctx.attrs.lib,
     )
 
     output = ctx.actions.declare_output(ctx.label.name + "_dist", dir = True)
 
     config = {
-        "cell": str(ctx.label.cell),
-        "package": ctx.label.package,
-        "srcs": srcs,
-        "deps": dep_modules.project_as_json("module"),
-        "packages": packages.project_as_json("package"),
-        "lib": lib.project_as_args("lib"),
         "alias": getattr(ctx.attrs, "alias", {}),
+        "cell": str(ctx.label.cell),
+        "deps": dep_modules.project_as_json("module"),
+        "lib": lib.project_as_args("lib"),
+        "package": ctx.label.package,
+        "packages": packages.project_as_json("package"),
+        "srcs": srcs,
         "strict": ctx.attrs.strict,
     }
 
@@ -104,51 +103,51 @@ def _typescript_library_impl(ctx: AnalysisContext) -> list[Provider]:
     ctx.actions.run(
         cmd_args([tsc_cfg, output.as_output()]),
         category = "tsc",
-        identifier = ctx.label.name,
         exe = WorkerRunInfo(
-            worker = toolchain.tsc_build,
             exe = toolchain.tsc_build.exe,
+            worker = toolchain.tsc_build,
         ),
+        identifier = ctx.label.name,
     )
 
     return [
         DefaultInfo(default_output = output),
         TypeScriptLibraryInfo(
-            transpiled = ctx.actions.tset(
-                TypeScriptModuleTSet,
-                value = TypeScriptModule(
-                    specifier = _canonical_label(ctx.label),
-                    main = _strip_ts_ext(main.short_path),
-                    transpiled = output,
-                ),
-                children = [dep.transpiled for dep in ts_deps],
-            ),
             lib = lib,
             packages = packages,
+            transpiled = ctx.actions.tset(
+                TypeScriptModuleTSet,
+                children = [dep.transpiled for dep in ts_deps],
+                value = TypeScriptModule(
+                    main = _strip_ts_ext(main.short_path),
+                    specifier = _canonical_label(ctx.label),
+                    transpiled = output,
+                ),
+            ),
         ),
     ]
 
 _typescript_library_attrs = {
-    "main": attrs.source(
-        doc = """
-        The main entrypoint of the library. This is the file a bare import of
-        this library's label resolves to.
-        """,
+    "deps": attrs.list(
+        attrs.dep(),
+        default = [],
+        doc = "typescript_library and npm package dependencies.",
     ),
     "extra_srcs": attrs.named_set(
         attrs.source(),
         default = [],
         doc = "The other TypeScript sources.",
     ),
-    "deps": attrs.list(
-        attrs.dep(),
-        default = [],
-        doc = "typescript_library and npm package dependencies.",
-    ),
     "lib": attrs.list(
         attrs.string(),
         default = [],
         doc = "tsconfig lib entries this library type checks against.",
+    ),
+    "main": attrs.source(
+        doc = """
+        The main entrypoint of the library. This is the file a bare import of
+        this library's label resolves to.
+        """,
     ),
     "strict": attrs.bool(
         default = True,
@@ -191,7 +190,6 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
 
     options = {
         "cell": str(ctx.label.cell),
-        "package": ctx.label.package,
         "deps": info.transpiled.project_as_json("module"),
         "entryPoints": [
             cmd_args(
@@ -199,6 +197,7 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
                 delimiter = "/",
             ),
         ],
+        "package": ctx.label.package,
     }
     if ctx.attrs.format != None:
         options["format"] = ctx.attrs.format
@@ -217,10 +216,7 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     if ctx.attrs.alias != {}:
         options["alias"] = ctx.attrs.alias
 
-    node_packages = {
-        package.package: package.contents
-        for package in info.packages.traverse()
-    }
+    node_packages = {package.package: package.contents for package in info.packages.traverse()}
     if node_packages:
         node_modules = ctx.actions.declare_output("node_modules", dir = True)
         ctx.actions.symlinked_dir(node_modules.as_output(), node_packages)
@@ -237,55 +233,16 @@ def _typescript_bundle_impl(ctx: AnalysisContext) -> list[Provider]:
     ctx.actions.run(
         cmd_args([bundler.bundle, bundle_cfg, output.as_output()]),
         category = "bundle",
-        identifier = ctx.label.name,
         env = bundler.env,
+        identifier = ctx.label.name,
     )
 
     return [DefaultInfo(default_output = output)]
 
 typescript_bundle = rule(
     impl = _typescript_bundle_impl,
-    attrs = _typescript_library_attrs | {
-        "outfile": attrs.option(
-            attrs.string(),
-            default = None,
-            doc = "The output filename. Defaults to the rule name with a .js extension.",
-        ),
-        "format": attrs.option(
-            attrs.enum(["iife", "cjs", "esm"]),
-            default = None,
-            doc = "Output format for the generated JavaScript bundle.",
-        ),
-        "platform": attrs.option(
-            attrs.enum(["browser", "node", "neutral"]),
-            default = None,
-            doc = "Platform to target.",
-        ),
-        "target": attrs.list(
-            attrs.string(),
-            default = [],
-            doc = "Target environments for the generated JavaScript.",
-        ),
-        "minify": attrs.bool(
-            default = False,
-            doc = "Minify the output.",
-        ),
-        "sourcemap": attrs.option(
-            attrs.enum(["inline", "linked", "external", "both"]),
-            default = None,
-            doc = "Sourcemap generation mode.",
-        ),
-        "external": attrs.list(
-            attrs.string(),
-            default = [],
-            doc = "Packages to exclude from the bundle.",
-        ),
-        "define": attrs.dict(
-            attrs.string(),
-            attrs.string(),
-            default = {},
-            doc = "Replace global identifiers with constant expressions.",
-        ),
+    attrs = _typescript_library_attrs
+    | {
         "alias": attrs.dict(
             attrs.string(),
             attrs.string(),
@@ -295,6 +252,46 @@ typescript_bundle = rule(
             checking and bundling (e.g. {"obsidian": "obsidian-mock"} to swap in
             a mock). The target must be provided by a dep.
             """,
+        ),
+        "define": attrs.dict(
+            attrs.string(),
+            attrs.string(),
+            default = {},
+            doc = "Replace global identifiers with constant expressions.",
+        ),
+        "external": attrs.list(
+            attrs.string(),
+            default = [],
+            doc = "Packages to exclude from the bundle.",
+        ),
+        "format": attrs.option(
+            attrs.enum(["iife", "cjs", "esm"]),
+            default = None,
+            doc = "Output format for the generated JavaScript bundle.",
+        ),
+        "minify": attrs.bool(
+            default = False,
+            doc = "Minify the output.",
+        ),
+        "outfile": attrs.option(
+            attrs.string(),
+            default = None,
+            doc = "The output filename. Defaults to the rule name with a .js extension.",
+        ),
+        "platform": attrs.option(
+            attrs.enum(["browser", "node", "neutral"]),
+            default = None,
+            doc = "Platform to target.",
+        ),
+        "sourcemap": attrs.option(
+            attrs.enum(["inline", "linked", "external", "both"]),
+            default = None,
+            doc = "Sourcemap generation mode.",
+        ),
+        "target": attrs.list(
+            attrs.string(),
+            default = [],
+            doc = "Target environments for the generated JavaScript.",
         ),
     },
 )
@@ -327,19 +324,19 @@ def _oxlint_lint_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(),
         ExternalRunnerTestInfo(
-            type = "oxlint",
             command = [command],
+            type = "oxlint",
         ),
     ]
 
 oxlint_lint = rule(
     impl = _oxlint_lint_impl,
     attrs = {
-        "srcs": attrs.list(attrs.source(), doc = "The JS/TS sources to lint."),
-        "rules": attrs.dict(attrs.string(), attrs.string(), default = {}),
         "categories": attrs.dict(attrs.string(), attrs.string(), default = {}),
         "env": attrs.dict(attrs.string(), attrs.bool(), default = {}),
         "globals": attrs.dict(attrs.string(), attrs.string(), default = {}),
+        "rules": attrs.dict(attrs.string(), attrs.string(), default = {}),
+        "srcs": attrs.list(attrs.source(), doc = "The JS/TS sources to lint."),
         "_oxlint_cli": attrs.default_only(
             attrs.exec_dep(
                 default = "toolchains//typescript:oxlint",

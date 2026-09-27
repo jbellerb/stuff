@@ -20,11 +20,7 @@ def _deno_binary_impl(ctx: AnalysisContext) -> list[Provider]:
             ctx.actions,
             ctx.attrs._reflinker[RunInfo],
             node_modules.as_output(),
-            [
-                (package.contents, package.package)
-                for dep in ctx.attrs.npm_deps
-                for package in dep[NodePackageInfo].lib.traverse()
-            ],
+            [(package.contents, package.package) for dep in ctx.attrs.npm_deps for package in dep[NodePackageInfo].lib.traverse()],
         )
         cfg["nodeModulesDir"] = "manual"
         hidden.append(node_modules)
@@ -44,37 +40,43 @@ def _deno_binary_impl(ctx: AnalysisContext) -> list[Provider]:
 
     output = ctx.actions.declare_output(ctx.label.name)
 
-    cmd = cmd_args([
-        deno_toolchain.deno,
-        "compile",
-        "--config",
-        deno_cfg,
-        "--no-remote",
-        permissions,
-        unstable_features,
-        includes,
-        cmd_args(["--no-check"] if ctx.attrs.skip_check else []),
-        "--output",
-        output.as_output(),
-        ctx.attrs.main,
-    ], hidden = hidden)
+    cmd = cmd_args(
+        [
+            deno_toolchain.deno,
+            "compile",
+            "--config",
+            deno_cfg,
+            "--no-remote",
+            permissions,
+            unstable_features,
+            includes,
+            cmd_args(["--no-check"] if ctx.attrs.skip_check else []),
+            "--output",
+            output.as_output(),
+            ctx.attrs.main,
+        ],
+        hidden = hidden,
+    )
 
     ctx.actions.run(cmd, category = "deno_compile", identifier = ctx.label.name)
 
     return [
         DefaultInfo(default_output = output),
         RunInfo(
-            args = cmd_args([
-                deno_toolchain.deno,
-                "run",
-                "--config",
-                deno_cfg,
-                "--no-remote",
-                permissions,
-                unstable_features,
-                cmd_args(["--check"] if not ctx.attrs.skip_check else []),
-                ctx.attrs.main,
-            ], hidden = hidden + [ctx.attrs.srcs]),
+            args = cmd_args(
+                [
+                    deno_toolchain.deno,
+                    "run",
+                    "--config",
+                    deno_cfg,
+                    "--no-remote",
+                    permissions,
+                    unstable_features,
+                    cmd_args(["--check"] if not ctx.attrs.skip_check else []),
+                    ctx.attrs.main,
+                ],
+                hidden = hidden + [ctx.attrs.srcs],
+            ),
         ),
     ]
 
@@ -82,10 +84,15 @@ deno_binary = rule(
     impl = _deno_binary_impl,
     attrs = {
         "main": attrs.source(doc = "The JS/TS entrypoint."),
-        "srcs": attrs.list(
-            attrs.source(),
+        "npm_deps": attrs.list(
+            attrs.dep(providers = [NodePackageInfo]),
             default = [],
-            doc = "Additional JS/TS files to reference.",
+            doc = "A list of npm dependencies to provide during execution.",
+        ),
+        "permissions": attrs.list(
+            attrs.string(),
+            default = [],
+            doc = "Permissions to enable.",
         ),
         # TODO: this shouldn't be an option because we need to set these values
         # from Buck, but the json file is still needed for the Deno CLI. How
@@ -96,20 +103,15 @@ deno_binary = rule(
         #     doc = "The deno.json config file.",
         # ),
         "skip_check": attrs.bool(default = False, doc = "Disable type checking."),
-        "permissions": attrs.list(
-            attrs.string(),
+        "srcs": attrs.list(
+            attrs.source(),
             default = [],
-            doc = "Permissions to enable.",
+            doc = "Additional JS/TS files to reference.",
         ),
         "unstable_features": attrs.list(
             attrs.string(),
             default = [],
             doc = "Unsable features to enable.",
-        ),
-        "npm_deps": attrs.list(
-            attrs.dep(providers = [NodePackageInfo]),
-            default = [],
-            doc = "A list of npm dependencies to provide during execution.",
         ),
         # TODO: Deno dependencies
         "_deno_toolchain": attrs.default_only(
@@ -120,8 +122,8 @@ deno_binary = rule(
         ),
         "_reflinker": attrs.default_only(
             attrs.exec_dep(
-                providers = [RunInfo],
                 default = "root//tools/reflink:reflink",
+                providers = [RunInfo],
             ),
         ),
     },

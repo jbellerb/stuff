@@ -22,9 +22,9 @@ _DEFAULT_TRIPLE = select({
 HaskellGHCDistrInfo = provider(
     fields = {
         "compiler": provider_field(RunInfo),
+        "haddock": provider_field(RunInfo),
         "linker": provider_field(RunInfo),
         "packager": provider_field(RunInfo),
-        "haddock": provider_field(RunInfo),
         "version": provider_field(str),
     },
 )
@@ -103,14 +103,14 @@ def haskell_ghc_distr_impl(ctx: AnalysisContext) -> list[Provider]:
         ),
         HaskellGHCDistrInfo(
             compiler = RunInfo(ghc),
+            haddock = ghc_bin("haddock-ghc"),
             linker = RunInfo(ghc),
             packager = ghc_bin("ghc-pkg"),
-            haddock = ghc_bin("haddock-ghc"),
             version = ctx.attrs.version,
         ),
         HaskellGHCPackageDBInfo(
-            db = lib.project("package.conf.d"),
             arch = arch,
+            db = lib.project("package.conf.d"),
             os = os,
             version = ctx.attrs.version,
         ),
@@ -124,25 +124,25 @@ def haskell_ghc_distr_impl(ctx: AnalysisContext) -> list[Provider]:
 haskell_ghc_distr = rule(
     impl = haskell_ghc_distr_impl,
     attrs = {
-        "ghc_root": attrs.source(allow_directory = True),
-        "cxx_toolchain": attrs.toolchain_dep(
-            providers = [CxxToolchainInfo, CxxPlatformInfo],
-            default = "toolchains//:cxx",
-        ),
         "bin_prefix": attrs.string(default = ""),
-        "target": attrs.string(),
+        "cxx_toolchain": attrs.toolchain_dep(
+            default = "toolchains//:cxx",
+            providers = [CxxToolchainInfo, CxxPlatformInfo],
+        ),
+        "ghc_root": attrs.source(allow_directory = True),
         "host": attrs.string(default = _DEFAULT_TRIPLE),
-        "version": attrs.string(),
+        "labels": attrs.list(attrs.string(), default = []),
         "package_manifest": attrs.dict(
+            default = {},
             key = attrs.string(),
             value = attrs.any(),
-            default = {},
         ),
-        "labels": attrs.list(attrs.string(), default = []),
+        "target": attrs.string(),
+        "version": attrs.string(),
         "_install_ghc": attrs.default_only(
             attrs.exec_dep(
-                providers = [RunInfo],
                 default = "//haskell/tools:install_ghc",
+                providers = [RunInfo],
             ),
         ),
     },
@@ -160,10 +160,10 @@ def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
             compiler = ghc_distr.compiler,
             compiler_flags = ctx.attrs.compiler_flags,
             compiler_major_version = ghc_distr.version,
+            haddock = ghc_distr.haddock,
             linker = ghc_distr.linker,
             linker_flags = ctx.attrs.linker_flags,
             packager = ghc_distr.packager,
-            haddock = ghc_distr.haddock,
         ),
         HaskellPlatformInfo(
             # TODO: what is HaskellPlatformInfo even used for?
@@ -174,8 +174,8 @@ def _haskell_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
 haskell_toolchain = rule(
     impl = _haskell_toolchain_impl,
     attrs = {
-        "ghc_distr": attrs.exec_dep(providers = [HaskellGHCDistrInfo]),
         "compiler_flags": attrs.list(attrs.arg(), default = []),
+        "ghc_distr": attrs.exec_dep(providers = [HaskellGHCDistrInfo]),
         "linker_flags": attrs.list(attrs.arg(), default = []),
     },
     is_toolchain_rule = True,
@@ -192,20 +192,20 @@ def _ghc_wrapper_impl(ctx: AnalysisContext) -> list[Provider]:
 exec {} "$@"
 """,
         ),
-        with_inputs = True,
-        is_executable = True,
         allow_args = True,
+        is_executable = True,
+        with_inputs = True,
     )
 
     return [DefaultInfo(default_output = wrapper)]
 
 ghc_wrapper = anon_rule(
     impl = _ghc_wrapper_impl,
-    attrs = {
-        "_haskell_toolchain": attrs.dep(providers = [HaskellToolchainInfo]),
-    },
     artifact_promise_mappings = {
         "wrapper": lambda x: x[DefaultInfo].default_outputs[0],
+    },
+    attrs = {
+        "_haskell_toolchain": attrs.dep(providers = [HaskellToolchainInfo]),
     },
 )
 

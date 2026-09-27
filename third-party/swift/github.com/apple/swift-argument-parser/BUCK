@@ -2,13 +2,9 @@ load("@toolchains//apple:rules.bzl", "apple_library")
 
 http_archive(
     name = "swift-argument-parser-1.7.0",
-    urls = ["https://github.com/apple/swift-argument-parser/archive/refs/tags/1.7.0.tar.gz"],
     sha256 = "84e685f0ca4d069a60193c9e477b6ec5a44016dc789db01e0b17c38b400a922e",
     strip_prefix = "swift-argument-parser-1.7.0/Sources",
     sub_targets = {
-        "ArgumentParserToolInfo": [
-            "ArgumentParserToolInfo/ToolInfo.swift",
-        ],
         "ArgumentParser": [
             "ArgumentParser/Completions/BashCompletionsGenerator.swift",
             "ArgumentParser/Completions/CompletionsGenerator.swift",
@@ -62,7 +58,11 @@ http_archive(
             "ArgumentParser/Validators/PositionalArgumentsValidator.swift",
             "ArgumentParser/Validators/UniqueNamesValidator.swift",
         ],
+        "ArgumentParserToolInfo": [
+            "ArgumentParserToolInfo/ToolInfo.swift",
+        ],
     },
+    urls = ["https://github.com/apple/swift-argument-parser/archive/refs/tags/1.7.0.tar.gz"],
 )
 
 apple_library(

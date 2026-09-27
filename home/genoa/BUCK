@@ -3,15 +3,6 @@ load("//home:defs.bzl", "dotfiles")
 dotfiles(
     name = "home",
     files = {
-        "~/.config/direnv": glob([".config/direnv/*.toml"]),
-        "~/.config/fish/completions": glob([".config/fish/completions/*.fish"]),
-        "~/.config/fish/functions": glob([".config/fish/functions/*.fish"]),
-        "~/.config/ghostty": [".config/ghostty/config"],
-        "~/.config/helix": glob([".config/helix/*.toml"]),
-        "~/.config/jj": glob([".config/jj/*.toml"]),
-        "~/.config/zed": glob([".config/zed/*.json"]),
-
-        # binaries
         "~/.cache/installer/bin": [
             "//home/genoa/bin:jj-pr",
             "//gotestd:gt",
@@ -19,5 +10,12 @@ dotfiles(
             "//sprite-hacks/bin:jj-sprite-workspace",
             "//sprite-hacks/bin:sprite-claude",
         ],
+        "~/.config/direnv": glob([".config/direnv/*.toml"]),
+        "~/.config/fish/completions": glob([".config/fish/completions/*.fish"]),
+        "~/.config/fish/functions": glob([".config/fish/functions/*.fish"]),
+        "~/.config/ghostty": [".config/ghostty/config"],
+        "~/.config/helix": glob([".config/helix/*.toml"]),
+        "~/.config/jj": glob([".config/jj/*.toml"]),
+        "~/.config/zed": glob([".config/zed/*.json"]),
     },
 )

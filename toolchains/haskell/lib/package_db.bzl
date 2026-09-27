@@ -1,6 +1,5 @@
 load("@prelude//cxx:cxx_toolchain_types.bzl", "LinkerType", "PicBehavior")
 load("@prelude//cxx:linker.bzl", "LINKERS")
-load("@prelude//cxx:preprocessor.bzl", "CPreprocessorInfo")
 load(
     "@prelude//haskell:library_info.bzl",
     "HaskellLibraryInfo",
@@ -14,7 +13,6 @@ load(
 )
 load(
     "@prelude//linking:link_groups.bzl",
-    "LinkGroupLibInfo",
     "merge_link_group_lib_info",
 )
 load(
@@ -26,20 +24,16 @@ load(
     "LinkInfos",
     "LinkStyle",
     "LinkedObject",
-    "MergedLinkInfo",
     "SharedLibLinkable",
     "create_merged_link_info",
 )
 load(
     "@prelude//linking:linkable_graph.bzl",
-    "LinkableGraph",
-    "LinkableNode",
     "create_linkable_graph",
     "create_linkable_graph_node",
     "create_linkable_node",
 )
-load("@prelude//linking:shared_libraries.bzl", "SharedLibraryInfo", "create_shared_libraries", "merge_shared_libraries")
-load("@prelude//utils:dicts.bzl", "flatten_x")
+load("@prelude//linking:shared_libraries.bzl", "create_shared_libraries", "merge_shared_libraries")
 load("@prelude//utils:expect.bzl", "expects")
 load("@prelude//utils:graph_utils.bzl", "post_order_traversal")
 
@@ -47,8 +41,8 @@ _PseudoProviderCollection = dict[str, Provider]
 
 HaskellGHCPackageDBInfo = provider(
     fields = {
-        "db": provider_field(Artifact),
         "arch": provider_field(str),
+        "db": provider_field(Artifact),
         "os": provider_field(str),
         "version": provider_field(str),
     },
@@ -84,9 +78,7 @@ def _build_linkable(output_style: LibOutputStyle, lib: Artifact) -> typing.Any:
             linker_type = LinkerType("gnu"),
         )
 
-def _collect_dep_infos(
-        deps: list[_PseudoProviderCollection],
-        name: str) -> list[Provider]:
+def _collect_dep_infos(deps: list[_PseudoProviderCollection], name: str) -> list[Provider]:
     infos = []
     for dep in deps:
         expects.expect(
@@ -98,13 +90,14 @@ def _collect_dep_infos(
     return infos
 
 def _collect_boot_library_libs(
-        actions: AnalysisActions,
-        pkg: dict[str, typing.Any],
-        db: Artifact,
-        import_dir: Artifact | None,
-        all_libs: dict[LinkStyle, list[Artifact]],
-        deps_infos: list[HaskellLinkInfo],
-        profiling_enabled: bool) -> typing.Any:
+    actions: AnalysisActions,
+    pkg: dict[str, typing.Any],
+    db: Artifact,
+    import_dir: Artifact | None,
+    all_libs: dict[LinkStyle, list[Artifact]],
+    deps_infos: list[HaskellLinkInfo],
+    profiling_enabled: bool,
+) -> typing.Any:
     hlibinfos = {}
     hlinkinfos = {}
     link_infos = {}
@@ -114,21 +107,18 @@ def _collect_boot_library_libs(
         hlibinfos[link_style] = HaskellLibraryInfo(
             name = pkg["name"],
             db = db,
-            import_dirs = {profiling_enabled: import_dir} if import_dir else {},
-            stub_dirs = [],
             id = pkg["id"],
-            libs = libs,
-            version = pkg["version"],
+            import_dirs = {profiling_enabled: import_dir} if import_dir else {},
             is_prebuilt = True,
+            libs = libs,
             profiling_enabled = profiling_enabled,
+            stub_dirs = [],
+            version = pkg["version"],
         )
         hlinkinfos[link_style] = actions.tset(
             HaskellLibraryInfoTSet,
+            children = [dep.prof_info[link_style] if profiling_enabled else dep.info[link_style] for dep in deps_infos],
             value = hlibinfos[link_style],
-            children = [
-                dep.prof_info[link_style] if profiling_enabled else dep.info[link_style]
-                for dep in deps_infos
-            ],
         )
 
         output_style = _to_lib_output_style(link_style)
@@ -141,13 +131,8 @@ def _collect_boot_library_libs(
     return hlibinfos, hlinkinfos, link_infos
 
 def _haskell_boot_library(
-        ctx: AnalysisContext,
-        pkg: dict[str, typing.Any],
-        libs: Artifact,
-        db: Artifact,
-        os: str,
-        version: str,
-        deps: list[_PseudoProviderCollection]) -> _PseudoProviderCollection:
+    ctx: AnalysisContext, pkg: dict[str, typing.Any], libs: Artifact, db: Artifact, os: str, version: str, deps: list[_PseudoProviderCollection]
+) -> _PseudoProviderCollection:
     # virtual packages (e.g. system-cxx-std-lib) exist only in the package db
     # and don't ship libraries to project out of the GHC root
     if pkg.get("virtual", False):
@@ -198,12 +183,17 @@ def _haskell_boot_library(
         True,
     )
 
-    shared_libs = create_shared_libraries(ctx, {
-        shared_lib.basename: LinkedObject(
-            output = shared_lib,
-            unstripped_output = shared_lib,
-        ),
-    } if shared_lib else {})
+    shared_libs = create_shared_libraries(
+        ctx,
+        {
+            shared_lib.basename: LinkedObject(
+                output = shared_lib,
+                unstripped_output = shared_lib,
+            ),
+        }
+        if shared_lib
+        else {},
+    )
 
     return {
         "DefaultInfo": DefaultInfo(),
@@ -215,50 +205,45 @@ def _haskell_boot_library(
             info = hlinkinfos,
             prof_info = prof_hlinkinfos,
         ),
-        "MergedLinkInfo": create_merged_link_info(
-            ctx,
-            # matching the behavior of prelude//haskell:haskell.bzl
-            pic_behavior = PicBehavior("supported"),
-            link_infos = link_infos,
-            exported_deps = native_infos,
-        ),
         "HaskellProfLinkInfo": HaskellProfLinkInfo(
             prof_infos = create_merged_link_info(
                 ctx,
+                exported_deps = [info.prof_infos for info in prof_native_infos],
+                link_infos = prof_link_infos,
                 # matching the behavior of prelude//haskell:haskell.bzl
                 pic_behavior = PicBehavior("supported"),
-                link_infos = prof_link_infos,
-                exported_deps = [info.prof_infos for info in prof_native_infos],
             ),
+        ),
+        "LinkGroupLibInfo": merge_link_group_lib_info(children = link_group_infos),
+        "LinkableGraph": create_linkable_graph(
+            ctx,
+            deps = [dep["LinkableGraph"] for dep in deps],
+            node = create_linkable_graph_node(
+                ctx,
+                linkable_node = create_linkable_node(
+                    ctx,
+                    default_soname = shared_lib.basename if shared_lib else None,
+                    exported_deps = [dep["LinkableGraph"] for dep in deps],
+                    link_infos = link_infos,
+                    shared_libs = shared_libs,
+                ),
+            ),
+        ),
+        "MergedLinkInfo": create_merged_link_info(
+            ctx,
+            exported_deps = native_infos,
+            link_infos = link_infos,
+            # matching the behavior of prelude//haskell:haskell.bzl
+            pic_behavior = PicBehavior("supported"),
         ),
         "SharedLibraryInfo": merge_shared_libraries(
             ctx.actions,
             shared_libs,
             shared_library_infos,
         ),
-        "LinkableGraph": create_linkable_graph(
-            ctx,
-            node = create_linkable_graph_node(
-                ctx,
-                linkable_node = create_linkable_node(
-                    ctx,
-                    exported_deps = [dep["LinkableGraph"] for dep in deps],
-                    link_infos = link_infos,
-                    shared_libs = shared_libs,
-                    default_soname = shared_lib.basename if shared_lib else None,
-                ),
-            ),
-            deps = [dep["LinkableGraph"] for dep in deps],
-        ),
-        "LinkGroupLibInfo": merge_link_group_lib_info(children = link_group_infos),
     }
 
-def haskell_boot_package_database(
-        ctx: AnalysisContext,
-        ghc_root: Artifact,
-        os: str,
-        version: str,
-        manifest: dict) -> dict[str, list[Provider]]:
+def haskell_boot_package_database(ctx: AnalysisContext, ghc_root: Artifact, os: str, version: str, manifest: dict) -> dict[str, list[Provider]]:
     lib = ghc_root.project("lib")
     db = lib.project("package.conf.d")
     libs = lib.project(manifest["lib_prefix"])

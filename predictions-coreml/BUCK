@@ -1,9 +1,9 @@
 genrule(
     name = "release_version",
-    out = "ReleaseVersion.swift",
     cmd = """
     $(exe :generate_version_info.sh) $(location //tools/version:version) > $OUT
     """,
+    out = "ReleaseVersion.swift",
     visibility = ["//predictions-coreml/Sources/Predictions:"],
 )
 

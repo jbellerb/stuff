@@ -3,11 +3,11 @@ load("@toolchains//apple:rules.bzl", "apple_library")
 apple_library(
     name = "PredictionsBackends",
     srcs = glob(["**/*.swift"]),
+    _swift_enable_testing = True,
     frameworks = [
         "$SDKROOT/System/Library/Frameworks/Foundation.framework",
     ],
     module_name = "PredictionsBackends",
     target_sdk_version = "15.0",
-    _swift_enable_testing = True,
     visibility = ["PUBLIC"],
 )

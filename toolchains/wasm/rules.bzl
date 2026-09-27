@@ -30,8 +30,8 @@ wasm_optimize = rule(
     attrs = {
         "bin": attrs.transition_dep(
             cfg = wasm_transition,
-            providers = [DefaultInfo],
             doc = "The WebAssembly binary to optimize.",
+            providers = [DefaultInfo],
         ),
         "options": attrs.list(
             attrs.arg(),
@@ -87,8 +87,8 @@ wasm_component = rule(
         ),
         "bin": attrs.transition_dep(
             cfg = wasm_transition,
-            providers = [DefaultInfo],
             doc = "The WebAssembly reactor binary to turn into a component.",
+            providers = [DefaultInfo],
         ),
         "_wasm_toolchain": attrs.default_only(
             attrs.toolchain_dep(

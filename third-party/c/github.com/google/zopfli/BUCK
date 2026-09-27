@@ -12,10 +12,12 @@ CFLAGS = [
 
 http_archive(
     name = "zopfli-1.0.3",
-    urls = ["https://github.com/google/zopfli/archive/refs/tags/zopfli-1.0.3.tar.gz"],
     sha256 = "e955a7739f71af37ef3349c4fa141c648e8775bceb2195be07e86f8e638814bd",
     strip_prefix = "zopfli-zopfli-1.0.3/src",
     sub_targets = {
+        "zopfli_bin": [
+            "zopfli/zopfli_bin.c",
+        ],
         "zopfli_lib": [
             "zopfli/blocksplitter.c",
             "zopfli/cache.c",
@@ -29,6 +31,9 @@ http_archive(
             "zopfli/util.c",
             "zopfli/zlib_container.c",
             "zopfli/zopfli_lib.c",
+        ],
+        "zopfli_lib_exported_headers": [
+            "zopfli/zopfli.h",
         ],
         "zopfli_lib_headers": [
             "zopfli/blocksplitter.h",
@@ -44,27 +49,22 @@ http_archive(
             "zopfli/util.h",
             "zopfli/zlib_container.h",
         ],
-        "zopfli_lib_exported_headers": [
-            "zopfli/zopfli.h",
-        ],
-        "zopfli_bin": [
-            "zopfli/zopfli_bin.c",
-        ],
     },
+    urls = ["https://github.com/google/zopfli/archive/refs/tags/zopfli-1.0.3.tar.gz"],
 )
 
 cxx_library(
     name = "zopflilib",
     srcs = [":zopfli-1.0.3[zopfli_lib]"],
+    compiler_flags = CFLAGS,
     exported_headers = [":zopfli-1.0.3[zopfli_lib_exported_headers]"],
     headers = [":zopfli-1.0.3[zopfli_lib_headers]"],
-    compiler_flags = CFLAGS,
 )
 
 cxx_binary(
     name = "zopfli",
     srcs = [":zopfli-1.0.3[zopfli_bin]"],
-    deps = [":zopflilib"],
     compiler_flags = CFLAGS,
+    deps = [":zopflilib"],
     visibility = ["PUBLIC"],
 )

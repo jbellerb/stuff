@@ -1,11 +1,5 @@
-load(
-    "@prelude//:artifact_tset.bzl",
-    "ArtifactInfoTag",
-    "make_artifact_tset",
-)
 load("@prelude//apple:apple_rules_decls.bzl", "SWIFT_VERSION_FEATURE_MAP")
 load("@prelude//apple:apple_toolchain_types.bzl", "AppleToolchainInfo")
-load("@prelude//apple/swift:swift_toolchain.bzl", "compute_sdk_module_graph")
 load(
     "@prelude//apple/swift:swift_toolchain_types.bzl",
     "SwiftObjectFormat",
@@ -63,12 +57,11 @@ system_apple_toolchain = rule(
         "sdk_path": attrs.string(),
         "swift_toolchain": attrs.option(attrs.toolchain_dep(), default = None),
         "xcode_version": attrs.string(default = "1600"),
-
         # prelude deps
         "_merge_index_store": attrs.default_only(
             attrs.dep(
-                providers = [RunInfo],
                 default = "prelude//apple/tools/index:merge_index_store",
+                providers = [RunInfo],
             ),
         ),
     },
@@ -80,28 +73,26 @@ def _system_swift_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
         DefaultInfo(),
         SwiftToolchainInfo(
             architecture = ctx.attrs.architecture,
-            compiler = (cmd_args(ctx.attrs._swiftc_wrapper[RunInfo])
-                .add(_xcrun(ctx.actions, "swiftc"))),
+            compiler = (cmd_args(ctx.attrs._swiftc_wrapper[RunInfo]).add(_xcrun(ctx.actions, "swiftc"))),
             compiler_flags = ctx.attrs.swiftc_flags,
             mk_swift_comp_db = ctx.attrs._make_swift_comp_db[RunInfo],
-            mk_swift_interface = (cmd_args(ctx.attrs._swiftc_wrapper[RunInfo])
-                .add(ctx.attrs._make_swift_interface[RunInfo])),
+            mk_swift_interface = (cmd_args(ctx.attrs._swiftc_wrapper[RunInfo]).add(ctx.attrs._make_swift_interface[RunInfo])),
             object_format = SwiftObjectFormat("object"),
             platform_path = None,
             provide_swift_debug_info = True,
             resource_dir = None,
+            sdk_debug_info = None,
             sdk_module_path_prefixes = {},
             sdk_path = ctx.attrs.sdk_path,
-            sdk_debug_info = None,
             serialized_diags_to_json = None,
             supports_explicit_module_debug_serialization = False,
             supports_incremental_file_hashing = False,
             supports_modulemaps_with_hmaps = False,
             supports_relative_resource_dir = False,
+            swift_experimental_features = ctx.attrs.swift_experimental_features,
             swift_ide_test_tool = None,
             swift_stdlib_tool = _xcrun(ctx.actions, "swift-stdlib-tool"),
             swift_stdlib_tool_flags = ctx.attrs.swift_stdlib_tool_flags,
-            swift_experimental_features = ctx.attrs.swift_experimental_features,
             swift_upcoming_features = ctx.attrs.swift_upcoming_features,
             uncompiled_clang_sdk_modules_deps = {},
             uncompiled_swift_sdk_modules_deps = {},
@@ -115,38 +106,37 @@ system_swift_toolchain = rule(
     attrs = {
         "architecture": attrs.string(default = "arm64"),
         "sdk_path": attrs.string(),
-        "swiftc_flags": attrs.list(attrs.arg(), default = []),
-        "swift_stdlib_tool_flags": attrs.list(attrs.arg(), default = []),
         "swift_experimental_features": attrs.dict(
-            key = attrs.enum(SwiftVersion),
-            value = attrs.list(attrs.string()),
-            sorted = False,
             default = SWIFT_VERSION_FEATURE_MAP,
+            key = attrs.enum(SwiftVersion),
+            sorted = False,
+            value = attrs.list(attrs.string()),
         ),
+        "swift_stdlib_tool_flags": attrs.list(attrs.arg(), default = []),
         "swift_upcoming_features": attrs.dict(
-            key = attrs.enum(SwiftVersion),
-            value = attrs.list(attrs.string()),
-            sorted = False,
             default = SWIFT_VERSION_FEATURE_MAP,
+            key = attrs.enum(SwiftVersion),
+            sorted = False,
+            value = attrs.list(attrs.string()),
         ),
-
+        "swiftc_flags": attrs.list(attrs.arg(), default = []),
         # prelude deps
         "_make_swift_comp_db": attrs.default_only(
             attrs.exec_dep(
-                providers = [RunInfo],
                 default = "prelude//apple/tools:make_swift_comp_db",
+                providers = [RunInfo],
             ),
         ),
         "_make_swift_interface": attrs.default_only(
             attrs.exec_dep(
-                providers = [RunInfo],
                 default = "prelude//apple/tools:make_swift_interface",
+                providers = [RunInfo],
             ),
         ),
         "_swiftc_wrapper": attrs.default_only(
             attrs.exec_dep(
-                providers = [RunInfo],
                 default = "prelude//apple/tools:swift_exec",
+                providers = [RunInfo],
             ),
         ),
     },
@@ -165,10 +155,10 @@ def _no_apple_simulators_impl(ctx: AnalysisContext) -> list[Provider]:
     return [
         DefaultInfo(),
         LocalResourceInfo(
-            setup = cmd_args([]),
             resource_env_vars = {
                 "MY_RESOURCE_ID": "my_alias",
             },
+            setup = cmd_args([]),
         ),
     ]
 

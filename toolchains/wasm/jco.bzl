@@ -18,10 +18,10 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
     config = ctx.actions.write_json(
         ctx.actions.declare_output("jco.json").as_output(),
         {
-            "input": component.default_outputs[0],
-            "name": ctx.attrs.module_name,
             "compress": ctx.attrs.compress,
             "compressor": ctx.attrs.compressor[RunInfo] if ctx.attrs.compressor else None,
+            "input": component.default_outputs[0],
+            "name": ctx.attrs.module_name,
         },
         with_inputs = True,
     )
@@ -34,27 +34,27 @@ def _jco_transpile_impl(ctx: AnalysisContext) -> list[Provider]:
     ctx.actions.run(
         cmd_args([ctx.attrs._jco_transpile[RunInfo], config, out.as_output()]),
         category = "jco_transpile",
-        identifier = ctx.label.name,
         env = env,
+        identifier = ctx.label.name,
     )
 
     return [
         DefaultInfo(default_output = out),
         TypeScriptLibraryInfo(
+            lib = ctx.actions.tset(TypeScriptLibTSet, value = []),
+            packages = ctx.actions.tset(NodePackageTSet),
             transpiled = ctx.actions.tset(
                 TypeScriptModuleTSet,
                 value = TypeScriptModule(
+                    main = ctx.attrs.module_name,
                     specifier = "{}//{}:{}".format(
                         ctx.label.cell,
                         ctx.label.package,
                         ctx.label.name,
                     ),
-                    main = ctx.attrs.module_name,
                     transpiled = out,
                 ),
             ),
-            lib = ctx.actions.tset(TypeScriptLibTSet, value = []),
-            packages = ctx.actions.tset(NodePackageTSet),
         ),
     ]
 
@@ -62,16 +62,8 @@ jco_transpile = rule(
     impl = _jco_transpile_impl,
     attrs = {
         "component": attrs.dep(
-            providers = [DefaultInfo],
             doc = "The WebAssembly component to transpile to an ES module.",
-        ),
-        "module_name": attrs.string(
-            default = "component",
-            doc = "Base name for the emitted module.",
-        ),
-        "optimize": attrs.bool(
-            default = False,
-            doc = "Run wasm-opt on core modules after splitting.",
+            providers = [DefaultInfo],
         ),
         "compress": attrs.bool(
             default = False,
@@ -87,6 +79,14 @@ jco_transpile = rule(
             A compressor command that takes a binary as stdin and produces a
             gzip binary as stdout. Implies `compress = True`.
             """,
+        ),
+        "module_name": attrs.string(
+            default = "component",
+            doc = "Base name for the emitted module.",
+        ),
+        "optimize": attrs.bool(
+            default = False,
+            doc = "Run wasm-opt on core modules after splitting.",
         ),
         "_jco_transpile": attrs.default_only(
             attrs.exec_dep(

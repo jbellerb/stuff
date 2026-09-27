@@ -31,7 +31,7 @@ def _reflink_project_impl(ctx: AnalysisContext) -> list[Provider]:
         # check if this path is nested within a previously seen directory
         if parent and src.startswith(parent + "/"):
             # project from the directory artifact
-            relative_path = src[len(parent) + 1:]
+            relative_path = src[len(parent) + 1 :]
             outputs[dst] = parent_artifact.project(relative_path)
         else:
             # create new reflink
@@ -60,29 +60,26 @@ def _reflink_project_impl(ctx: AnalysisContext) -> list[Provider]:
 reflink_project = rule(
     impl = _reflink_project_impl,
     attrs = {
-        "dir": attrs.source(allow_directory = True),
         "default_output": attrs.option(attrs.string(), default = None),
+        "dir": attrs.source(allow_directory = True),
         "sub_targets": attrs.option(attrs.named_set(attrs.string()), default = None),
         "_reflinker": attrs.default_only(
             attrs.exec_dep(
-                providers = [RunInfo],
                 default = "//tools/reflink:reflink",
+                providers = [RunInfo],
             ),
         ),
     },
     doc = "Project files from a source directory.",
 )
 
-def reflink_dir(
-        actions: AnalysisActions,
-        reflinker: RunInfo,
-        output: OutputArtifact,
-        entries: list[(typing.Any, str)]):
+def reflink_dir(actions: AnalysisActions, reflinker: RunInfo, output: OutputArtifact, entries: list[(typing.Any, str)]):
     actions.run(
-        cmd_args([
-            "sh",
-            "-c",
-            r"""
+        cmd_args(
+            [
+                "sh",
+                "-c",
+                r"""
 reflink=$1
 output=$2
 
@@ -97,13 +94,11 @@ do
     "$reflink" --auto "$from" "$to"
 done
 """,
-            "--",
-            reflinker,
-            output,
-            cmd_args([
-                cmd_args([src, path], delimiter = ":")
-                for src, path in entries
-            ]),
-        ]),
+                "--",
+                reflinker,
+                output,
+                cmd_args([cmd_args([src, path], delimiter = ":") for src, path in entries]),
+            ]
+        ),
         category = "reflink_dir",
     )

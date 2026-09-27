@@ -32,13 +32,13 @@ def _npm_package_impl(ctx: AnalysisContext) -> list[Provider]:
     output, _ = unarchive(
         ctx,
         archive = archive,
-        output_name = ctx.label.name,
-        ext_type = "tar.gz",
         excludes = [],
+        exec_deps = ctx.attrs._archive_exec_deps[HttpArchiveExecDeps],
+        ext_type = "tar.gz",
+        output_name = ctx.label.name,
+        prefer_local = True,
         strip_prefix = ctx.attrs.strip_prefix,
         sub_targets = [],
-        exec_deps = ctx.attrs._archive_exec_deps[HttpArchiveExecDeps],
-        prefer_local = True,
     )
 
     return [
@@ -46,8 +46,8 @@ def _npm_package_impl(ctx: AnalysisContext) -> list[Provider]:
         NodePackageInfo(
             lib = ctx.actions.tset(
                 NodePackageTSet,
-                value = NodePackage(package = full_package, contents = output),
                 children = [dep[NodePackageInfo].lib for dep in ctx.attrs.deps],
+                value = NodePackage(contents = output, package = full_package),
             ),
         ),
     ]
@@ -55,13 +55,15 @@ def _npm_package_impl(ctx: AnalysisContext) -> list[Provider]:
 npm_package = rule(
     impl = _npm_package_impl,
     attrs = {
+        "deps": attrs.list(
+            attrs.dep(providers = [NodePackageInfo]),
+            default = [],
+            doc = "The package dependencies.",
+        ),
         "package": attrs.option(
             attrs.string(),
             default = None,
             doc = "The npm package name. Defaults to the rule name.",
-        ),
-        "version": attrs.string(
-            doc = "The npm package version.",
         ),
         "sha256": attrs.option(
             attrs.string(),
@@ -75,14 +77,14 @@ npm_package = rule(
             `package/`, but some (e.g. `@types/node`) use a different directory.
             """,
         ),
-        "deps": attrs.list(
-            attrs.dep(providers = [NodePackageInfo]),
-            default = [],
-            doc = "The package dependencies.",
+        "version": attrs.string(
+            doc = "The npm package version.",
         ),
-        "_archive_exec_deps": attrs.default_only(attrs.exec_dep(
-            providers = [HttpArchiveExecDeps],
-            default = "prelude//http_archive/tools:exec_deps",
-        )),
+        "_archive_exec_deps": attrs.default_only(
+            attrs.exec_dep(
+                default = "prelude//http_archive/tools:exec_deps",
+                providers = [HttpArchiveExecDeps],
+            )
+        ),
     },
 )

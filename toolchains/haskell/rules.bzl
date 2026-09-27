@@ -44,46 +44,44 @@ def _haskell_prebuilt_library_impl(ctx: AnalysisContext) -> list[Provider]:
                 hlibinfo = HaskellLibraryInfo(
                     name = ctx.attrs.name,
                     db = ctx.attrs.db,
-                    import_dirs = ctx.attrs.import_dirs,  # new
-                    stub_dirs = [],
                     id = ctx.attrs.id,
-                    libs = libs,
-                    version = ctx.attrs.version,
+                    import_dirs = ctx.attrs.import_dirs,  # new
                     is_prebuilt = True,
+                    libs = libs,
                     profiling_enabled = False,
+                    stub_dirs = [],
+                    version = ctx.attrs.version,
                 )
                 prof_hlibinfo = HaskellLibraryInfo(
                     name = ctx.attrs.name,
                     db = ctx.attrs.db,
-                    import_dirs = ctx.attrs.import_dirs,  # new
-                    stub_dirs = [],
                     id = ctx.attrs.id,
-                    libs = prof_libs,
-                    version = ctx.attrs.version,
+                    import_dirs = ctx.attrs.import_dirs,  # new
                     is_prebuilt = True,
+                    libs = prof_libs,
                     profiling_enabled = True,
+                    stub_dirs = [],
+                    version = ctx.attrs.version,
                 )
 
-                haskell_infos = [
-                    dep[HaskellLinkInfo]
-                    for dep in ctx.attrs.deps
-                    if HaskellLinkInfo in dep
-                ]
+                haskell_infos = [dep[HaskellLinkInfo] for dep in ctx.attrs.deps if HaskellLinkInfo in dep]
                 new_info[link_style] = ctx.actions.tset(
                     HaskellLibraryInfoTSet,
-                    value = hlibinfo,
                     children = [lib.info[link_style] for lib in haskell_infos],
+                    value = hlibinfo,
                 )
                 new_prof_info[link_style] = ctx.actions.tset(
                     HaskellLibraryInfoTSet,
-                    value = prof_hlibinfo,
                     children = [lib.prof_info[link_style] for lib in haskell_infos],
+                    value = prof_hlibinfo,
                 )
 
-            new_providers.append(HaskellLinkInfo(
-                info = new_info,
-                prof_info = new_prof_info,
-            ))
+            new_providers.append(
+                HaskellLinkInfo(
+                    info = new_info,
+                    prof_info = new_prof_info,
+                )
+            )
         else:
             # keep other providers unchanged
             new_providers.append(provider)
@@ -102,9 +100,9 @@ haskell_prebuilt_library = rule(
 haskell_library = rule(
     impl = haskell_library_impl,
     attrs = (
-        haskell_rules.haskell_library.attrs |
-        categorized_extra_attributes["haskell"]["haskell_library"] |
-        {
+        haskell_rules.haskell_library.attrs
+        | categorized_extra_attributes["haskell"]["haskell_library"]
+        | {
             "_cxx_toolchain": attrs.toolchain_dep(
                 default = "toolchains//:haskell",
                 providers = [CxxToolchainInfo],
@@ -116,9 +114,9 @@ haskell_library = rule(
 haskell_binary = rule(
     impl = haskell_binary_impl,
     attrs = (
-        haskell_rules.haskell_binary.attrs |
-        categorized_extra_attributes["haskell"]["haskell_binary"] |
-        {
+        haskell_rules.haskell_binary.attrs
+        | categorized_extra_attributes["haskell"]["haskell_binary"]
+        | {
             "_cxx_toolchain": attrs.toolchain_dep(
                 default = "toolchains//:haskell",
                 providers = [CxxToolchainInfo],

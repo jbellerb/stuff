@@ -2,7 +2,6 @@ load("@prelude//:rules_impl.bzl", "categorized_extra_attributes")
 load("@prelude//cxx:cxx_toolchain_types.bzl", "CxxToolchainInfo")
 load("@prelude//decls:haskell_rules.bzl", "haskell_rules")
 load("@prelude//haskell:haskell.bzl", "haskell_binary_impl")
-load("@prelude//transitions:utils.bzl", "transition_utils")
 load("//deno:defs.bzl", "DenoToolchainInfo")
 load("//deno:node.bzl", "NodePackage", "NodePackageInfo", "NodePackageTSet")
 load("//wasm:wasm_transition.bzl", "wasm_transition")
@@ -50,9 +49,9 @@ fi
 exit "$status"
 """,
                 ),
-                with_inputs = True,
-                is_executable = True,
                 allow_args = True,
+                is_executable = True,
+                with_inputs = True,
             )
 
             new_providers.append(
@@ -60,9 +59,9 @@ exit "$status"
                     # NOTE: haskell_binary uses compiler instead of linker for
                     # linking static binaries.
                     compiler = RunInfo(linker_wrapper),
+                    haddock = provider.haddock,
                     linker = RunInfo(linker_wrapper),
                     packager = provider.packager,
-                    haddock = provider.haddock,
                     version = provider.version,
                 ),
             )
@@ -85,28 +84,28 @@ exit "$status"
 haskell_ghc_wasm_distr = rule(
     impl = _haskell_ghc_wasm_distr_impl,
     attrs = {
-        "ghc_root": attrs.source(allow_directory = True),
-        "cxx_toolchain": attrs.toolchain_dep(providers = [CxxToolchainInfo]),
         "bin_prefix": attrs.string(default = ""),
-        "target": attrs.default_only(attrs.string(default = "wasm32-unknown-wasi")),
+        "cxx_toolchain": attrs.toolchain_dep(providers = [CxxToolchainInfo]),
+        "ghc_root": attrs.source(allow_directory = True),
         "host": attrs.string(),
-        "version": attrs.string(),
+        "labels": attrs.list(attrs.string(), default = []),
         "package_manifest": attrs.dict(
+            default = {},
             key = attrs.string(),
             value = attrs.any(),
-            default = {},
         ),
-        "labels": attrs.list(attrs.string(), default = []),
-        "_install_ghc": attrs.default_only(
-            attrs.exec_dep(
-                providers = [RunInfo],
-                default = "//haskell/tools:install_ghc",
-            ),
-        ),
+        "target": attrs.default_only(attrs.string(default = "wasm32-unknown-wasi")),
+        "version": attrs.string(),
         "_deno_toolchain": attrs.default_only(
             attrs.toolchain_dep(
                 default = "toolchains//:deno",
                 providers = [DenoToolchainInfo],
+            ),
+        ),
+        "_install_ghc": attrs.default_only(
+            attrs.exec_dep(
+                default = "//haskell/tools:install_ghc",
+                providers = [RunInfo],
             ),
         ),
     },
@@ -115,9 +114,9 @@ haskell_ghc_wasm_distr = rule(
 haskell_wasm_binary = rule(
     impl = haskell_binary_impl,
     attrs = (
-        haskell_rules.haskell_binary.attrs |
-        categorized_extra_attributes["haskell"]["haskell_binary"] |
-        {
+        haskell_rules.haskell_binary.attrs
+        | categorized_extra_attributes["haskell"]["haskell_binary"]
+        | {
             "link_style": attrs.string(default = "static"),
             "_cxx_toolchain": attrs.toolchain_dep(
                 default = "toolchains//:haskell",
@@ -139,10 +138,11 @@ def _haskell_wasm_exports_impl(ctx: AnalysisContext) -> list[Provider]:
 
     output = ctx.actions.declare_output(ctx.label.name, dir = True)
 
-    cmd = cmd_args([
-        "sh",
-        "-c",
-        r"""
+    cmd = cmd_args(
+        [
+            "sh",
+            "-c",
+            r"""
 package_name=$1
 input=$2
 output=$3
@@ -159,12 +159,13 @@ cat > "$output/package.json" << EOF
 }
 EOF
 """,
-        "--",
-        package_name,
-        ctx.attrs.binary,
-        output.as_output(),
-        ctx.attrs._haskell_wasm_distr[HaskellGHCWasmDistrInfo].post_linker,
-    ])
+            "--",
+            package_name,
+            ctx.attrs.binary,
+            output.as_output(),
+            ctx.attrs._haskell_wasm_distr[HaskellGHCWasmDistrInfo].post_linker,
+        ]
+    )
 
     ctx.actions.run(cmd, category = "ghc_wasm_post_linker", identifier = ctx.label.name)
 
@@ -173,7 +174,7 @@ EOF
         NodePackageInfo(
             lib = ctx.actions.tset(
                 NodePackageTSet,
-                value = NodePackage(package = package_name, contents = output),
+                value = NodePackage(contents = output, package = package_name),
             ),
         ),
     ]
@@ -181,8 +182,8 @@ EOF
 haskell_wasm_exports = rule(
     impl = _haskell_wasm_exports_impl,
     attrs = {
-        "package_name": attrs.option(attrs.string(), default = None),
         "binary": attrs.source(),
+        "package_name": attrs.option(attrs.string(), default = None),
         "_haskell_wasm_distr": attrs.toolchain_dep(
             default = "toolchains//:haskell[ghc]",
             providers = [HaskellGHCWasmDistrInfo],
@@ -204,7 +205,7 @@ def _wasi_sdk_binary_impl(ctx: AnalysisContext) -> list[Provider]:
 wasi_sdk_binary = rule(
     impl = _wasi_sdk_binary_impl,
     attrs = {
-        "sdk": attrs.source(allow_directory = True),
         "binary": attrs.string(),
+        "sdk": attrs.source(allow_directory = True),
     },
 )

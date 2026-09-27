@@ -2,13 +2,13 @@ load("@toolchains//deno:npm.bzl", "npm_package")
 
 npm_package(
     name = "grpc-js-1.14.4",
-    package = "@grpc/grpc-js",
-    version = "1.14.4",
-    sha256 = "f628897b6f550d0309b76c0ae2d33470d5b9ac840d71f9da3c10e54b9d6ee086",
     deps = [
         "//third-party/js/npm/@js-sdsl/ordered-map:ordered-map",
         # skipping @grpc/proto-loader
     ],
+    package = "@grpc/grpc-js",
+    sha256 = "f628897b6f550d0309b76c0ae2d33470d5b9ac840d71f9da3c10e54b9d6ee086",
+    version = "1.14.4",
 )
 
 alias(

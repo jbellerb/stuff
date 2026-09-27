@@ -1,11 +1,11 @@
 go_library(
     name = "store",
     srcs = glob(["*.go"]),
-    visibility = ["PUBLIC"],
     deps = [
         "root//tools/installer/third-party:github.com/zeebo/blake3",
         "root//tools/installer/third-party:golang.org/x/sys/unix",
     ],
+    visibility = ["PUBLIC"],
 )
 
 go_test(

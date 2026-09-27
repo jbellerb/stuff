@@ -12,19 +12,19 @@ def _wasm_transition_impl(platform: PlatformInfo, refs: struct) -> PlatformInfo:
     updated_constraints[os] = refs.wasi[ConstraintValueInfo]
 
     return PlatformInfo(
-        label = "wasm_transition",
         configuration = ConfigurationInfo(
             constraints = updated_constraints,
             values = platform.configuration.values,
         ),
+        label = "wasm_transition",
     )
 
 wasm_transition = transition(
     impl = _wasm_transition_impl,
     refs = {
         "cpu": "config//cpu/constraints:cpu",
-        "wasm32": "config//cpu/constraints:wasm32",
         "os": "config//os/constraints:os",
         "wasi": "config//os/constraints:wasi",
+        "wasm32": "config//cpu/constraints:wasm32",
     },
 )

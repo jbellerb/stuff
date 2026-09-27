@@ -58,12 +58,8 @@ def _system_cxx_toolchain_impl(ctx: AnalysisContext) -> Promise:
         base = {k: getattr(cxx, k, None) for k in dir(cxx)}
 
         # copy ObjC/ObjC++ compiler info from C/C++ compilers
-        base["objc_compiler_info"] = ObjcCompilerInfo(
-            **{k: getattr(base["c_compiler_info"], k, None) for k in _COMPILER_FIELDS}
-        )
-        base["objcxx_compiler_info"] = ObjcxxCompilerInfo(
-            **{k: getattr(base["cxx_compiler_info"], k, None) for k in _COMPILER_FIELDS}
-        )
+        base["objc_compiler_info"] = ObjcCompilerInfo(**{k: getattr(base["c_compiler_info"], k, None) for k in _COMPILER_FIELDS})
+        base["objcxx_compiler_info"] = ObjcxxCompilerInfo(**{k: getattr(base["cxx_compiler_info"], k, None) for k in _COMPILER_FIELDS})
 
         # the prelude sets the OS name to "macos", but the Apple target triple
         # map expects the SDK name "macosx"
@@ -82,9 +78,7 @@ def _system_cxx_toolchain_impl(ctx: AnalysisContext) -> Promise:
     for name in _TOOLCHAIN_FIELDS:
         attrs[name] = getattr(ctx.attrs, name)
 
-    return (ctx.actions.anon_target(prelude_system_cxx_toolchain, attrs)
-        .promise
-        .map(wrap))
+    return ctx.actions.anon_target(prelude_system_cxx_toolchain, attrs).promise.map(wrap)
 
 system_cxx_toolchain = rule(
     impl = _system_cxx_toolchain_impl,
@@ -100,8 +94,8 @@ system_cxx_toolchain = rule(
         "cxx_flags": attrs.list(attrs.arg(), default = []),
         "internal_tools": attrs.default_only(
             attrs.exec_dep(
-                providers = [CxxInternalTools],
                 default = "prelude//cxx/tools:internal_tools",
+                providers = [CxxInternalTools],
             ),
         ),
         "link_flags": attrs.list(attrs.arg(), default = []),
@@ -111,18 +105,17 @@ system_cxx_toolchain = rule(
         ),
         "link_style": attrs.string(default = "shared"),
         "linker": attrs.option(attrs.string(), default = None),
+        # Apple-specific attrs
+        "minimum_os_version": attrs.option(attrs.string(), default = None),
         "post_link_flags": attrs.list(attrs.arg(), default = []),
         "rc_compiler": attrs.option(attrs.string(), default = None),
         "rc_flags": attrs.list(attrs.arg(), default = []),
         "supports_content_based_paths": attrs.bool(default = False),
         "_cxx_tools_info": attrs.exec_dep(
-            providers = [CxxToolsInfo],
             default = "prelude//toolchains/msvc:msvc_tools" if host_info().os.is_windows else "prelude//toolchains/cxx/clang:path_clang_tools",
+            providers = [CxxToolsInfo],
         ),
         "_target_os_type": buck.target_os_type_arg(),
-
-        # Apple-specific attrs
-        "minimum_os_version": attrs.option(attrs.string(), default = None),
     },
     is_toolchain_rule = True,
 )

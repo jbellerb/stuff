@@ -26,8 +26,8 @@ http_archive(
 
 go_library(
     name = "github.com/klauspost/cpuid/v2",
-    package_name = "github.com/klauspost/cpuid/v2",
     srcs = [":github.com/klauspost/cpuid/v2__srcs[.]"],
+    package_name = "github.com/klauspost/cpuid/v2",
     visibility = ["root//tools/installer/..."],
 )
 
@@ -83,107 +83,107 @@ http_archive(
 
 go_library(
     name = "github.com/zeebo/blake3",
-    package_name = "github.com/zeebo/blake3",
     srcs = [":github.com/zeebo/blake3__srcs[.]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/alg",
         ":github.com/zeebo/blake3/internal/consts",
         ":github.com/zeebo/blake3/internal/utils",
     ],
+    package_name = "github.com/zeebo/blake3",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/alg",
-    package_name = "github.com/zeebo/blake3/internal/alg",
     srcs = [":github.com/zeebo/blake3__srcs[internal/alg]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/alg/compress",
         ":github.com/zeebo/blake3/internal/alg/hash",
     ],
+    package_name = "github.com/zeebo/blake3/internal/alg",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/alg/compress",
-    package_name = "github.com/zeebo/blake3/internal/alg/compress",
     srcs = [":github.com/zeebo/blake3__srcs[internal/alg/compress]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/alg/compress/compress_pure",
         ":github.com/zeebo/blake3/internal/alg/compress/compress_sse41",
         ":github.com/zeebo/blake3/internal/consts",
     ],
+    package_name = "github.com/zeebo/blake3/internal/alg/compress",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/alg/compress/compress_pure",
-    package_name = "github.com/zeebo/blake3/internal/alg/compress/compress_pure",
     srcs = [":github.com/zeebo/blake3__srcs[internal/alg/compress/compress_pure]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/consts",
     ],
+    package_name = "github.com/zeebo/blake3/internal/alg/compress/compress_pure",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/alg/compress/compress_sse41",
-    package_name = "github.com/zeebo/blake3/internal/alg/compress/compress_sse41",
     srcs = [":github.com/zeebo/blake3__srcs[internal/alg/compress/compress_sse41]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/alg/compress/compress_pure",
     ],
+    package_name = "github.com/zeebo/blake3/internal/alg/compress/compress_sse41",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/alg/hash",
-    package_name = "github.com/zeebo/blake3/internal/alg/hash",
     srcs = [":github.com/zeebo/blake3__srcs[internal/alg/hash]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/alg/hash/hash_avx2",
         ":github.com/zeebo/blake3/internal/alg/hash/hash_pure",
         ":github.com/zeebo/blake3/internal/consts",
     ],
+    package_name = "github.com/zeebo/blake3/internal/alg/hash",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/alg/hash/hash_avx2",
-    package_name = "github.com/zeebo/blake3/internal/alg/hash/hash_avx2",
     srcs = [":github.com/zeebo/blake3__srcs[internal/alg/hash/hash_avx2]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/alg/hash/hash_pure",
     ],
+    package_name = "github.com/zeebo/blake3/internal/alg/hash/hash_avx2",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/alg/hash/hash_pure",
-    package_name = "github.com/zeebo/blake3/internal/alg/hash/hash_pure",
     srcs = [":github.com/zeebo/blake3__srcs[internal/alg/hash/hash_pure]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/zeebo/blake3/internal/alg/compress",
         ":github.com/zeebo/blake3/internal/consts",
         ":github.com/zeebo/blake3/internal/utils",
     ],
+    package_name = "github.com/zeebo/blake3/internal/alg/hash/hash_pure",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/consts",
-    package_name = "github.com/zeebo/blake3/internal/consts",
     srcs = [":github.com/zeebo/blake3__srcs[internal/consts]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":github.com/klauspost/cpuid/v2",
     ],
+    package_name = "github.com/zeebo/blake3/internal/consts",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "github.com/zeebo/blake3/internal/utils",
-    package_name = "github.com/zeebo/blake3/internal/utils",
     srcs = [":github.com/zeebo/blake3__srcs[internal/utils]"],
+    package_name = "github.com/zeebo/blake3/internal/utils",
     visibility = ["root//tools/installer/..."],
 )
 
@@ -264,72 +264,72 @@ http_archive(
 
 go_library(
     name = "golang.org/x/net/http/httpguts",
-    package_name = "golang.org/x/net/http/httpguts",
     srcs = [":golang.org/x/net__srcs[http/httpguts]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/net/idna",
     ],
+    package_name = "golang.org/x/net/http/httpguts",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/net/http2",
-    package_name = "golang.org/x/net/http2",
     srcs = [":golang.org/x/net__srcs[http2]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/net/http/httpguts",
         ":golang.org/x/net/http2/hpack",
         ":golang.org/x/net/idna",
         ":golang.org/x/net/internal/httpcommon",
     ],
+    package_name = "golang.org/x/net/http2",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/net/http2/hpack",
-    package_name = "golang.org/x/net/http2/hpack",
     srcs = [":golang.org/x/net__srcs[http2/hpack]"],
+    package_name = "golang.org/x/net/http2/hpack",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/net/idna",
-    package_name = "golang.org/x/net/idna",
     srcs = [":golang.org/x/net__srcs[idna]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/text/secure/bidirule",
         ":golang.org/x/text/unicode/bidi",
         ":golang.org/x/text/unicode/norm",
     ],
+    package_name = "golang.org/x/net/idna",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/net/internal/httpcommon",
-    package_name = "golang.org/x/net/internal/httpcommon",
     srcs = [":golang.org/x/net__srcs[internal/httpcommon]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/net/http/httpguts",
         ":golang.org/x/net/http2/hpack",
     ],
+    package_name = "golang.org/x/net/internal/httpcommon",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/net/internal/timeseries",
-    package_name = "golang.org/x/net/internal/timeseries",
     srcs = [":golang.org/x/net__srcs[internal/timeseries]"],
+    package_name = "golang.org/x/net/internal/timeseries",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/net/trace",
-    package_name = "golang.org/x/net/trace",
     srcs = [":golang.org/x/net__srcs[trace]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/net/internal/timeseries",
     ],
+    package_name = "golang.org/x/net/trace",
+    visibility = ["root//tools/installer/..."],
 )
 
 http_archive(
@@ -675,8 +675,8 @@ http_archive(
 
 go_library(
     name = "golang.org/x/sys/unix",
-    package_name = "golang.org/x/sys/unix",
     srcs = [":golang.org/x/sys__srcs[unix]"],
+    package_name = "golang.org/x/sys/unix",
     visibility = ["root//tools/installer/..."],
 )
 
@@ -733,37 +733,37 @@ http_archive(
 
 go_library(
     name = "golang.org/x/text/secure/bidirule",
-    package_name = "golang.org/x/text/secure/bidirule",
     srcs = [":golang.org/x/text__srcs[secure/bidirule]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/text/transform",
         ":golang.org/x/text/unicode/bidi",
     ],
+    package_name = "golang.org/x/text/secure/bidirule",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/text/transform",
-    package_name = "golang.org/x/text/transform",
     srcs = [":golang.org/x/text__srcs[transform]"],
+    package_name = "golang.org/x/text/transform",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/text/unicode/bidi",
-    package_name = "golang.org/x/text/unicode/bidi",
     srcs = [":golang.org/x/text__srcs[unicode/bidi]"],
+    package_name = "golang.org/x/text/unicode/bidi",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "golang.org/x/text/unicode/norm",
-    package_name = "golang.org/x/text/unicode/norm",
     srcs = [":golang.org/x/text__srcs[unicode/norm]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/text/transform",
     ],
+    package_name = "golang.org/x/text/unicode/norm",
+    visibility = ["root//tools/installer/..."],
 )
 
 http_archive(
@@ -780,14 +780,14 @@ http_archive(
 
 go_library(
     name = "google.golang.org/genproto/googleapis/rpc/status",
-    package_name = "google.golang.org/genproto/googleapis/rpc/status",
     srcs = [":google.golang.org/genproto/googleapis/rpc__srcs[status]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/runtime/protoimpl",
         ":google.golang.org/protobuf/types/known/anypb",
     ],
+    package_name = "google.golang.org/genproto/googleapis/rpc/status",
+    visibility = ["root//tools/installer/..."],
 )
 
 http_archive(
@@ -1063,9 +1063,7 @@ http_archive(
 
 go_library(
     name = "google.golang.org/grpc",
-    package_name = "google.golang.org/grpc",
     srcs = [":google.golang.org/grpc__srcs[.]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/net/trace",
         ":google.golang.org/grpc/backoff",
@@ -1112,27 +1110,27 @@ go_library(
         ":google.golang.org/grpc/status",
         ":google.golang.org/grpc/tap",
     ],
+    package_name = "google.golang.org/grpc",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/attributes",
-    package_name = "google.golang.org/grpc/attributes",
     srcs = [":google.golang.org/grpc__srcs[attributes]"],
+    package_name = "google.golang.org/grpc/attributes",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/backoff",
-    package_name = "google.golang.org/grpc/backoff",
     srcs = [":google.golang.org/grpc__srcs[backoff]"],
+    package_name = "google.golang.org/grpc/backoff",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/balancer",
-    package_name = "google.golang.org/grpc/balancer",
     srcs = [":google.golang.org/grpc__srcs[balancer]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/channelz",
         ":google.golang.org/grpc/connectivity",
@@ -1144,49 +1142,49 @@ go_library(
         ":google.golang.org/grpc/resolver",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/balancer",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/balancer/base",
-    package_name = "google.golang.org/grpc/balancer/base",
     srcs = [":google.golang.org/grpc__srcs[balancer/base]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/balancer",
         ":google.golang.org/grpc/connectivity",
         ":google.golang.org/grpc/grpclog",
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/balancer/base",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/balancer/endpointsharding",
-    package_name = "google.golang.org/grpc/balancer/endpointsharding",
     srcs = [":google.golang.org/grpc__srcs[balancer/endpointsharding]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/balancer",
         ":google.golang.org/grpc/balancer/base",
         ":google.golang.org/grpc/connectivity",
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/balancer/endpointsharding",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/balancer/grpclb/state",
-    package_name = "google.golang.org/grpc/balancer/grpclb/state",
     srcs = [":google.golang.org/grpc__srcs[balancer/grpclb/state]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/balancer/grpclb/state",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/balancer/pickfirst",
-    package_name = "google.golang.org/grpc/balancer/pickfirst",
     srcs = [":google.golang.org/grpc__srcs[balancer/pickfirst]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/balancer",
         ":google.golang.org/grpc/balancer/pickfirst/internal",
@@ -1198,20 +1196,20 @@ go_library(
         ":google.golang.org/grpc/resolver",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/balancer/pickfirst",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/balancer/pickfirst/internal",
-    package_name = "google.golang.org/grpc/balancer/pickfirst/internal",
     srcs = [":google.golang.org/grpc__srcs[balancer/pickfirst/internal]"],
+    package_name = "google.golang.org/grpc/balancer/pickfirst/internal",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/balancer/roundrobin",
-    package_name = "google.golang.org/grpc/balancer/roundrobin",
     srcs = [":google.golang.org/grpc__srcs[balancer/roundrobin]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/balancer",
         ":google.golang.org/grpc/balancer/endpointsharding",
@@ -1219,56 +1217,56 @@ go_library(
         ":google.golang.org/grpc/grpclog",
         ":google.golang.org/grpc/internal/grpclog",
     ],
+    package_name = "google.golang.org/grpc/balancer/roundrobin",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/binarylog/grpc_binarylog_v1",
-    package_name = "google.golang.org/grpc/binarylog/grpc_binarylog_v1",
     srcs = [":google.golang.org/grpc__srcs[binarylog/grpc_binarylog_v1]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/runtime/protoimpl",
         ":google.golang.org/protobuf/types/known/durationpb",
         ":google.golang.org/protobuf/types/known/timestamppb",
     ],
+    package_name = "google.golang.org/grpc/binarylog/grpc_binarylog_v1",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/channelz",
-    package_name = "google.golang.org/grpc/channelz",
     srcs = [":google.golang.org/grpc__srcs[channelz]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal/channelz",
     ],
+    package_name = "google.golang.org/grpc/channelz",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/codes",
-    package_name = "google.golang.org/grpc/codes",
     srcs = [":google.golang.org/grpc__srcs[codes]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal",
     ],
+    package_name = "google.golang.org/grpc/codes",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/connectivity",
-    package_name = "google.golang.org/grpc/connectivity",
     srcs = [":google.golang.org/grpc__srcs[connectivity]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/grpclog",
     ],
+    package_name = "google.golang.org/grpc/connectivity",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/credentials",
-    package_name = "google.golang.org/grpc/credentials",
     srcs = [":google.golang.org/grpc__srcs[credentials]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/attributes",
         ":google.golang.org/grpc/grpclog",
@@ -1276,106 +1274,106 @@ go_library(
         ":google.golang.org/grpc/internal/envconfig",
         ":google.golang.org/protobuf/proto",
     ],
+    package_name = "google.golang.org/grpc/credentials",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/credentials/insecure",
-    package_name = "google.golang.org/grpc/credentials/insecure",
     srcs = [":google.golang.org/grpc__srcs[credentials/insecure]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/credentials",
     ],
+    package_name = "google.golang.org/grpc/credentials/insecure",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/encoding",
-    package_name = "google.golang.org/grpc/encoding",
     srcs = [":google.golang.org/grpc__srcs[encoding]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/encoding/internal",
         ":google.golang.org/grpc/internal/grpcutil",
         ":google.golang.org/grpc/mem",
     ],
+    package_name = "google.golang.org/grpc/encoding",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/encoding/internal",
-    package_name = "google.golang.org/grpc/encoding/internal",
     srcs = [":google.golang.org/grpc__srcs[encoding/internal]"],
+    package_name = "google.golang.org/grpc/encoding/internal",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/encoding/proto",
-    package_name = "google.golang.org/grpc/encoding/proto",
     srcs = [":google.golang.org/grpc__srcs[encoding/proto]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/encoding",
         ":google.golang.org/grpc/mem",
         ":google.golang.org/protobuf/proto",
         ":google.golang.org/protobuf/protoadapt",
     ],
+    package_name = "google.golang.org/grpc/encoding/proto",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/experimental/stats",
-    package_name = "google.golang.org/grpc/experimental/stats",
     srcs = [":google.golang.org/grpc__srcs[experimental/stats]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/grpclog",
         ":google.golang.org/grpc/internal",
         ":google.golang.org/grpc/stats",
     ],
+    package_name = "google.golang.org/grpc/experimental/stats",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/grpclog",
-    package_name = "google.golang.org/grpc/grpclog",
     srcs = [":google.golang.org/grpc__srcs[grpclog]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/grpclog/internal",
     ],
+    package_name = "google.golang.org/grpc/grpclog",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/grpclog/internal",
-    package_name = "google.golang.org/grpc/grpclog/internal",
     srcs = [":google.golang.org/grpc__srcs[grpclog/internal]"],
+    package_name = "google.golang.org/grpc/grpclog/internal",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal",
-    package_name = "google.golang.org/grpc/internal",
     srcs = [":google.golang.org/grpc__srcs[internal]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/sys/unix",
         ":google.golang.org/grpc/connectivity",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/internal",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/backoff",
-    package_name = "google.golang.org/grpc/internal/backoff",
     srcs = [":google.golang.org/grpc__srcs[internal/backoff]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/backoff",
     ],
+    package_name = "google.golang.org/grpc/internal/backoff",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/balancer/gracefulswitch",
-    package_name = "google.golang.org/grpc/internal/balancer/gracefulswitch",
     srcs = [":google.golang.org/grpc__srcs[internal/balancer/gracefulswitch]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/balancer",
         ":google.golang.org/grpc/balancer/base",
@@ -1383,23 +1381,23 @@ go_library(
         ":google.golang.org/grpc/resolver",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/internal/balancer/gracefulswitch",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/balancerload",
-    package_name = "google.golang.org/grpc/internal/balancerload",
     srcs = [":google.golang.org/grpc__srcs[internal/balancerload]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/metadata",
     ],
+    package_name = "google.golang.org/grpc/internal/balancerload",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/binarylog",
-    package_name = "google.golang.org/grpc/internal/binarylog",
     srcs = [":google.golang.org/grpc__srcs[internal/binarylog]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/binarylog/grpc_binarylog_v1",
         ":google.golang.org/grpc/grpclog",
@@ -1410,20 +1408,20 @@ go_library(
         ":google.golang.org/protobuf/types/known/durationpb",
         ":google.golang.org/protobuf/types/known/timestamppb",
     ],
+    package_name = "google.golang.org/grpc/internal/binarylog",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/buffer",
-    package_name = "google.golang.org/grpc/internal/buffer",
     srcs = [":google.golang.org/grpc__srcs[internal/buffer]"],
+    package_name = "google.golang.org/grpc/internal/buffer",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/channelz",
-    package_name = "google.golang.org/grpc/internal/channelz",
     srcs = [":google.golang.org/grpc__srcs[internal/channelz]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/sys/unix",
         ":google.golang.org/grpc/connectivity",
@@ -1431,111 +1429,111 @@ go_library(
         ":google.golang.org/grpc/grpclog",
         ":google.golang.org/grpc/internal",
     ],
+    package_name = "google.golang.org/grpc/internal/channelz",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/credentials",
-    package_name = "google.golang.org/grpc/internal/credentials",
     srcs = [":google.golang.org/grpc__srcs[internal/credentials]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/grpclog",
     ],
+    package_name = "google.golang.org/grpc/internal/credentials",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/envconfig",
-    package_name = "google.golang.org/grpc/internal/envconfig",
     srcs = [":google.golang.org/grpc__srcs[internal/envconfig]"],
+    package_name = "google.golang.org/grpc/internal/envconfig",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/grpclog",
-    package_name = "google.golang.org/grpc/internal/grpclog",
     srcs = [":google.golang.org/grpc__srcs[internal/grpclog]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/grpclog",
     ],
+    package_name = "google.golang.org/grpc/internal/grpclog",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/grpcsync",
-    package_name = "google.golang.org/grpc/internal/grpcsync",
     srcs = [":google.golang.org/grpc__srcs[internal/grpcsync]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal/buffer",
     ],
+    package_name = "google.golang.org/grpc/internal/grpcsync",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/grpcutil",
-    package_name = "google.golang.org/grpc/internal/grpcutil",
     srcs = [":google.golang.org/grpc__srcs[internal/grpcutil]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/metadata",
     ],
+    package_name = "google.golang.org/grpc/internal/grpcutil",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/idle",
-    package_name = "google.golang.org/grpc/internal/idle",
     srcs = [":google.golang.org/grpc__srcs[internal/idle]"],
+    package_name = "google.golang.org/grpc/internal/idle",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/metadata",
-    package_name = "google.golang.org/grpc/internal/metadata",
     srcs = [":google.golang.org/grpc__srcs[internal/metadata]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/metadata",
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/internal/metadata",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/pretty",
-    package_name = "google.golang.org/grpc/internal/pretty",
     srcs = [":google.golang.org/grpc__srcs[internal/pretty]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protojson",
         ":google.golang.org/protobuf/protoadapt",
     ],
+    package_name = "google.golang.org/grpc/internal/pretty",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/proxyattributes",
-    package_name = "google.golang.org/grpc/internal/proxyattributes",
     srcs = [":google.golang.org/grpc__srcs[internal/proxyattributes]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/internal/proxyattributes",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/resolver",
-    package_name = "google.golang.org/grpc/internal/resolver",
     srcs = [":google.golang.org/grpc__srcs[internal/resolver]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal/serviceconfig",
         ":google.golang.org/grpc/metadata",
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/internal/resolver",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/resolver/delegatingresolver",
-    package_name = "google.golang.org/grpc/internal/resolver/delegatingresolver",
     srcs = [":google.golang.org/grpc__srcs[internal/resolver/delegatingresolver]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/grpclog",
         ":google.golang.org/grpc/internal/envconfig",
@@ -1545,13 +1543,13 @@ go_library(
         ":google.golang.org/grpc/resolver",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/internal/resolver/delegatingresolver",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/resolver/dns",
-    package_name = "google.golang.org/grpc/internal/resolver/dns",
     srcs = [":google.golang.org/grpc__srcs[internal/resolver/dns]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/balancer/grpclb/state",
         ":google.golang.org/grpc/grpclog",
@@ -1561,65 +1559,65 @@ go_library(
         ":google.golang.org/grpc/resolver",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/internal/resolver/dns",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/resolver/dns/internal",
-    package_name = "google.golang.org/grpc/internal/resolver/dns/internal",
     srcs = [":google.golang.org/grpc__srcs[internal/resolver/dns/internal]"],
+    package_name = "google.golang.org/grpc/internal/resolver/dns/internal",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/resolver/passthrough",
-    package_name = "google.golang.org/grpc/internal/resolver/passthrough",
     srcs = [":google.golang.org/grpc__srcs[internal/resolver/passthrough]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/internal/resolver/passthrough",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/resolver/unix",
-    package_name = "google.golang.org/grpc/internal/resolver/unix",
     srcs = [":google.golang.org/grpc__srcs[internal/resolver/unix]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal/transport/networktype",
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/internal/resolver/unix",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/serviceconfig",
-    package_name = "google.golang.org/grpc/internal/serviceconfig",
     srcs = [":google.golang.org/grpc__srcs[internal/serviceconfig]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/balancer",
         ":google.golang.org/grpc/codes",
         ":google.golang.org/grpc/grpclog",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/internal/serviceconfig",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/stats",
-    package_name = "google.golang.org/grpc/internal/stats",
     srcs = [":google.golang.org/grpc__srcs[internal/stats]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/experimental/stats",
         ":google.golang.org/grpc/stats",
     ],
+    package_name = "google.golang.org/grpc/internal/stats",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/status",
-    package_name = "google.golang.org/grpc/internal/status",
     srcs = [":google.golang.org/grpc__srcs[internal/status]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/genproto/googleapis/rpc/status",
         ":google.golang.org/grpc/codes",
@@ -1627,24 +1625,24 @@ go_library(
         ":google.golang.org/protobuf/protoadapt",
         ":google.golang.org/protobuf/types/known/anypb",
     ],
+    package_name = "google.golang.org/grpc/internal/status",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/syscall",
-    package_name = "google.golang.org/grpc/internal/syscall",
     srcs = [":google.golang.org/grpc__srcs[internal/syscall]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/sys/unix",
         ":google.golang.org/grpc/grpclog",
     ],
+    package_name = "google.golang.org/grpc/internal/syscall",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/transport",
-    package_name = "google.golang.org/grpc/internal/transport",
     srcs = [":google.golang.org/grpc__srcs[internal/transport]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":golang.org/x/net/http2",
         ":golang.org/x/net/http2/hpack",
@@ -1674,60 +1672,60 @@ go_library(
         ":google.golang.org/grpc/tap",
         ":google.golang.org/protobuf/proto",
     ],
+    package_name = "google.golang.org/grpc/internal/transport",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/internal/transport/networktype",
-    package_name = "google.golang.org/grpc/internal/transport/networktype",
     srcs = [":google.golang.org/grpc__srcs[internal/transport/networktype]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/internal/transport/networktype",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/keepalive",
-    package_name = "google.golang.org/grpc/keepalive",
     srcs = [":google.golang.org/grpc__srcs[keepalive]"],
+    package_name = "google.golang.org/grpc/keepalive",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/mem",
-    package_name = "google.golang.org/grpc/mem",
     srcs = [":google.golang.org/grpc__srcs[mem]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal",
     ],
+    package_name = "google.golang.org/grpc/mem",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/metadata",
-    package_name = "google.golang.org/grpc/metadata",
     srcs = [":google.golang.org/grpc__srcs[metadata]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal",
     ],
+    package_name = "google.golang.org/grpc/metadata",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/peer",
-    package_name = "google.golang.org/grpc/peer",
     srcs = [":google.golang.org/grpc__srcs[peer]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/credentials",
     ],
+    package_name = "google.golang.org/grpc/peer",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/resolver",
-    package_name = "google.golang.org/grpc/resolver",
     srcs = [":google.golang.org/grpc__srcs[resolver]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/attributes",
         ":google.golang.org/grpc/credentials",
@@ -1735,56 +1733,58 @@ go_library(
         ":google.golang.org/grpc/internal",
         ":google.golang.org/grpc/serviceconfig",
     ],
+    package_name = "google.golang.org/grpc/resolver",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/resolver/dns",
-    package_name = "google.golang.org/grpc/resolver/dns",
     srcs = [":google.golang.org/grpc__srcs[resolver/dns]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/internal/resolver/dns",
         ":google.golang.org/grpc/resolver",
     ],
+    package_name = "google.golang.org/grpc/resolver/dns",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/serviceconfig",
-    package_name = "google.golang.org/grpc/serviceconfig",
     srcs = [":google.golang.org/grpc__srcs[serviceconfig]"],
+    package_name = "google.golang.org/grpc/serviceconfig",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/stats",
-    package_name = "google.golang.org/grpc/stats",
     srcs = [":google.golang.org/grpc__srcs[stats]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/metadata",
     ],
+    package_name = "google.golang.org/grpc/stats",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/status",
-    package_name = "google.golang.org/grpc/status",
     srcs = [":google.golang.org/grpc__srcs[status]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/genproto/googleapis/rpc/status",
         ":google.golang.org/grpc/codes",
         ":google.golang.org/grpc/internal/status",
     ],
+    package_name = "google.golang.org/grpc/status",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/grpc/tap",
-    package_name = "google.golang.org/grpc/tap",
     srcs = [":google.golang.org/grpc__srcs[tap]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/grpc/metadata",
     ],
+    package_name = "google.golang.org/grpc/tap",
+    visibility = ["root//tools/installer/..."],
 )
 
 http_archive(
@@ -2010,9 +2010,7 @@ http_archive(
 
 go_library(
     name = "google.golang.org/protobuf/encoding/protojson",
-    package_name = "google.golang.org/protobuf/encoding/protojson",
     srcs = [":google.golang.org/protobuf__srcs[encoding/protojson]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protowire",
         ":google.golang.org/protobuf/internal/encoding/json",
@@ -2029,13 +2027,13 @@ go_library(
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/reflect/protoregistry",
     ],
+    package_name = "google.golang.org/protobuf/encoding/protojson",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/encoding/prototext",
-    package_name = "google.golang.org/protobuf/encoding/prototext",
     srcs = [":google.golang.org/protobuf__srcs[encoding/prototext]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protowire",
         ":google.golang.org/protobuf/internal/encoding/messageset",
@@ -2051,134 +2049,134 @@ go_library(
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/reflect/protoregistry",
     ],
+    package_name = "google.golang.org/protobuf/encoding/prototext",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/encoding/protowire",
-    package_name = "google.golang.org/protobuf/encoding/protowire",
     srcs = [":google.golang.org/protobuf__srcs[encoding/protowire]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/errors",
     ],
+    package_name = "google.golang.org/protobuf/encoding/protowire",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/descfmt",
-    package_name = "google.golang.org/protobuf/internal/descfmt",
     srcs = [":google.golang.org/protobuf__srcs[internal/descfmt]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/detrand",
         ":google.golang.org/protobuf/internal/pragma",
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/descfmt",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/descopts",
-    package_name = "google.golang.org/protobuf/internal/descopts",
     srcs = [":google.golang.org/protobuf__srcs[internal/descopts]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/descopts",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/detrand",
-    package_name = "google.golang.org/protobuf/internal/detrand",
     srcs = [":google.golang.org/protobuf__srcs[internal/detrand]"],
+    package_name = "google.golang.org/protobuf/internal/detrand",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/editiondefaults",
-    package_name = "google.golang.org/protobuf/internal/editiondefaults",
     srcs = [":google.golang.org/protobuf__srcs[internal/editiondefaults]"],
     embed_srcs = [
         ":google.golang.org/protobuf__srcs[internal/editiondefaults]",
     ],
+    package_name = "google.golang.org/protobuf/internal/editiondefaults",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/encoding/defval",
-    package_name = "google.golang.org/protobuf/internal/encoding/defval",
     srcs = [":google.golang.org/protobuf__srcs[internal/encoding/defval]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/encoding/text",
         ":google.golang.org/protobuf/internal/errors",
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/encoding/defval",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/encoding/json",
-    package_name = "google.golang.org/protobuf/internal/encoding/json",
     srcs = [":google.golang.org/protobuf__srcs[internal/encoding/json]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/detrand",
         ":google.golang.org/protobuf/internal/errors",
         ":google.golang.org/protobuf/internal/strs",
     ],
+    package_name = "google.golang.org/protobuf/internal/encoding/json",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/encoding/messageset",
-    package_name = "google.golang.org/protobuf/internal/encoding/messageset",
     srcs = [":google.golang.org/protobuf__srcs[internal/encoding/messageset]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protowire",
         ":google.golang.org/protobuf/internal/errors",
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/encoding/messageset",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/encoding/tag",
-    package_name = "google.golang.org/protobuf/internal/encoding/tag",
     srcs = [":google.golang.org/protobuf__srcs[internal/encoding/tag]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/encoding/defval",
         ":google.golang.org/protobuf/internal/filedesc",
         ":google.golang.org/protobuf/internal/strs",
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/encoding/tag",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/encoding/text",
-    package_name = "google.golang.org/protobuf/internal/encoding/text",
     srcs = [":google.golang.org/protobuf__srcs[internal/encoding/text]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/detrand",
         ":google.golang.org/protobuf/internal/errors",
         ":google.golang.org/protobuf/internal/flags",
         ":google.golang.org/protobuf/internal/strs",
     ],
+    package_name = "google.golang.org/protobuf/internal/encoding/text",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/errors",
-    package_name = "google.golang.org/protobuf/internal/errors",
     srcs = [":google.golang.org/protobuf__srcs[internal/errors]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/detrand",
     ],
+    package_name = "google.golang.org/protobuf/internal/errors",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/filedesc",
-    package_name = "google.golang.org/protobuf/internal/filedesc",
     srcs = [":google.golang.org/protobuf__srcs[internal/filedesc]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protowire",
         ":google.golang.org/protobuf/internal/descfmt",
@@ -2194,13 +2192,13 @@ go_library(
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/reflect/protoregistry",
     ],
+    package_name = "google.golang.org/protobuf/internal/filedesc",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/filetype",
-    package_name = "google.golang.org/protobuf/internal/filetype",
     srcs = [":google.golang.org/protobuf__srcs[internal/filetype]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/descopts",
         ":google.golang.org/protobuf/internal/filedesc",
@@ -2208,30 +2206,30 @@ go_library(
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/reflect/protoregistry",
     ],
+    package_name = "google.golang.org/protobuf/internal/filetype",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/flags",
-    package_name = "google.golang.org/protobuf/internal/flags",
     srcs = [":google.golang.org/protobuf__srcs[internal/flags]"],
+    package_name = "google.golang.org/protobuf/internal/flags",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/genid",
-    package_name = "google.golang.org/protobuf/internal/genid",
     srcs = [":google.golang.org/protobuf__srcs[internal/genid]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/genid",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/impl",
-    package_name = "google.golang.org/protobuf/internal/impl",
     srcs = [":google.golang.org/protobuf__srcs[internal/impl]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/prototext",
         ":google.golang.org/protobuf/encoding/protowire",
@@ -2252,66 +2250,66 @@ go_library(
         ":google.golang.org/protobuf/reflect/protoregistry",
         ":google.golang.org/protobuf/runtime/protoiface",
     ],
+    package_name = "google.golang.org/protobuf/internal/impl",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/order",
-    package_name = "google.golang.org/protobuf/internal/order",
     srcs = [":google.golang.org/protobuf__srcs[internal/order]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/order",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/pragma",
-    package_name = "google.golang.org/protobuf/internal/pragma",
     srcs = [":google.golang.org/protobuf__srcs[internal/pragma]"],
+    package_name = "google.golang.org/protobuf/internal/pragma",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/protolazy",
-    package_name = "google.golang.org/protobuf/internal/protolazy",
     srcs = [":google.golang.org/protobuf__srcs[internal/protolazy]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protowire",
         ":google.golang.org/protobuf/runtime/protoiface",
     ],
+    package_name = "google.golang.org/protobuf/internal/protolazy",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/set",
-    package_name = "google.golang.org/protobuf/internal/set",
     srcs = [":google.golang.org/protobuf__srcs[internal/set]"],
+    package_name = "google.golang.org/protobuf/internal/set",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/strs",
-    package_name = "google.golang.org/protobuf/internal/strs",
     srcs = [":google.golang.org/protobuf__srcs[internal/strs]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/flags",
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/internal/strs",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/internal/version",
-    package_name = "google.golang.org/protobuf/internal/version",
     srcs = [":google.golang.org/protobuf__srcs[internal/version]"],
+    package_name = "google.golang.org/protobuf/internal/version",
     visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/proto",
-    package_name = "google.golang.org/protobuf/proto",
     srcs = [":google.golang.org/protobuf__srcs[proto]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protowire",
         ":google.golang.org/protobuf/internal/encoding/messageset",
@@ -2325,60 +2323,60 @@ go_library(
         ":google.golang.org/protobuf/reflect/protoregistry",
         ":google.golang.org/protobuf/runtime/protoiface",
     ],
+    package_name = "google.golang.org/protobuf/proto",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/protoadapt",
-    package_name = "google.golang.org/protobuf/protoadapt",
     srcs = [":google.golang.org/protobuf__srcs[protoadapt]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/proto",
         ":google.golang.org/protobuf/runtime/protoiface",
         ":google.golang.org/protobuf/runtime/protoimpl",
     ],
+    package_name = "google.golang.org/protobuf/protoadapt",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/reflect/protoreflect",
-    package_name = "google.golang.org/protobuf/reflect/protoreflect",
     srcs = [":google.golang.org/protobuf__srcs[reflect/protoreflect]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/encoding/protowire",
         ":google.golang.org/protobuf/internal/pragma",
     ],
+    package_name = "google.golang.org/protobuf/reflect/protoreflect",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/reflect/protoregistry",
-    package_name = "google.golang.org/protobuf/reflect/protoregistry",
     srcs = [":google.golang.org/protobuf__srcs[reflect/protoregistry]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/encoding/messageset",
         ":google.golang.org/protobuf/internal/errors",
         ":google.golang.org/protobuf/internal/flags",
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/reflect/protoregistry",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/runtime/protoiface",
-    package_name = "google.golang.org/protobuf/runtime/protoiface",
     srcs = [":google.golang.org/protobuf__srcs[runtime/protoiface]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/pragma",
         ":google.golang.org/protobuf/reflect/protoreflect",
     ],
+    package_name = "google.golang.org/protobuf/runtime/protoiface",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/runtime/protoimpl",
-    package_name = "google.golang.org/protobuf/runtime/protoimpl",
     srcs = [":google.golang.org/protobuf__srcs[runtime/protoimpl]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/internal/filedesc",
         ":google.golang.org/protobuf/internal/filetype",
@@ -2386,39 +2384,41 @@ go_library(
         ":google.golang.org/protobuf/internal/protolazy",
         ":google.golang.org/protobuf/internal/version",
     ],
+    package_name = "google.golang.org/protobuf/runtime/protoimpl",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/types/known/anypb",
-    package_name = "google.golang.org/protobuf/types/known/anypb",
     srcs = [":google.golang.org/protobuf__srcs[types/known/anypb]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/proto",
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/reflect/protoregistry",
         ":google.golang.org/protobuf/runtime/protoimpl",
     ],
+    package_name = "google.golang.org/protobuf/types/known/anypb",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/types/known/durationpb",
-    package_name = "google.golang.org/protobuf/types/known/durationpb",
     srcs = [":google.golang.org/protobuf__srcs[types/known/durationpb]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/runtime/protoimpl",
     ],
+    package_name = "google.golang.org/protobuf/types/known/durationpb",
+    visibility = ["root//tools/installer/..."],
 )
 
 go_library(
     name = "google.golang.org/protobuf/types/known/timestamppb",
-    package_name = "google.golang.org/protobuf/types/known/timestamppb",
     srcs = [":google.golang.org/protobuf__srcs[types/known/timestamppb]"],
-    visibility = ["root//tools/installer/..."],
     deps = [
         ":google.golang.org/protobuf/reflect/protoreflect",
         ":google.golang.org/protobuf/runtime/protoimpl",
     ],
+    package_name = "google.golang.org/protobuf/types/known/timestamppb",
+    visibility = ["root//tools/installer/..."],
 )

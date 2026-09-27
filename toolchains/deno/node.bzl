@@ -1,14 +1,14 @@
 load("@root//tools/reflink/defs.bzl", "reflink_dir")
 
 NodePackage = record(
-    package = str,
     contents = Artifact,
+    package = str,
 )
 
 def _project_as_package_json(entry: NodePackage) -> dict:
     return {
-        "pkg": entry.package,
         "path": entry.contents,
+        "pkg": entry.package,
     }
 
 NodePackageTSet = transitive_set(
@@ -54,8 +54,8 @@ def _node_package_impl(ctx: AnalysisContext) -> list[Provider]:
         NodePackageInfo(
             lib = ctx.actions.tset(
                 NodePackageTSet,
-                value = NodePackage(package = package, contents = contents),
                 children = [dep[NodePackageInfo].lib for dep in ctx.attrs.deps],
+                value = NodePackage(contents = contents, package = package),
             ),
         ),
     ]
@@ -63,19 +63,25 @@ def _node_package_impl(ctx: AnalysisContext) -> list[Provider]:
 node_package = rule(
     impl = _node_package_impl,
     attrs = {
-        "package": attrs.option(
-            attrs.string(),
-            default = None,
-            doc = "The package name.",
-        ),
-        "version": attrs.string(
-            default = "0.0.0",
-            doc = "The package version.",
+        "deps": attrs.list(
+            attrs.dep(providers = [NodePackageInfo]),
+            default = [],
+            doc = "The package dependencies.",
         ),
         "main": attrs.option(
             attrs.source(),
             default = None,
             doc = "The JS entrypoint.",
+        ),
+        "package": attrs.option(
+            attrs.string(),
+            default = None,
+            doc = "The package name.",
+        ),
+        "package_json": attrs.option(
+            attrs.source(),
+            default = None,
+            doc = "A package.json to use instead of the generated one.",
         ),
         "srcs": attrs.named_set(
             attrs.source(),
@@ -87,20 +93,16 @@ node_package = rule(
             default = None,
             doc = "The package type.",
         ),
-        "package_json": attrs.option(
-            attrs.source(),
-            default = None,
-            doc = "A package.json to use instead of the generated one.",
+        "version": attrs.string(
+            default = "0.0.0",
+            doc = "The package version.",
         ),
-        "deps": attrs.list(
-            attrs.dep(providers = [NodePackageInfo]),
-            default = [],
-            doc = "The package dependencies.",
+        "_reflinker": attrs.default_only(
+            attrs.exec_dep(
+                default = "root//tools/reflink:reflink",
+                providers = [RunInfo],
+            )
         ),
-        "_reflinker": attrs.default_only(attrs.exec_dep(
-            providers = [RunInfo],
-            default = "root//tools/reflink:reflink",
-        )),
     },
 )
 
@@ -114,15 +116,15 @@ def _node_module_impl(ctx: AnalysisContext) -> list[Provider]:
 
 node_module = anon_rule(
     impl = _node_module_impl,
+    artifact_promise_mappings = {
+        "node_modules": lambda x: x[DefaultInfo].default_outputs[0],
+    },
     attrs = {
-        "package": attrs.string(
-            doc = "The npm package name, used as the entry inside node_modules.",
-        ),
         "contents": attrs.source(
             doc = "The unpacked package contents to symlink into node_modules.",
         ),
-    },
-    artifact_promise_mappings = {
-        "node_modules": lambda x: x[DefaultInfo].default_outputs[0],
+        "package": attrs.string(
+            doc = "The npm package name, used as the entry inside node_modules.",
+        ),
     },
 )

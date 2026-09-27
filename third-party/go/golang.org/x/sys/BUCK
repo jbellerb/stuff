@@ -70,7 +70,7 @@ http_archive(
 
 go_library(
     name = "unix",
-    package_name = "golang.org/x/sys/unix",
     srcs = [":golang.org/x/sys__srcs[unix]"],
+    package_name = "golang.org/x/sys/unix",
     visibility = ["PUBLIC"],
 )

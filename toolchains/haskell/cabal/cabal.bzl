@@ -29,7 +29,6 @@ load(
     "LinkInfos",
     "LinkStyle",
     "LinkedObject",
-    "MergedLinkInfo",
     "SharedLibLinkable",
     "create_merged_link_info",
     "get_lib_output_style",
@@ -74,8 +73,8 @@ def _cabal_setup_script_impl(ctx: AnalysisContext) -> list[Provider]:
         ctx,
         # Setup.hs is always statically linked
         LinkStyle("static"),
-        specify_pkg_version = False,
         enable_profiling = False,
+        specify_pkg_version = False,
     )
     cmd.add(packages_info.exposed_package_args)
     cmd.add(packages_info.packagedb_args)
@@ -97,20 +96,20 @@ def _cabal_setup_script_impl(ctx: AnalysisContext) -> list[Provider]:
 cabal_setup_script = rule(
     impl = _cabal_setup_script_impl,
     attrs = {
-        "src": attrs.source(),
         "deps": attrs.list(attrs.dep(), default = []),
         "platform_deps": attrs.list(
             attrs.tuple(attrs.string(), attrs.list(attrs.dep())),
             default = [],
         ),
+        "src": attrs.source(),
         "template_deps": attrs.default_only(
             attrs.list(attrs.exec_dep(providers = [HaskellLibraryProvider]), default = []),
         ),
-        "_haskell_toolchain": toolchains_common.haskell(),
         "_cxx_toolchain": attrs.toolchain_dep(
             default = "toolchains//:haskell",
             providers = [CxxToolchainInfo],
         ),
+        "_haskell_toolchain": toolchains_common.haskell(),
     },
 )
 
@@ -119,90 +118,96 @@ def _extract_dep_package_names(ctx: AnalysisContext, output_style: LibOutputStyl
     link_style = legacy_output_style_to_link_style(output_style)
     return [li.info[link_style].value.name for li in hlis]
 
-def _generate_cabal_file(
-        ctx: AnalysisContext,
-        package_name: str,
-        output_style: LibOutputStyle) -> Artifact:
+def _generate_cabal_file(ctx: AnalysisContext, package_name: str, output_style: LibOutputStyle) -> Artifact:
     def _cabal_identifier_list(name: str, args) -> cmd_args:
-        return cmd_args([
-            "{}:".format(name),
-            cmd_args(args, delimiter = ", "),
-        ], delimiter = " ")
+        return cmd_args(
+            [
+                "{}:".format(name),
+                cmd_args(args, delimiter = ", "),
+            ],
+            delimiter = " ",
+        )
 
-    cabal = cmd_args([
-        "cabal-version: 3.0",
-        "name: {}".format(package_name),
-        "version: {}".format(ctx.attrs.version),
-        # we compile and invoke the Setup binary ourselves, so Cabal never needs
-        # to build it
-        "build-type: Simple",
-        "library",
-        cmd_args([
-            cmd_args([
-                "ghc-options:",
-                [ctx.attrs.compiler_flags or []],
-            ], delimiter = " "),
-            _cabal_identifier_list(
-                "exposed-modules",
-                ctx.attrs.exposed_modules or [],
-            ),
-            _cabal_identifier_list(
-                "reexported-modules",
-                ctx.attrs.reexported_modules or [],
-            ),
-            _cabal_identifier_list(
-                "other-modules",
-                ctx.attrs.other_modules or [],
-            ),
-            _cabal_identifier_list(
-                "hs-source-dirs",
+    cabal = cmd_args(
+        [
+            "cabal-version: 3.0",
+            "name: {}".format(package_name),
+            "version: {}".format(ctx.attrs.version),
+            # we compile and invoke the Setup binary ourselves, so Cabal never needs
+            # to build it
+            "build-type: Simple",
+            "library",
+            cmd_args(
                 [
-                    (ctx.attrs.src if dir == "." else ctx.attrs.src.project(dir))
-                    for dir in ctx.attrs.hs_source_dirs or ["."]
+                    cmd_args(
+                        [
+                            "ghc-options:",
+                            [ctx.attrs.compiler_flags or []],
+                        ],
+                        delimiter = " ",
+                    ),
+                    _cabal_identifier_list(
+                        "exposed-modules",
+                        ctx.attrs.exposed_modules or [],
+                    ),
+                    _cabal_identifier_list(
+                        "reexported-modules",
+                        ctx.attrs.reexported_modules or [],
+                    ),
+                    _cabal_identifier_list(
+                        "other-modules",
+                        ctx.attrs.other_modules or [],
+                    ),
+                    _cabal_identifier_list(
+                        "hs-source-dirs",
+                        [(ctx.attrs.src if dir == "." else ctx.attrs.src.project(dir)) for dir in ctx.attrs.hs_source_dirs or ["."]],
+                    ),
+                    cmd_args(
+                        [
+                            "default-language:",
+                            ctx.attrs.default_language,
+                        ],
+                        delimiter = " ",
+                    ),
+                    _cabal_identifier_list(
+                        "default-extensions",
+                        ctx.attrs.default_extensions or [],
+                    ),
+                    _cabal_identifier_list(
+                        "build-depends",
+                        _extract_dep_package_names(ctx, output_style),
+                    ),
+                    _cabal_identifier_list(
+                        "c-sources",
+                        [ctx.attrs.src.project(src) for src in ctx.attrs.c_sources or []],
+                    ),
+                    _cabal_identifier_list(
+                        "include-dirs",
+                        [(ctx.attrs.src if dir == "." else ctx.attrs.src.project(dir)) for dir in ctx.attrs.include_dirs or []],
+                    ),
+                    _cabal_identifier_list(
+                        "cc-options",
+                        ctx.attrs.cc_options or [],
+                    ),
+                    _cabal_identifier_list(
+                        "cpp-options",
+                        ctx.attrs.cpp_options or [],
+                    ),
+                    _cabal_identifier_list(
+                        "ld-options",
+                        ctx.attrs.ld_options or [],
+                    ),
+                    _cabal_identifier_list(
+                        "extra-libraries",
+                        ctx.attrs.extra_libraries or [],
+                    ),
                 ],
+                format = "    {}",
             ),
-            cmd_args([
-                "default-language:",
-                ctx.attrs.default_language,
-            ], delimiter = " "),
-            _cabal_identifier_list(
-                "default-extensions",
-                ctx.attrs.default_extensions or [],
-            ),
-            _cabal_identifier_list(
-                "build-depends",
-                _extract_dep_package_names(ctx, output_style),
-            ),
-            _cabal_identifier_list(
-                "c-sources",
-                [ctx.attrs.src.project(src) for src in ctx.attrs.c_sources or []],
-            ),
-            _cabal_identifier_list(
-                "include-dirs",
-                [
-                    (ctx.attrs.src if dir == "." else ctx.attrs.src.project(dir))
-                    for dir in ctx.attrs.include_dirs or []
-                ],
-            ),
-            _cabal_identifier_list(
-                "cc-options",
-                ctx.attrs.cc_options or [],
-            ),
-            _cabal_identifier_list(
-                "cpp-options",
-                ctx.attrs.cpp_options or [],
-            ),
-            _cabal_identifier_list(
-                "ld-options",
-                ctx.attrs.ld_options or [],
-            ),
-            _cabal_identifier_list(
-                "extra-libraries",
-                ctx.attrs.extra_libraries or [],
-            ),
-        ], format = "    {}"),
-        "",
-    ], delimiter = "\n")
+            "",
+        ],
+        delimiter = "\n",
+    )
 
     return ctx.actions.write(
         "{}.cabal".format(package_name),
@@ -267,7 +272,7 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
             setup,
             "configure",
             cmd_args(cabal_file, format = "--cabal-file={}"),
-            "--builddir=\"$1\"",
+            '--builddir="$1"',
             "--ghc",
             "--ipid={}".format(pkg_id),
         ])
@@ -314,23 +319,25 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
             )
             for libs in combined_libs.traverse():
                 for shlib in libs.libraries:
-                    cmd_configure.add(cmd_args(
-                        shlib.lib.output,
-                        format = "--ghc-option=-optl-L{}",
-                        parent = 1,  # get parent directory
-                    ))
+                    cmd_configure.add(
+                        cmd_args(
+                            shlib.lib.output,
+                            format = "--ghc-option=-optl-L{}",
+                            parent = 1,  # get parent directory
+                        )
+                    )
 
         cmd_configure.add([
             cmd_args(ghc_wrapper_bin, format = "--with-ghc={}"),
             cmd_args(toolchain.packager, format = "--with-ghc-pkg={}"),
         ])
 
-        cmd_build = cmd_args([setup, "build", "--builddir=\"$1\""])
+        cmd_build = cmd_args([setup, "build", '--builddir="$1"'])
 
         cmd_gen_pkg = cmd_args([
             setup,
             "register",
-            "--builddir=\"$1\"",
+            '--builddir="$1"',
             # without --inplace, Cabal generates the package description as
             # it would appear after `install` to the (unset, so system default)
             # --prefix, i.e. pointing at /usr/local/lib/...
@@ -342,13 +349,16 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
             cmd_args([
                 "sh",
                 "-c",
-                cmd_args([
-                    cmd_configure,
-                    "&&",
-                    cmd_build,
-                    "&&",
-                    cmd_gen_pkg,
-                ], delimiter = " "),
+                cmd_args(
+                    [
+                        cmd_configure,
+                        "&&",
+                        cmd_build,
+                        "&&",
+                        cmd_gen_pkg,
+                    ],
+                    delimiter = " ",
+                ),
                 "--",
                 build_dir.as_output(),
             ]),
@@ -356,7 +366,7 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
             identifier = identifier,
         )
 
-        cmd_db_init = cmd_args([toolchain.packager, "init", "\"$1\""])
+        cmd_db_init = cmd_args([toolchain.packager, "init", '"$1"'])
 
         cmd_register = cmd_args([toolchain.packager, "register"])
 
@@ -364,7 +374,7 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
             cmd_register.add(cmd_args(lib_info.db, format = "--package-db={}"))
 
         cmd_register.add([
-            "--package-db=\"$1\"",
+            '--package-db="$1"',
             "--no-expand-pkgroot",
             pkg_conf,
         ])
@@ -405,8 +415,8 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
         else:
             linkable = ArchiveLinkable(
                 archive = Archive(artifact = lib),
-                linker_type = linker_info.type,
                 link_whole = False,
+                linker_type = linker_info.type,
             )
 
         lib_infos[link_style] = HaskellLibraryInfo(
@@ -414,17 +424,17 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
             db = package_db,
             id = "{}-{}".format(package_name, ctx.attrs.version),
             import_dirs = {False: import_dir},
-            stub_dirs = [],
-            libs = [lib],
-            version = ctx.attrs.version,
             is_prebuilt = False,
+            libs = [lib],
             profiling_enabled = False,
+            stub_dirs = [],
+            version = ctx.attrs.version,
         )
 
         link_info_tsets[link_style] = ctx.actions.tset(
             HaskellLibraryInfoTSet,
-            value = lib_infos[link_style],
             children = [li.info[link_style] for li in hlis],
+            value = lib_infos[link_style],
         )
 
         link_infos[output_style] = LinkInfos(
@@ -443,17 +453,17 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
                 db = package_db,
                 id = "{}-{}".format(package_name, ctx.attrs.version),
                 import_dirs = {True: import_dir},
-                stub_dirs = [],
-                libs = [prof_lib],
-                version = ctx.attrs.version,
                 is_prebuilt = False,
+                libs = [prof_lib],
                 profiling_enabled = True,
+                stub_dirs = [],
+                version = ctx.attrs.version,
             )
 
             prof_link_info_tsets[link_style] = ctx.actions.tset(
                 HaskellLibraryInfoTSet,
-                value = prof_lib_infos[link_style],
                 children = [li.prof_info[link_style] for li in hlis],
+                value = prof_lib_infos[link_style],
             )
 
             prof_link_infos[output_style] = LinkInfos(
@@ -462,8 +472,8 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
                     linkables = [
                         ArchiveLinkable(
                             archive = Archive(artifact = prof_lib),
-                            linker_type = linker_info.type,
                             link_whole = False,
+                            linker_type = linker_info.type,
                         ),
                     ],
                 ),
@@ -483,17 +493,17 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
             db = lib_infos[link_style].db,
             id = lib_infos[link_style].id,
             import_dirs = {},
-            stub_dirs = [],
-            libs = [],
-            version = ctx.attrs.version,
             is_prebuilt = False,
+            libs = [],
             profiling_enabled = True,
+            stub_dirs = [],
+            version = ctx.attrs.version,
         )
 
         prof_link_info_tsets[link_style] = ctx.actions.tset(
             HaskellLibraryInfoTSet,
-            value = prof_lib_infos[link_style],
             children = [li.prof_info[link_style] for li in hlis],
+            value = prof_lib_infos[link_style],
         )
 
         prof_link_infos[output_style] = LinkInfos(
@@ -504,18 +514,18 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
     shared_libs = create_shared_libraries(ctx, solibs)
     linkable_graph = create_linkable_graph(
         ctx,
+        deps = ctx.attrs.deps,
         node = create_linkable_graph_node(
             ctx,
             linkable_node = create_linkable_node(
                 ctx = ctx,
-                preferred_linkage = preferred_linkage,
+                default_soname = None,
                 exported_deps = ctx.attrs.deps,
                 link_infos = link_infos,
+                preferred_linkage = preferred_linkage,
                 shared_libs = shared_libs,
-                default_soname = None,
             ),
         ),
-        deps = ctx.attrs.deps,
     )
 
     output_style = get_lib_output_style(
@@ -537,16 +547,16 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
         ),
         create_merged_link_info(
             ctx,
-            pic_behavior = PicBehavior("supported"),
-            link_infos = link_infos,
             exported_deps = attr_deps_merged_link_infos(ctx),
+            link_infos = link_infos,
+            pic_behavior = PicBehavior("supported"),
         ),
         HaskellProfLinkInfo(
             prof_infos = create_merged_link_info(
                 ctx,
-                pic_behavior = PicBehavior("supported"),
-                link_infos = prof_link_infos,
                 exported_deps = attr_deps_profiling_link_infos(ctx),
+                link_infos = prof_link_infos,
+                pic_behavior = PicBehavior("supported"),
             ),
         ),
         linkable_graph,
@@ -560,43 +570,43 @@ def _cabal_library_impl(ctx: AnalysisContext) -> list[Provider]:
 cabal_library = rule(
     impl = _cabal_library_impl,
     attrs = (
-        haskell_common.compiler_flags_arg() |
-        haskell_common.deps_arg() |
-        native_common.preferred_linkage(
+        haskell_common.compiler_flags_arg()
+        | haskell_common.deps_arg()
+        | native_common.preferred_linkage(
             preferred_linkage_type = attrs.enum(
                 Linkage.values(),
                 default = "any",
             ),
-        ) |
-        {
+        )
+        | {
+            "c_sources": attrs.list(attrs.string(), default = []),
+            "cc_options": attrs.list(attrs.string(), default = []),
+            "cpp_options": attrs.list(attrs.string(), default = []),
+            "default_extensions": attrs.list(attrs.string(), default = []),
+            "default_language": attrs.string(default = "GHC2021"),
+            "exposed_modules": attrs.list(attrs.string(), default = []),
+            "extra_libraries": attrs.list(attrs.string(), default = []),
+            "hs_source_dirs": attrs.list(attrs.string(), default = []),
+            "include_dirs": attrs.list(attrs.string(), default = []),
+            "ld_options": attrs.list(attrs.string(), default = []),
+            "linker_flags": attrs.list(attrs.arg(), default = []),
+            "other_modules": attrs.list(attrs.string(), default = []),
             "package": attrs.option(attrs.string(), default = None),
-            "version": attrs.string(),
-            "src": attrs.source(allow_directory = True),
+            "reexported_modules": attrs.list(attrs.string(), default = []),
             # custom setup scripts should point this at a `cabal_setup_script`
             # target
             "setup": attrs.exec_dep(
-                providers = [RunInfo],
                 default = "toolchains//haskell/cabal/setup_templates:simple",
+                providers = [RunInfo],
             ),
-            "exposed_modules": attrs.list(attrs.string(), default = []),
-            "reexported_modules": attrs.list(attrs.string(), default = []),
-            "other_modules": attrs.list(attrs.string(), default = []),
-            "hs_source_dirs": attrs.list(attrs.string(), default = []),
-            "default_language": attrs.string(default = "GHC2021"),
-            "default_extensions": attrs.list(attrs.string(), default = []),
-            "c_sources": attrs.list(attrs.string(), default = []),
-            "include_dirs": attrs.list(attrs.string(), default = []),
-            "cc_options": attrs.list(attrs.string(), default = []),
-            "cpp_options": attrs.list(attrs.string(), default = []),
-            "ld_options": attrs.list(attrs.string(), default = []),
-            "extra_libraries": attrs.list(attrs.string(), default = []),
-            "linker_flags": attrs.list(attrs.arg(), default = []),
-            "_haskell_toolchain": toolchains_common.haskell(),
+            "src": attrs.source(allow_directory = True),
+            "version": attrs.string(),
             "_cxx_toolchain": attrs.toolchain_dep(
                 default = "toolchains//:haskell",
                 providers = [CxxToolchainInfo],
             ),
-        } |
-        buck.labels_arg()
+            "_haskell_toolchain": toolchains_common.haskell(),
+        }
+        | buck.labels_arg()
     ),
 )

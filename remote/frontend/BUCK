@@ -19,25 +19,25 @@ css_stylesheet(
 
 typescript_bundle(
     name = "bundle-js",
-    main = "app.ts",
     deps = [
         ":xterm-css",
         "//third-party/js/npm/@xterm/xterm:xterm",
     ],
-    lib = ["esnext", "dom", "dom.iterable"],
     format = "esm",
+    lib = ["esnext", "dom", "dom.iterable"],
+    main = "app.ts",
+    minify = True,
     platform = "browser",
     target = TARGETS,
-    minify = True,
     visibility = ["//remote/..."],
 )
 
 css_bundle(
     name = "bundle-css",
     entrypoint = "main.css",
+    minify = True,
     outfile = "main.css",
     targets = CSS_TARGETS,
-    minify = True,
     visibility = ["//remote/..."],
 )
 

@@ -28,7 +28,6 @@ protobuf_library(
 go_library(
     name = "install",
     srcs = [":install.pb", ":install_grpc.pb"],
-    visibility = ["PUBLIC"],
     deps = [
         "root//tools/installer/third-party:google.golang.org/grpc",
         "root//tools/installer/third-party:google.golang.org/grpc/codes",
@@ -36,4 +35,5 @@ go_library(
         "root//tools/installer/third-party:google.golang.org/protobuf/reflect/protoreflect",
         "root//tools/installer/third-party:google.golang.org/protobuf/runtime/protoimpl",
     ],
+    visibility = ["PUBLIC"],
 )

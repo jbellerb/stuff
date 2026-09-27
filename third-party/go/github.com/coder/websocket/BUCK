@@ -36,25 +36,25 @@ http_archive(
 
 go_library(
     name = "websocket",
-    package_name = "github.com/coder/websocket",
     srcs = [":github.com/coder/websocket__srcs[.]"],
     deps = [
         ":websocket/internal/errd",
         ":websocket/internal/util",
     ],
+    package_name = "github.com/coder/websocket",
     visibility = ["PUBLIC"],
 )
 
 go_library(
     name = "websocket/internal/errd",
-    package_name = "github.com/coder/websocket/internal/errd",
     srcs = [":github.com/coder/websocket__srcs[internal/errd]"],
+    package_name = "github.com/coder/websocket/internal/errd",
     visibility = ["//third-party/go/github.com/coder/websocket/..."],
 )
 
 go_library(
     name = "websocket/internal/util",
-    package_name = "github.com/coder/websocket/internal/util",
     srcs = [":github.com/coder/websocket__srcs[internal/util]"],
+    package_name = "github.com/coder/websocket/internal/util",
     visibility = ["//third-party/go/github.com/coder/websocket/..."],
 )

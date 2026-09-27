@@ -2,8 +2,8 @@ load("//:rules.bzl", "executable_file")
 
 genrule(
     name = "version",
-    out = "VERSION",
     cmd = "$(exe :generate_version) > $OUT",
+    out = "VERSION",
     visibility = ["PUBLIC"],
 )
 

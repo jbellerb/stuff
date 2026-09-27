@@ -37,28 +37,28 @@ css_bundle = rule(
         "entrypoint": attrs.source(
             doc = "The CSS entrypoint.",
         ),
-        "srcs": attrs.list(
-            attrs.source(),
-            default = [],
-            doc = "Additional source files available to the bundler.",
+        "minify": attrs.bool(
+            default = False,
+            doc = "Minify the output.",
         ),
         "outfile": attrs.option(
             attrs.string(),
             default = None,
             doc = "The output filename. Defaults to the rule name with a .css extension.",
         ),
-        "minify": attrs.bool(
+        "sourcemap": attrs.bool(
             default = False,
-            doc = "Minify the output.",
+            doc = "Emit a sourcemap next to the output.",
+        ),
+        "srcs": attrs.list(
+            attrs.source(),
+            default = [],
+            doc = "Additional source files available to the bundler.",
         ),
         "targets": attrs.list(
             attrs.string(),
             default = [],
             doc = "Browser targets as browserslist queries.",
-        ),
-        "sourcemap": attrs.bool(
-            default = False,
-            doc = "Emit a sourcemap next to the output.",
         ),
         "_css_toolchain": attrs.default_only(
             attrs.toolchain_dep(

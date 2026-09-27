@@ -13,7 +13,7 @@ def _deno_toolchain_impl(ctx: AnalysisContext) -> list[Provider]:
 deno_toolchain = rule(
     impl = _deno_toolchain_impl,
     attrs = {
-        "deno": attrs.exec_dep(providers = [RunInfo], doc = "The Deno binary."),
+        "deno": attrs.exec_dep(doc = "The Deno binary.", providers = [RunInfo]),
     },
     is_toolchain_rule = True,
 )

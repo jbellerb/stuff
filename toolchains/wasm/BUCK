@@ -16,16 +16,16 @@ http_archive(
 
 genrule(
     name = "wasm-opt-arm64-macos",
-    out = "wasm-opt",
     cmd = "ln -s $(location :binaryen-version_129-arm64-macos.tar.gz)/bin/wasm-opt $OUT",
     executable = True,
+    out = "wasm-opt",
 )
 
 genrule(
     name = "wasm-opt-x86_64-linux",
-    out = "wasm-opt",
     cmd = "ln -s $(location :binaryen-version_129-x86_64-linux.tar.gz)/bin/wasm-opt $OUT",
     executable = True,
+    out = "wasm-opt",
 )
 
 http_archive(
@@ -44,23 +44,23 @@ http_archive(
 
 genrule(
     name = "wasm-tools-arm64-macos",
-    out = "wasm-tools",
     cmd = "ln -s $(location :wasm-tools-1.252.0-aarch64-macos.tar.gz)/wasm-tools $OUT",
     executable = True,
+    out = "wasm-tools",
 )
 
 genrule(
     name = "wasm-tools-x86_64-linux",
-    out = "wasm-tools",
     cmd = "ln -s $(location :wasm-tools-1.252.0-x86_64-linux.tar.gz)/wasm-tools $OUT",
     executable = True,
+    out = "wasm-tools",
 )
 
 http_file(
     name = "wasi-snapshot-preview1-reactor-v46.0.1",
     out = "wasi_snapshot_preview1.reactor.wasm",
-    urls = ["https://github.com/bytecodealliance/wasmtime/releases/download/v46.0.1/wasi_snapshot_preview1.reactor.wasm"],
     sha256 = "0acb10959bd3c1d2e7903ef82212910bfc156ab5698ef3f2ff669474ba59fb0a",
+    urls = ["https://github.com/bytecodealliance/wasmtime/releases/download/v46.0.1/wasi_snapshot_preview1.reactor.wasm"],
 )
 
 alias(

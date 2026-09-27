@@ -16,16 +16,16 @@ http_archive(
 
 genrule(
     name = "lightningcss-aarch64-darwin",
-    out = "lightningcss",
     cmd = "ln -s $(location :darwin-arm64-1.32.0.tgz)/lightningcss $OUT",
     executable = True,
+    out = "lightningcss",
 )
 
 genrule(
     name = "lightningcss-x86_64-linux",
-    out = "lightningcss",
     cmd = "ln -s $(location :linux-x64-gnu-1.32.0.tgz)/lightningcss $OUT",
     executable = True,
+    out = "lightningcss",
 )
 
 alias(

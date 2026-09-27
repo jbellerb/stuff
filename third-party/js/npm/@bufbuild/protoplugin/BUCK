@@ -2,14 +2,14 @@ load("@toolchains//deno:npm.bzl", "npm_package")
 
 npm_package(
     name = "protoplugin-2.12.1",
-    package = "@bufbuild/protoplugin",
-    version = "2.12.1",
-    sha256 = "2f6230b35d2b338ba6b79e732a903381d9d58b72987809bc78d44e1124bde356",
     deps = [
         "//third-party/js/npm/@bufbuild/protobuf:protobuf",
         "//third-party/js/npm/@typescript/vfs:vfs",
         "//third-party/js/npm/typescript:typescript",
     ],
+    package = "@bufbuild/protoplugin",
+    sha256 = "2f6230b35d2b338ba6b79e732a903381d9d58b72987809bc78d44e1124bde356",
+    version = "2.12.1",
 )
 
 alias(
