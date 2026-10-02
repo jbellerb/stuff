@@ -17,6 +17,7 @@ dotfiles(
             "//gotestd:gt",
             "//sprite-hacks/bin:git-remote-sprite",
             "//sprite-hacks/bin:jj-sprite-workspace",
+            "//sprite-hacks/bin:sprite-claude",
         ],
     },
 )

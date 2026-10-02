@@ -11,3 +11,9 @@ executable_file(
     src = "jj-sprite-workspace",
     visibility = ["PUBLIC"],
 )
+
+executable_file(
+    name = "sprite-claude",
+    src = "sprite-claude",
+    visibility = ["PUBLIC"],
+)
