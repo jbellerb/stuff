@@ -1,6 +1,26 @@
 default_committer = "jae-beller <foss@jae.zone>"
 
 core.workflow(
+    name = "push-flypervisor",
+    origin = git.github_origin(
+        url = "https://github.com/jbellerb/stuff",
+        ref = "trunk",
+    ),
+    destination = git.github_destination(
+        url = "https://github.com/jbellerb/flypervisor",
+        push = "trunk",
+    ),
+    origin_files = glob(["flypervisor/**"]),
+    destination_files = glob(["**"]),
+    mode = "ITERATIVE",
+    authoring = authoring.pass_thru(default_committer),
+    transformations = [
+        core.move("flypervisor", ""),
+        metadata.scrubber("\\Aflypervisor: ", replacement = ""),
+    ],
+)
+
+core.workflow(
     name = "push-sprite-hacks",
     origin = git.github_origin(
         url = "https://github.com/jbellerb/stuff",

@@ -1,10 +1,11 @@
-name: Push sprite-hacks changes to the main repo
+name: Push subproject changes to their main repos
 
 on:
   push:
     branches: [trunk]
     paths:
       - copy.bara.sky
+      - flypervisor/**
       - sprite-hacks/**
   workflow_dispatch:
 
@@ -24,4 +25,6 @@ jobs:
           signing_key: ${{ secrets.COMMIT_SIGNING_KEY }}
 
       - name: Publish change
-        run: copybara push-sprite-hacks
+        run: |
+          copybara push-flypervisor
+          copybara push-sprite-hacks
