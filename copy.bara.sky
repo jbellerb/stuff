@@ -10,7 +10,7 @@ core.workflow(
         url = "https://github.com/jbellerb/flypervisor",
         push = "trunk",
     ),
-    origin_files = glob(["flypervisor/**"]),
+    origin_files = glob(["flypervisor/**"], exclude = ["flypervisor/bin/BUCK"]),
     destination_files = glob(["**"]),
     mode = "ITERATIVE",
     authoring = authoring.pass_thru(default_committer),

@@ -6,6 +6,7 @@ dotfiles(
         "~/.cache/installer/bin": [
             "//home/genoa/bin:git-credential-1password",
             "//home/genoa/bin:jj-pr",
+            "//flypervisor/bin:flyperctl",
             "//gotestd:gt",
             "//sprite-hacks/bin:git-remote-sprite",
             "//sprite-hacks/bin:jj-sprite-workspace",
