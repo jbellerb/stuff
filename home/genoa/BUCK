@@ -4,6 +4,7 @@ dotfiles(
     name = "home",
     files = {
         "~/.cache/installer/bin": [
+            "//home/genoa/bin:git-credential-1password",
             "//home/genoa/bin:jj-pr",
             "//gotestd:gt",
             "//sprite-hacks/bin:git-remote-sprite",

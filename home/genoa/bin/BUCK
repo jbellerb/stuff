@@ -5,3 +5,9 @@ executable_file(
     src = "jj-pr",
     visibility = ["PUBLIC"],
 )
+
+executable_file(
+    name = "git-credential-1password",
+    src = "git-credential-1password",
+    visibility = ["PUBLIC"],
+)
