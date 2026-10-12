@@ -9,5 +9,5 @@ Copyright (C) jae beller, 2026.
 </sup>
 <br />
 <sup>
-Except as noted, released under the <a href="LICENSE">GNU General Public License, Version 3</a> or later. sprite-hacks is released under the <a href="LICENSE-APACHE">Apache License, Version 2.0</a>.
+Except as noted, released under the <a href="LICENSE">GNU General Public License, Version 3</a> or later. flypervisor is released under the <a href="LICENSE-MIT">MIT License</a>. sprite-hacks is released under the <a href="LICENSE-APACHE">Apache License, Version 2.0</a>.
 </sup>
